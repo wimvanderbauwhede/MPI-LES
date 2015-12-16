@@ -5,7 +5,7 @@ contains
 
       subroutine velfg(km,jm,im,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6, &
       dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2, &
-      nou3,nou4,nou6,nou7,nou8)
+      nou3,nou4,nou6,nou7,nou8,uspd,vspd)
       use common_sn ! create_new_include_statements() line 102
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov2
@@ -51,10 +51,15 @@ contains
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
         real(kind=4), intent(In) :: vn
         real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
+
+!wall function
+        real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: uspd
+        real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: vspd
+ 
 !
 !
       call vel2(km,jm,im,nou1,u,diu1,dx1,nou5,v,diu5,dy1,nou9,w,diu9,dzn,cov1,cov5,cov9,nou2,diu2, &
-           cov2,nou3,diu3,dzs,cov3,nou4,diu4,cov4,nou6,diu6,cov6,nou7,diu7,cov7,nou8,diu8,cov8)
+           cov2,nou3,diu3,dzs,cov3,nou4,diu4,cov4,nou6,diu6,cov6,nou7,diu7,cov7,nou8,diu8,cov8,uspd,vspd)
 ! --u velocity
       do k = 1,km
       do j = 1,jm

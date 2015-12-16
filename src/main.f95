@@ -16,6 +16,7 @@ program main
 #else
     use module_velnw
     use module_bondv1
+    use module_bondv1_data24
     use module_velFG
 #if IFBF == 1
     use module_feedbf
@@ -39,6 +40,9 @@ program main
     real(kind=4) :: beta
     character(len=70) :: data10
     character(len=70) :: data11
+    character(len=70) :: data12
+    character(len=70) :: data13
+    character(len=70) :: data14
     character(len=70) :: data20
     character(len=70) :: data21
     character(len=70) :: data22
@@ -67,11 +71,11 @@ program main
     real(kind=4), dimension(ip,kp)  :: avesvv
     real(kind=4), dimension(ip,kp)  :: avesw
     real(kind=4), dimension(ip,kp)  :: avesww
-    real(kind=4), dimension(ip,jp,kp)  :: aveu
+    real(kind=4), dimension(ip,jp,0:kp)  :: aveu
     real(kind=4), dimension(ip,jp,kp)  :: aveuu
-    real(kind=4), dimension(ip,jp,kp)  :: avev
+    real(kind=4), dimension(ip,jp,0:kp)  :: avev
     real(kind=4), dimension(ip,jp,kp)  :: avevv
-    real(kind=4), dimension(ip,jp,kp)  :: avew
+    real(kind=4), dimension(ip+1,jp,0:kp+2)  :: avew
     real(kind=4), dimension(ip,jp,kp)  :: aveww
     real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1)  :: bmask1
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: cmask1
@@ -148,8 +152,44 @@ program main
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: vsum
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1)  :: w
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: wsum
-    real(kind=4), dimension(kp+2)  :: z2
+    real(kind=4), dimension(0:kp+2)  :: z2
     real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1)  :: zbm
+!wall function
+    real(kind=4), dimension(0:ip+1,0:jp+1)  :: uspd
+    real(kind=4), dimension(0:ip+1,0:jp+1)  :: vspd
+!idata24
+    integer :: idata24
+!jdata24
+    integer :: jdata24
+
+!nspec
+    integer :: nspec
+
+
+    real(kind=4), dimension(1,1,36001,kp) :: ut_x1_2
+    real(kind=4), dimension(1,1,36001,kp) :: ut_x2_2
+    real(kind=4), dimension(1,1,36001,kp) :: vt_x1_2
+    real(kind=4), dimension(1,1,36001,kp) :: vt_x2_2
+    real(kind=4), dimension(1,1,36001,kp) :: wt_x1_2
+    real(kind=4), dimension(1,1,36001,kp) :: wt_x2_2
+
+
+    real(kind=4), dimension(1,kp,36001)  :: u_spany2
+    real(kind=4), dimension(1,kp,36001)  :: v_spany2
+    real(kind=4), dimension(1,kp,36001)  :: w_spany2
+    real(kind=4), dimension(1,kp,36001)  :: u_spany3
+    real(kind=4), dimension(1,kp,36001)  :: v_spany3
+    real(kind=4), dimension(1,kp,36001)  :: w_spany3
+
+    real(kind=4), dimension(19,kp,36001)  :: u_x1_19_spany2
+    real(kind=4), dimension(19,kp,36001)  :: v_x1_19_spany2
+    real(kind=4), dimension(19,kp,36001)  :: w_x1_19_spany2
+    real(kind=4), dimension(19,kp,36001)  :: u_x1_19_spany3
+    real(kind=4), dimension(19,kp,36001)  :: v_x1_19_spany3
+    real(kind=4), dimension(19,kp,36001)  :: w_x1_19_spany3
+
+
+
 #ifdef TIMINGS
     integer (kind=4), dimension(0:9) :: timestamp
 #endif
@@ -168,21 +208,23 @@ program main
 #endif
     call set(data10,data11,data20,data21,data22,data23,data24,data25,data26,&
              data27,data30,data31,im,jm,km,ifbf,ianime,ical,n0,n1,nmax,dt,ro,&
-             vn,alpha,beta)
+             vn,alpha,beta,data12,data13,data14,idata24,nspec,jdata24)
     call grid(dx1,dxl,dy1,dyl,z2,dzn,dzs,dxs,dys)
     call timdata()
     call init(km,jm,im,u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,&
               amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
-    n=n0
+!    n0=200
     call ifdata( &
-#if ICAL == 1
-                data30,data31, fold,gold,hold,fghold, time &
-#endif
+!#if ICAL == 1
+                data30,data31, fold,gold,hold,fghold, time, &
+!#endif
                 n,u,im,jm,km,v,w,p,usum,vsum,wsum,delx1,dx1,dy1,dzn,diu1,diu2,&
                 diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g,h,z2,dt,dxs,cov1, &
                 cov2,cov3,dfu1,vn,cov4,cov5,cov6,dfv1,cov7,cov8,cov9,dfw1,dzs,&
                 nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,bmask1,cmask1,&
-                dmask1,alpha,beta,fx,fy,fz,amask1,zbm)
+                dmask1,alpha,beta,fx,fy,fz,amask1,zbm,ical)
+!     n=n0
+
 #ifdef _OPENCL_LES_WV
     call initialise_LES_kernel(p,u,v,w,usum,vsum,wsum,f,g,h,fold,gold,hold, &
                                diu1, diu2, diu3, diu4, diu5, diu6, diu7, diu8, &
@@ -199,7 +241,7 @@ program main
 #endif
 ! --main loop
 #ifdef TIMINGS
-    nmax=201
+!    nmax=201
     call system_clock(timestamp(8), clock_rate)
 #endif
     do n = n0,nmax
@@ -219,14 +261,18 @@ program main
 #ifdef TIMINGS
         call system_clock(timestamp(1), clock_rate)
 #endif
+     if(jdata24.eq.0) then
         call bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
+     else
+        call bondv1_data24(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
+     end if
 #ifdef TIMINGS
         call system_clock(timestamp(2), clock_rate)
 #endif
         call velfg(km,jm,im,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn, &
                    vn,f,cov4,cov5,cov6,dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9, &
                    dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
-                   nou4,nou6,nou7,nou8)
+                   nou4,nou6,nou7,nou8,uspd,vspd)
 #ifdef TIMINGS
         call system_clock(timestamp(3), clock_rate)
 #endif
@@ -238,7 +284,7 @@ program main
         call system_clock(timestamp(4), clock_rate)
 #endif
         call les(km,delx1,dx1,dy1,dzn,jm,im,diu1,diu2,diu3,diu4,diu5,diu6, &
-                 diu7,diu8,diu9,sm,f,g,h)
+                 diu7,diu8,diu9,sm,f,g,h,uspd,vspd,dxs,dys)
 #ifdef TIMINGS
         call system_clock(timestamp(5), clock_rate)
 #endif
@@ -261,14 +307,27 @@ program main
 #ifdef TIMSERIS_FIXED
         call timseris(n,dt,u,v,w)
 #endif
-        call aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww, &
-                     avesm,avesmsm,uwfx,avesu,avesv,avesw,avesuu,avesvv, &
-                     avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11)
 #if IANIME == 1
         call anime(n,n0,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,&
-                   amask1)
+                   amask1,zbm)
+
+        if (idata24.eq.1) then
+        call anime_bond(n,n0,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,amask1,zbm)
+        end if
 #endif
-    end do
+        call ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,hold)
+
+        call aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww, &
+                     avesm,avesmsm,uwfx,avesu,avesv,avesw,avesuu,avesvv, &
+                     avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14,amask1)
+
+        call timestep_out_all_k(n,n0,n1,nmax,km,jm,im,z2,data22,data23,u,w,v,amask1&
+,ut_x1_2,vt_x1_2,wt_x1_2,ut_x2_2,vt_x2_2,wt_x2_2,nspec&
+,u_spany2,v_spany2,w_spany2,u_spany3,v_spany3,w_spany3&
+,u_x1_19_spany2,v_x1_19_spany2,w_x1_19_spany2,u_x1_19_spany3,v_x1_19_spany3,w_x1_19_spany3)
+
+
+        end do
 #ifdef USE_NETCDF_OUTPUT
     call close_netcdf_file()
 #endif

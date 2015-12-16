@@ -378,7 +378,11 @@ subroutine write_to_netcdf_file(p,u,v,w,usum,vsum,wsum,n)
         start(4) = n
         print *, 'ncid: ',ncid,'pres_varid: ',pres_varid
 
+        write(*,*) 'test1'
+
         call check( nf90_put_var(ncid, pres_varid, pTot,  start, count) )
+
+        write(*,*) 'test2'
 
         call check( nf90_put_var(ncid_p, pres_varid, pTot,  start, count_p) )
 
@@ -402,7 +406,11 @@ subroutine write_to_netcdf_file(p,u,v,w,usum,vsum,wsum,n)
     start(4) = n
     print *, 'ncid: ',ncid,'pres_varid: ',pres_varid
 
+!    write(*,*) 'test1'
+
     call check( nf90_put_var(ncid, pres_varid, p,  start, count) )
+
+!    write(*,*) 'test2'
 
     call check( nf90_put_var(ncid_p, pres_varid, p,  start, count_p) )
 

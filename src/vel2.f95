@@ -1,9 +1,8 @@
 module module_vel2
-
 contains
 
       subroutine vel2(km,jm,im,nou1,u,diu1,dx1,nou5,v,diu5,dy1,nou9,w,diu9,dzn,cov1,cov5,cov9,nou2, &
-      diu2,cov2,nou3,diu3,dzs,cov3,nou4,diu4,cov4,nou6,diu6,cov6,nou7,diu7,cov7,nou8,diu8,cov8)
+      diu2,cov2,nou3,diu3,dzs,cov3,nou4,diu4,cov4,nou6,diu6,cov6,nou7,diu7,cov7,nou8,diu8,cov8,uspd,vspd)
       use common_sn ! create_new_include_statements() line 102
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov2
@@ -43,7 +42,34 @@ contains
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
         real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
 !
+!wall function
+        real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: uspd
+        real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: vspd
+!
       integer, parameter  :: u0 = 0
+
+        
+
+
+      do j=1,jm
+        do i=1,im
+         uspd(i,j)=(u(i,j,1)**2+((0.5*(v(i,j-1,1)+v(i,j,1))*dx1(i+1)&
+     +0.5*(v(i+1,j-1,1)+v(i+1,j,1))*dx1(i))/(dx1(i)+dx1(i+1)))**2)**0.5
+        end do
+        end do
+        do j=1,jm
+        do i=1,im
+         vspd(i,j)=(v(i,j,1)**2+((0.5*(u(i-1,j,1)+u(i,j,1))*dy1(j+1)&
+     +0.5*(u(i-1,j+1,1)+u(i,j+1,1))*dy1(j))/(dy1(j)+dy1(j+1)))**2)**0.5
+        end do
+        end do
+
+       if (isMaster()) then
+        write(6,*) 'CHK_uspd=',uspd(im/2,jm/2),vspd(im/2,jm/2)
+       end if
+
+
+
 !
       do k = 1,km
       do j = 1,jm
@@ -90,7 +116,7 @@ contains
     print*, 'GR: SUM(cov2) = ', sum(cov2)
 #endif
 !
-      do k = 1,km+1
+      do k = 2,km+1
       do j = 1,jm
       do i = 1,im
         nou3(i,j,k) = (dx1(i+1)*w(i,j,k-1)+dx1(i)*w(i+1,j,k-1)) /(dx1(i)+dx1(i+1))
@@ -100,6 +126,21 @@ contains
       end do
       end do
 !
+!      do j=1,jm
+!      do i=1,im
+!       diu3(i,j,1)=0.45/0.4/(0.5*dzn(1))*uspd(i,j)
+!      end do
+!      end do
+
+      do j=1,jm
+      do i=1,im
+       nou3(i,j,1) = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
+       diu3(i,j,1)=uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
+       cov3(i,j,1) = nou3(i,j,1)*diu3(i,j,1)
+      end do
+      end do
+
+
       do k = 1,km
       do j = 1,jm
       do i = 1,im
@@ -110,7 +151,7 @@ contains
       end do
       end do
 !
-      do k = 1,km+1
+      do k = 2,km+1
       do j = 1,jm
       do i = 1,im
         nou6(i,j,k) = (dy1(j+1)*w(i,j,k-1)+dy1(j)*w(i,j+1,k-1)) /(dy1(j)+dy1(j+1))
@@ -120,6 +161,21 @@ contains
       end do
       end do
 !
+!      do j=1,jm
+!      do i=1,im
+!       diu6(i,j,1)=0.45/0.4/(0.5*dzn(1))*vspd(i,j)
+!      end do
+!      end do
+
+      do j=1,jm
+      do i=1,im
+       nou6(i,j,1) = 0.5*(dy1(j+1)*w(i,j,1)+dy1(j)*w(i,j+1,1))/(dy1(j)+dy1(j+1))
+       diu6(i,j,1)=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
+       cov6(i,j,1) = nou6(i,j,1)*diu6(i,j,1)
+      end do
+      end do
+
+
       do k = 1,km-1
       do j = 1,jm
       do i = 1,im
@@ -290,6 +346,16 @@ contains
     call exchangeRealHalos(diu9, procPerRow, neighbours, 1, 2, 1, 2)
     call exchangeRealHalos(cov9, procPerRow, neighbours, 1, 2, 1, 2)
 #endif
+
+!uspd,vspd
+        do j=1,jm
+        do i=1,im
+         uspd(i,j)=u(i,j,1)/uspd(i,j)
+         vspd(i,j)=v(i,j,1)/vspd(i,j)
+        end do
+        end do
+
+
 
 #ifdef WV_DEBUG
     print *, 'F95 DIU SUMS:',sum(diu1),sum(diu2),sum(diu3),sum(diu4),sum(diu5),sum(diu6),sum(diu7),sum(diu8),sum(diu9)

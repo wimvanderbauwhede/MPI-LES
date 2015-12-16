@@ -200,7 +200,7 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
                 'vel at centre: ', &
                 u(ip/2,jp/2,kp/2),v(ip/2,jp/2,kp/2),w(ip/2,jp/2,kp/2)
 #ifdef USE_NETCDF_OUTPUT
-        call write_to_netcdf_file(p,u,v,w,usum,vsum,wsum,nn)
+!        call write_to_netcdf_file(p,u,v,w,usum,vsum,wsum,nn)
 #endif
 #ifndef NO_IO
 #ifndef MPI

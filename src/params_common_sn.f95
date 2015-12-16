@@ -9,16 +9,16 @@ module params_common_sn
     data dimensionSizes /procPerCol,procPerRow/, periodicDimensions /.false.,.false./, &
     reorder /.false./
 #endif
-    integer, parameter :: ipmax = 150, jpmax = 150
+    integer, parameter :: ipmax = 3000, jpmax = 300
 #ifndef TEST_SMALL_DOMAIN
 #ifdef MPI
-    integer, parameter :: ip = 150/PROC_PER_COL ! rows per process
-    integer, parameter :: jp = 150/PROC_PER_ROW ! columns per process
-    integer, parameter :: kp=90
+    integer, parameter :: ip = 3000/PROC_PER_COL ! rows per process
+    integer, parameter :: jp = 300/PROC_PER_ROW ! columns per process
+    integer, parameter :: kp=105
 #else
-    integer, parameter :: ip = 150, jp = 150, kp = 90
+    integer, parameter :: ip = 300, jp = 300, kp = 105
 #endif
 #else
-    integer, parameter :: ip = 25, jp = 25, kp = 90
+    integer, parameter :: ip = 25, jp = 25, kp = 105
 #endif
 end module params_common_sn

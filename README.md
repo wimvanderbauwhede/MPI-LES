@@ -1,6 +1,7 @@
 # MPI implementation of the LES
 
 This repository contains the code that adds support for MPI in the LES.
+Note that the GIS files do not contain the actual GIS data for Kyoto but synthetic data.
 
 # Requirements
 - Python 2.7 or a later version of Python 2.x (not Python 3).

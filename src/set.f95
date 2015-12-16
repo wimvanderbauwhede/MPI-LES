@@ -3,12 +3,15 @@ module module_set
 contains
 
       subroutine set(data10,data11,data20,data21,data22,data23,data24,data25,data26,data27,data30, &
-      data31,im,jm,km,ifbf,ianime,ical,n0,n1,nmax,dt,ro,vn,alpha,beta)
+      data31,im,jm,km,ifbf,ianime,ical,n0,n1,nmax,dt,ro,vn,alpha,beta,data12,data13,data14,idata24,nspec,jdata24)
       use common_sn ! create_new_include_statements() line 102
         real(kind=4), intent(Out) :: alpha
         real(kind=4), intent(Out) :: beta
         character(len=70), intent(InOut) :: data10
         character(len=70), intent(InOut) :: data11
+        character(len=70), intent(InOut) :: data12
+        character(len=70), intent(InOut) :: data13
+        character(len=70), intent(InOut) :: data14
         character(len=70), intent(InOut) :: data20
         character(len=70), intent(InOut) :: data21
         character(len=70), intent(InOut) :: data22
@@ -31,10 +34,18 @@ contains
         integer, intent(Out) :: nmax
         real(kind=4), intent(Out) :: ro
         real(kind=4), intent(Out) :: vn
+!idata24
+        integer, intent(Out) :: idata24
+!jdata24
+        integer, intent(Out) :: jdata24
+
 !
 !
       data10 = './data/data10'
       data11 = './data/data11'
+      data12 = './data/data12'
+      data13 = './data/data13'
+      data14 = './data/data14'      
       data20 = './data/data20'
       data21 = './data/data21'
       data22 = './data/data22'
@@ -69,11 +80,13 @@ contains
 !           = 1; continuous computation
       ical = 0
       n0 = 1
-      n1 = 10001
+      n1 = 1
 ! --setnmax
-      nmax = 20000
+      nmax = 10
+! --for sepctrum, nspec = nmax-n1+1
+      nspec = 10
 ! --time step
-      dt = 0.2
+      dt = 0.05
 ! --physical property set
       ro = 1.1763
       vn = 15.83*10.**(-6.)
@@ -86,6 +99,10 @@ contains
       write(6,*) 'IBM parameter, dt=' ,((-beta-(beta*beta-2.*alpha)**(0.5))/alpha),dt
       stop
       endif
+!--make_data24
+      idata24 = 0
+!--use_data24
+      jdata24 = 0
 ! =======================================
       return
       end subroutine set

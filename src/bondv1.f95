@@ -12,10 +12,12 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: u
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: v
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(InOut) :: w
-    real(kind=4), dimension(kp+2) , intent(In) :: z2
+    real(kind=4), dimension(0:kp+2) , intent(In) :: z2
     real(kind=4) :: u_val
     integer :: i, j, k
     real(kind=4) :: aaa, bbb, uout
+!    integer, intent(In) :: ical
+
 #ifdef MPI
     integer :: a
 #endif
@@ -31,9 +33,10 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
         do i = 0,1
             do k = 1,78 ! kp = 90 so OK
                 do j = 1,jm
-                    u_val = 5.*((z2(k)+0.5*dzn(k))/600.)**0.2
+!                    u_val = 5.*((z2(k)+0.5*dzn(k))/600.)**0.2
                     !print *, u_val
-                    u(i,j,k) = u_val
+!                    u(i,j,k) = u_val
+                    u(i,j,k) = 5.0
                     v(i,j,k) = 0.0
                     w(i,j,k) = 0.0
                 end do
@@ -185,7 +188,7 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
     end do
 
     do j = -1,jm+1 ! 2 !WV: I think this is wrong: j = jm+2 is not allocated!
-        do i = -1,im+1
+        do i = 0,im+1
             w(i,j, 0) = 0.0
             w(i,j,km) = 0.0
         end do

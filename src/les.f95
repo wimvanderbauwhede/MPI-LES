@@ -4,7 +4,7 @@ module module_les
 contains
 
       subroutine les(km,delx1,dx1,dy1,dzn,jm,im,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g, &
-      h)
+      h,uspd,vspd,dxs,dys)
       use common_sn ! create_new_include_statements() line 102
         real(kind=4), dimension(kp) , intent(Out) :: delx1
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(In) :: diu1
@@ -26,6 +26,11 @@ contains
         integer, intent(In) :: jm
         integer, intent(In) :: km
         real(kind=4), dimension(-1:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: sm
+!wall function
+        real(kind=4), dimension(0:ip+1,0:jp+1) , intent(in) :: uspd
+        real(kind=4), dimension(0:ip+1,0:jp+1) , intent(in) :: vspd
+        real(kind=4), dimension(0:ip) , intent(in) :: dxs
+        real(kind=4), dimension(0:jp) , intent(in) :: dys
 !
 !
       cs0 = .1
@@ -75,7 +80,7 @@ contains
     print *, 'F95 HSUM after boundsm:',sum(h)
 #endif
 ! --calculation of viscosity terms in momentum eq.(x-comp.)
-      do k = 1,km
+      do k = 2,km
       do j = 1,jm
       do i = 1,im
 ! --eddyviscosity on face
@@ -101,15 +106,41 @@ contains
       visuz2 = (evsz2)* ( diu3(i  ,j  ,k+1)+diu7(i+1,j  ,k  ) )
       visuz1 = (evsz1)* ( diu3(i  ,j  ,k  )+diu7(i+1,j  ,k-1) )
 !
-      vfu = (visux2-visux1)/dx1(i) +(visuy2-visuy1)/dy1(j) +(visuz2-visuz1)/dzn(k)
+      vfu = (visux2-visux1)/dxs(i) +(visuy2-visuy1)/dy1(j) +(visuz2-visuz1)/dzn(k)
 !
       f(i,j,k) = (f(i,j,k)+vfu)
       end do
       end do
       end do
 
+!wall function
+
+      do j=1,jm
+      do i=1,im
+      evsx2=sm(i+1,j,1)
+      evsx1=sm(i,j,1)
+      evsy2=(dy1(j+1)*((dx1(i+1)*sm(i,j,1)+dx1(i)*sm(i+1,j,1))/(dx1(i)+dx1(i+1)))&
+      +dy1(j)*((dx1(i+1)*sm(i,j+1,1)+dx1(i)*sm(i+1,j+1,1))/(dx1(i)+dx1(i+1))))/(dy1(j)+dy1(j+1))
+      evsy1=(dy1(j+1)*((dx1(i+1)*sm(i,j-1,1)+dx1(i)*sm(i+1,j-1,1))/(dx1(i)+dx1(i+1)))&
+      +dy1(j)*((dx1(i+1)*sm(i,j,1)+dx1(i)*sm(i+1,j,1))/(dx1(i)+dx1(i+1))))/(dy1(j)+dy1(j+1))
+      evsz2=(dzn(2)*((dx1(i+1)*sm(i,j,1)+dx1(i)*sm(i+1,j,1))/(dx1(i)+dx1(i+1)))&
+      +dzn(1)*((dx1(i+1)*sm(i,j,2)+dx1(i)*sm(i+1,j,2))/(dx1(i)+dx1(i+1))))/(dzn(1)+dzn(2))
+      visux2=(evsx2)*2.*diu1(i+1,j  ,1  )
+      visux1=(evsx1)*2.*diu1(i  ,j,  1  )
+      visuy2=(evsy2)* ( diu2(i  ,j+1,1  )+diu4(i+1,j  ,1 ) )
+      visuy1=(evsy1)* ( diu2(i  ,j  ,1  )+diu4(i+1,j-1,1 ) )
+      visuz2=(evsz2)* ( diu3(i  ,j  ,2  )+diu7(i+1,j  ,1 ) )
+      visuz1=(0.4*uspd(i,j)/alog(0.5*dzn(1)/0.1))**2*uspd(i,j)
+!
+      vfu= (visux2-visux1)/dxs(i)+(visuy2-visuy1)/dy1(j)+(visuz2-visuz1)/dzn(1)+(visuy2-visuy1)/dy1(j)+(visuz2-visuz1)/dzn(1)
+!
+      F(i,j,1)=(F(i,j,1)+vfu)
+      end do
+      end do
+
+
 ! --calculation of viscosity terms in momentum eq.(y-comp.)
-      do k = 1,km
+      do k = 2,km
       do j = 1,jm
       do i = 1,im
 ! --eddyviscosity on face
@@ -135,12 +166,41 @@ contains
       visvz2 = (evsz2)* ( diu6(i  ,j  ,k+1)+diu8(i  ,j+1,k  ) )
       visvz1 = (evsz1)* ( diu6(i  ,j  ,k  )+diu8(i  ,j+1,k-1) )
 !
-      vfv = (visvx2-visvx1)/dx1(i) +(visvy2-visvy1)/dy1(j) +(visvz2-visvz1)/dzn(k)
+      vfv = (visvx2-visvx1)/dx1(i) +(visvy2-visvy1)/dys(j) +(visvz2-visvz1)/dzn(k)
 !
       g(i,j,k) = (g(i,j,k)+vfv)
       end do
       end do
       end do
+
+!wall function
+
+      do j=1,jm
+      do i=1,im
+!c--eddyviscosity on face
+      evsy2=sm(i,j+1,1)
+      evsy1=sm(i,j,1)
+      evsx2=(dy1(j+1)*((dx1(i+1)*sm(i,j,1)+dx1(i)*sm(i+1,j,1))/(dx1(i)+dx1(i+1)))&
+      +dy1(j)*((dx1(i+1)*sm(i,j+1,1)+dx1(i)*sm(i+1,j+1,1))/(dx1(i)+dx1(i+1))))/(dy1(j)+dy1(j+1))
+      evsx1=(dy1(j+1)*((dx1(i)*sm(i-1,j,1)+dx1(i-1)*sm(i,j,1))/(dx1(i-1)+dx1(i)))&
+      +dy1(j)*((dx1(i)*sm(i-1,j+1,1)+dx1(i-1)*sm(i,j+1,1))/(dx1(i-1)+dx1(i))))/(dy1(j)+dy1(j+1))
+      evsz2=(dzn(2)*((dx1(i+1)*sm(i,j,1)+dx1(i)*sm(i+1,j,1))/(dx1(i)+dx1(i+1)))&
+      +dzn(1)*((dx1(i+1)*sm(i,j,2)+dx1(i)*sm(i+1,j,2))/(dx1(i)+dx1(i+1))))/(dzn(1)+dzn(2))
+!
+      visvx2=(evsx2)* ( diu2(i  ,j+1,1  )+diu4(i+1,j  ,1  ) )
+      visvx1=(evsx1)* ( diu2(i-1,j+1,1  )+diu4(i  ,j  ,1  ) )
+      visvy2=(evsy2)*2.*diu5(i  ,j+1,1  )
+      visvy1=(evsy1)*2.*diu5(i  ,j  ,1  )
+      visvz2=(evsz2)* ( diu6(i  ,j  ,2  )+diu8(i  ,j+1,1  ) )
+      visvz1=(0.4*vspd(i,j)/alog(0.5*dzn(1)/0.1))**2*vspd(i,j)
+!
+      vfv=(visvx2-visvx1)/dx1(i)+(visvy2-visvy1)/dys(j)+(visvz2-visvz1)/dzn(1)
+!
+      G(i,j,1)=(G(i,j,1)+vfv)
+      end do
+      end do
+
+
 
 ! --calculation of viscosity terms in momentum eq.(z-comp.)
       do k = 1,km

@@ -12,7 +12,7 @@ contains
         real(kind=4), dimension(0:jp) , intent(Out) :: dys
         real(kind=4), dimension(-1:kp+2) , intent(Out) :: dzn
         real(kind=4), dimension(-1:kp+2) , intent(Out) :: dzs
-        real(kind=4), dimension(kp+2) , intent(Out) :: z2
+        real(kind=4), dimension(0:kp+2) , intent(Out) :: z2
 #ifdef MPI
         real(kind=4), dimension(-1:(ip*procPerCol)+1) :: dx1Tot
         real(kind=4), dimension(0:(jp*procPerRow)+1) :: dy1Tot
@@ -28,13 +28,13 @@ contains
 #ifdef MPI
     if (isMaster()) then
         do i=-1,(ip*procPerCol)+1
-            dx1Tot(i) = 20.
+            dx1Tot(i) = 4.
         end do
     end if
     call distribute1DRealRowWiseArray(dx1Tot,dx1, 2, 1, procPerRow)
 #else
       do i = -1,ip+1
-       dx1(i) = 20.
+       dx1(i) = 4.
       end do
 #endif
 
@@ -59,13 +59,13 @@ contains
 #ifdef MPI
     if (isMaster()) then
         do j=0,(jp*procPerRow)+1
-            dy1Tot(j) = 20.
+            dy1Tot(j) = 4.
         end do
     end if
     call distribute1DRealColumnWiseArray(dy1Tot, dy1, 1, 1, procPerRow)
 #else
       do j = 0,jp+1
-       dy1(j) = 20.
+       dy1(j) = 4.
       end do
 #endif
 
@@ -85,23 +85,64 @@ contains
 #endif
 ! --dz set; vertical direction
 !WV: also define the first and last point in the array!
-      do k = 0,1
-        z2(k) = 2.5
-        dzn(k) = 2.5
-      end do
-      do k = 2,15
-        dzn(k) = dzn(k-1)*1.05
-      end do
-      do k = 16,44
-        dzn(k) = 5.
-      end do
-      do k = 45,kp+1
-        dzn(k) = dzn(k-1)*1.0459
-      end do
-      do k = 2,kp+2 ! WV: was kp+1
-        z2(k) = z2(k-1)+dzn(k)
-      end do
+!      do k = 0,1
+!        z2(k) = 2.5
+!        dzn(k) = 2.5
+!      end do
+!      do k = 2,15
+!        dzn(k) = dzn(k-1)*1.05
+!      end do
+!      do k = 16,44
+!        dzn(k) = 5.
+!      end do
+!      do k = 45,kp+1
+!        dzn(k) = dzn(k-1)*1.0459
+!      end do
+!      do k = 2,kp+2 ! WV: was kp+1
+!        z2(k) = z2(k-1)+dzn(k)
+!      end do
       ! so z2(kp+2) is not set, why?
+
+!original
+!      do k=0,1
+!        z2(k)= 1.
+!        dzn(k)= 1.
+!        write(*,*) 'dzn=',dzn(k)
+!      end do
+
+
+        z2(0)= 1.
+        dzn(0)= 1.
+
+        z2(1)= 1.
+        dzn(1)= 1.
+
+      do k=2,15
+        dzn(k)=dzn(k-1)*1.1
+        write(*,*) 'dzn=',dzn(k)
+      end do
+      do k=16,44
+        dzn(k)=4.
+      end do
+      do k=45,58
+        dzn(k)=dzn(k-1)*1.1
+      end do
+      do k=59,kp+1
+        dzn(k)=16.
+      enddo
+      do k=2,kp+2
+        z2(k)=z2(k-1)+dzn(k)  !Height
+      end do
+
+    if (isMaster()) then
+      do k=1,kp
+!       write(*,*) 'a=',amask1(100,100,k)
+!       write(*,*) 'zbm(i,j)=', zbm(100,100)
+        write(*,*) 'z2grid=',z2(k)
+      end do
+    end if
+
+
 ! --gaiten deno haba
       dzn(kp+1) = dzn(kp)
       !WV
