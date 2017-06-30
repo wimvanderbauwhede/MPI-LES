@@ -69,55 +69,56 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
     rowCount = size(array, 1) - topThickness - bottomThickness
     colCount = size(array, 2) - leftThickness - rightThickness
     depthSize = size(array, 3)
-    allocate(leftRecv(rowCount, rightThickness, depthSize))
-    allocate(rightSend(rowCount, leftThickness, depthSize))
-    allocate(rightRecv(rowCount, leftThickness, depthSize))
-    allocate(leftSend(rowCount, rightThickness, depthSize))
-    allocate(topRecv(bottomThickness, colCount, depthSize))
-    allocate(bottomSend(topThickness, colCount, depthSize))
-    allocate(bottomRecv(topThickness, colCount, depthSize))
-    allocate(topSend(bottomThickness, colCount, depthSize))
+    allocate(leftRecv(rowCount, rightThickness, depthSize)) 
+    allocate(rightSend(rowCount, leftThickness, depthSize)) 
+    allocate(rightRecv(rowCount, leftThickness, depthSize)) 
+    allocate(leftSend(rowCount, rightThickness, depthSize)) 
+    allocate(topRecv(bottomThickness, colCount, depthSize)) 
+    allocate(bottomSend(topThickness, colCount, depthSize)) 
+    allocate(bottomRecv(topThickness, colCount, depthSize)) 
+    allocate(topSend(bottomThickness, colCount, depthSize)) 
 #ifdef MPI
     do i=1,8
         requests(i)= MPI_REQUEST_NULL
     end do
 #endif
-    ! Top edge to send, bottom edge to receive
+    ! Top edge to send, bottom edge to receive. 
     commWith = neighbours(topNeighbour)
     if (commWith .ne. -1) then
         !print*, 'rank ', rank, ' communicating with top neighbour ', commWith
         do r=1, bottomThickness
             do c=1, colCount
                 do d=1, depthSize
-                    topSend(r, c, d) = array(r + topThickness, c+leftThickness, d)
+                    topSend(r, c, d) = array(r + topThickness, c+leftThickness, d) 
                 end do
             end do
         end do
         call MPI_ISend(topSend, bottomThickness*colCount*depthSize, MPI_REAL, commWith, topTag, &
-                      cartTopComm, requests(1), ierror)
+                      cartTopComm, requests(1), ierror) 
         call checkMPIError()
         call MPI_IRecv(bottomRecv, topThickness*colCount*depthSize, MPI_REAL, commWith, bottomTag, &
-                      communicator, requests(2), ierror)
+                      communicator, requests(2), ierror)  
         call checkMPIError()
     end if
     ! Bottom edge to send, top edge to receive
     commWith = neighbours(bottomNeighbour)
     if (commWith .ne. -1) then
         !print*, 'rank ', rank, ' communicating with bottom neighbour ', commWith
-        do r=1, topThickness
+        do r=1, topThickness 
             do c=1, colCount
                 do d=1, depthSize
                     bottomSend(r, c, d) = array(size(array, 1) - bottomThickness - topThickness + r, &
                                           c+leftThickness, &
-                                          d)
+                                          d) 
+
                 end do
             end do
         end do
         call MPI_IRecv(topRecv, bottomThickness*colCount*depthSize, MPI_REAL, commWith, topTag, &
-                      cartTopComm, requests(3), ierror)
+                      cartTopComm, requests(3), ierror) 
         call checkMPIError()
         call MPI_ISend(bottomSend, topThickness*colCount*depthSize, MPI_REAL, commWith, bottomTag, &
-                      communicator, requests(4), ierror)
+                      communicator, requests(4), ierror) 
         call checkMPIError()
     end if
     ! Left edge to send, right edge to receive
@@ -127,7 +128,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
         do r=1, rowCount
             do c=1, rightThickness
                 do d=1, depthSize
-                    leftSend(r, c, d) = array(r+topThickness, c + leftThickness, d)
+                leftSend(r, c, d) = array(r+topThickness, c + leftThickness, d) 
                 end do
             end do
         end do
@@ -147,7 +148,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
                 do d=1, depthSize
                     rightSend(r, c, d) = array(r+topThickness, &
                                                size(array, 2) - rightThickness - leftThickness + c,&
-                                               d)
+                                               d) 
                 end do
             end do
         end do
@@ -168,7 +169,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
         do r=1, topThickness
             do c=1, colCount
                 do d=1, depthSize
-                    array(r, c+leftThickness, d) = bottomRecv(r, c, d)
+                    array(r, c+leftThickness, d) = bottomRecv(r, c, d) 
                 end do
             end do
         end do
@@ -177,7 +178,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
         do r=1, bottomThickness
             do c=1, colCount
                 do d=1, depthSize
-                    array(size(array, 1) - bottomThickness + r, c+leftThickness, d) = topRecv(r, c, d)
+                    array(size(array, 1) - bottomThickness + r, c+leftThickness, d) = topRecv(r, c, d) 
                 end do
             end do
         end do
@@ -186,7 +187,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
         do r=1, rowCount
             do c=1, leftThickness
                 do d=1, depthSize
-                    array(r+topThickness, c, d) = rightRecv(r, c, d)
+                    array(r+topThickness, c, d) = rightRecv(r, c, d) ! OK
                 end do
             end do
         end do
@@ -195,7 +196,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
         do r=1, rowCount
             do c=1, rightThickness
                 do d=1, depthSize
-                    array(r+topThickness, size(array, 2) - rightThickness + c, d) = leftRecv(r, c, d)
+                    array(r+topThickness, size(array, 2) - rightThickness + c, d) = leftRecv(r, c, d) 
                 end do
             end do
         end do
