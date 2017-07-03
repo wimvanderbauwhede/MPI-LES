@@ -75,7 +75,7 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
     real(kind=4),allocatable :: avevva(:,:,:)
     real(kind=4),allocatable :: avewwa(:,:,:)
     real(kind=4),allocatable :: uwfxa(:,:,:)
-
+    real(kind=4),allocatable :: avepa(:,:,:)
 
     if(n == n1) then
         do k = 1,km
@@ -108,10 +108,7 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
                 end do
             end do
         end do
-
-
     end if
-
 
     if(n >= n1) then
         do k = 1,km
@@ -130,7 +127,6 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
             end do
         end do
 
-
         do k = 0,km
             do j = 1,jm
                 do i = 1,im
@@ -145,47 +141,45 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
                 end do
             end do
         end do
+    endif
 
-
-  endif
   if(n == nmax) then
       do k = 1,km
           do j = 1,jm
               do i = 1,im
-!                  aveu(i,j,k) = aveu(i,j,k)/float(nmax-n1+1)
-                  avev(i,j,k) = avev(i,j,k)/float(nmax-n1+1)
-!                  avew(i,j,k) = avew(i,j,k)/float(nmax-n1+1)
-                  avep(i,j,k) = avep(i,j,k)/float(nmax-n1+1)
-                  avel(i,j,k) = avel(i,j,k)/float(nmax-n1+1)
-                  aveuu(i,j,k) = aveuu(i,j,k)/float(nmax-n1+1)
-                  avevv(i,j,k) = avevv(i,j,k)/float(nmax-n1+1)
-                  aveww(i,j,k) = aveww(i,j,k)/float(nmax-n1+1)
-                  avesm(i,j,k) = avesm(i,j,k)/float(nmax-n1+1)
-                  avesmsm(i,j,k) = avesmsm(i,j,k)/float(nmax-n1+1)
+!                  aveu(i,j,k) = aveu(i,j,k)/real(nmax-n1+1)
+                  avev(i,j,k) = avev(i,j,k)/real(nmax-n1+1)
+!                  avew(i,j,k) = avew(i,j,k)/real(nmax-n1+1)
+                  avep(i,j,k) = avep(i,j,k)/real(nmax-n1+1)
+                  avel(i,j,k) = avel(i,j,k)/real(nmax-n1+1)
+                  aveuu(i,j,k) = aveuu(i,j,k)/real(nmax-n1+1)
+                  avevv(i,j,k) = avevv(i,j,k)/real(nmax-n1+1)
+                  aveww(i,j,k) = aveww(i,j,k)/real(nmax-n1+1)
+                  avesm(i,j,k) = avesm(i,j,k)/real(nmax-n1+1)
+                  avesmsm(i,j,k) = avesmsm(i,j,k)/real(nmax-n1+1)
               end do
       end do
     end do
 
-        do k = 0,km
-            do j = 1,jm
-                do i = 1,im
-                    aveu(i,j,k) = aveu(i,j,k)/float(nmax-n1+1)
-                end do
+    do k = 0,km
+        do j = 1,jm
+            do i = 1,im
+                aveu(i,j,k) = aveu(i,j,k)/real(nmax-n1+1)
             end do
         end do
-        do k = 0,km
-            do j = 1,jm
-                do i = 1,im+1
-                    avew(i,j,k) = avew(i,j,k)/float(nmax-n1+1)
-                end do
+    end do
+    do k = 0,km
+        do j = 1,jm
+            do i = 1,im+1
+                avew(i,j,k) = avew(i,j,k)/real(nmax-n1+1)
             end do
         end do
-
+    end do
 
     do k = 1,km
         do j = 1,jm
             do i = 1,im
-                uwfx(i,j,k) = uwfx(i,j,k)/float(nmax-n1+1) - &
+                uwfx(i,j,k) = uwfx(i,j,k)/real(nmax-n1+1) - &
                               0.5*(aveu(i,j,k-1)+aveu(i,j,k)) * &
                               0.5*(avew(i,j, k-1)+avew(i+1,j,k-1))
             end do
@@ -193,7 +187,7 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
     end do
 
 
-      do k = 1,km
+    do k = 1,km
         do j = 1,jm
             do i = 1,im
                 aveuu(i,j,k) = sqrt(abs(aveuu(i,j,k)-aveu(i,j,k)**2))
@@ -201,151 +195,153 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
                 aveww(i,j,k) = sqrt(abs(aveww(i,j,k)-avew(i,j,k)**2))
             end do
         end do
-        end do
+    end do
 
 
 
-       if (isMaster()) then
-    open(unit=10,file=data10,form='unformatted',status='unknown')
-
-       end if
-      allocate(aveua(0:ipmax,0:jpmax,0:kp))
-      call distributeaveu(aveua, aveu, ip, jp, kp, ipmax, jpmax, procPerRow)
-
-       if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
-                    aveua(i,j,k) = aveu(i,j,k)
-                end do
-            end do
-        end do
-
-        write(10) (((aveua(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
-
-       end if
-       deallocate(aveua)
-
-
-      allocate(avewa(ipmax+1,jpmax,0:kp+2))
-      call distributeavew(avewa, avew, ip, jp, kp, ipmax, jpmax, procPerRow)
-
-       if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
-                    avewa(i,j,k) = avew(i,j,k)
-                end do
-            end do
-        end do
-
-        write(10) (((avewa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
-
-       end if
-       deallocate(avewa)
-
-
-      allocate(aveva(0:ipmax,0:jpmax,0:kp))
-      call distributeaveu(aveva, avev, ip, jp, kp, ipmax, jpmax, procPerRow)
-
-       if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
-                    aveva(i,j,k) = avev(i,j,k)
-                end do
-            end do
-        end do
-
-
-        write(10) (((aveva(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+    if (isMaster()) then
+       write(filename, '("../ave_data/data10",i6.6, ".dat")') n
+       open(unit=10,file=filename,form='unformatted',status='unknown')
+    end if
+         allocate(aveua(0:ipmax,0:jpmax,0:kp))
+         call distributeaveu(aveua, aveu, ip, jp, kp, ipmax, jpmax, procPerRow)
+            if (isMaster()) then
+               do k = 1,km
+                  do j = 1,jm
+                     do i = 1,im
+                         aveua(i,j,k) = aveu(i,j,k)
+                     end do
+                  end do
+               end do
+               write(10) (((aveua(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+            end if
+         deallocate(aveua)
+   
+         allocate(avewa(ipmax+1,jpmax,0:kp+2))
+         call distributeavew(avewa, avew, ip, jp, kp, ipmax, jpmax, procPerRow)
+            if (isMaster()) then
+               do k = 1,km
+                  do j = 1,jm
+                     do i = 1,im
+                         avewa(i,j,k) = avew(i,j,k)
+                     end do
+                  end do
+               end do
+               write(10) (((avewa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+            end if
+         deallocate(avewa)
+   
+         allocate(aveva(0:ipmax,0:jpmax,0:kp))
+         call distributeaveu(aveva, avev, ip, jp, kp, ipmax, jpmax, procPerRow)
+            if (isMaster()) then
+               do k = 1,km
+                  do j = 1,jm
+                     do i = 1,im
+                         aveva(i,j,k) = avev(i,j,k)
+                     end do
+                  end do
+               end do
+               write(10) (((aveva(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+            end if
+         deallocate(aveva)
+   
+         allocate(avepa(0:ipmax,0:jpmax,0:kp))
+         call distributeaveuu(avepa, avep, ip, jp, kp, ipmax, jpmax, procPerRow)
+            if (isMaster()) then
+               do k = 1,km
+                  do j = 1,jm
+                     do i = 1,im
+                         avepa(i,j,k) = avep(i,j,k)
+                     end do
+                  end do
+               end do
+               write(10) (((avepa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
 
        close(10)
-
-       end if
-       deallocate(aveva)
-
-   
+            end if
+         deallocate(avepa)
 
 
-
-       if (isMaster()) then
-       open(unit=11,file=data11,form='unformatted',status='unknown')
-       end if
-      allocate(aveuua(0:ipmax,0:jpmax,0:kp))
-      call distributeaveuu(aveuua, aveuu, ip, jp, kp, ipmax, jpmax, procPerRow)
-
-       if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
-                    aveuua(i,j,k) = aveuu(i,j,k)
-                end do
+    if (isMaster()) then
+       write(filename, '("../ave_data/data11",i6.6, ".dat")') n
+       open(unit=11,file=filename,form='unformatted',status='unknown')
+    end if
+         allocate(aveuua(0:ipmax,0:jpmax,0:kp))
+         call distributeaveuu(aveuua, aveuu, ip, jp, kp, ipmax, jpmax, procPerRow)
+         if (isMaster()) then
+            do k = 1,km
+               do j = 1,jm
+                  do i = 1,im
+                      aveuua(i,j,k) = aveuu(i,j,k)
+                  end do
+               end do
             end do
-        end do
-
-        write(11) (((aveuua(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
-
-       end if
-       deallocate(aveuua)
-
-
-
-      allocate(avewwa(0:ipmax,0:jpmax,0:kp))
-      call distributeaveuu(avewwa, aveww, ip, jp, kp, ipmax, jpmax, procPerRow)
-
-       if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
-                    avewwa(i,j,k) = aveww(i,j,k)
-                end do
+            write(11) (((aveuua(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+         end if
+         deallocate(aveuua)
+       
+       
+         allocate(avewwa(0:ipmax,0:jpmax,0:kp))
+         call distributeaveuu(avewwa, aveww, ip, jp, kp, ipmax, jpmax, procPerRow)
+         if (isMaster()) then
+            do k = 1,km
+               do j = 1,jm
+                  do i = 1,im
+                      avewwa(i,j,k) = aveww(i,j,k)
+                  end do
+               end do
             end do
-        end do
-
-        write(11) (((avewwa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
-
-       end if
-       deallocate(avewwa)
-
-
-      allocate(avevva(0:ipmax,0:jpmax,0:kp))
-      call distributeaveuu(avevva, avevv, ip, jp, kp, ipmax, jpmax, procPerRow)
-
-       if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
-                    avevva(i,j,k) = avevv(i,j,k)
-                end do
+            write(11) (((avewwa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+         end if
+         deallocate(avewwa)
+       
+         allocate(avevva(0:ipmax,0:jpmax,0:kp))
+         call distributeaveuu(avevva, avevv, ip, jp, kp, ipmax, jpmax, procPerRow)
+         if (isMaster()) then
+            do k = 1,km
+               do j = 1,jm
+                  do i = 1,im
+                      avevva(i,j,k) = avevv(i,j,k)
+                  end do
+               end do
             end do
-        end do
-
-        write(11) (((avevva(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
-
-       end if
-       deallocate(avevva)
-
-
-      allocate(uwfxa(0:ipmax,0:jpmax,0:kp))
-      call distributeaveuu(uwfxa, uwfx, ip, jp, kp, ipmax, jpmax, procPerRow)
-
-       if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
-                    uwfxa(i,j,k) = uwfx(i,j,k)
-                end do
+            write(11) (((avevva(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+         end if
+         deallocate(avevva)
+       
+        allocate(uwfxa(0:ipmax,0:jpmax,0:kp))
+        call distributeaveuu(uwfxa, uwfx, ip, jp, kp, ipmax, jpmax, procPerRow)
+        if (isMaster()) then
+            do k = 1,km
+               do j = 1,jm
+                  do i = 1,im
+                      uwfxa(i,j,k) = uwfx(i,j,k)
+                  end do
+               end do
             end do
-        end do
-
-        write(11) (((uwfxa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
-     
-       close(11) 
+            write(11) (((uwfxa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+      close(11) 
  
-       end if
-       deallocate(uwfxa)
+        end if
+        deallocate(uwfxa)
 
+        do k = 1,km
+            do j = 1,jm
+                do i = 1,im
+                    aveu(i,j,k) = 0.0
+                    avev(i,j,k) = 0.0
+                    avew(i,j,k) = 0.0
+                    avep(i,j,k) = 0.0
+                    avel(i,j,k) = 0.0
+                    aveuu(i,j,k) = 0.0
+                    avevv(i,j,k) = 0.0
+                    aveww(i,j,k) = 0.0
+                    avesm(i,j,k) = 0.0
+                    avesmsm(i,j,k) = 0.0
+                    uwfx(i,j,k) = 0.0
+                end do
+            end do
+        end do
     
 
 !#endif
@@ -354,3 +350,4 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
 end subroutine aveflow
 
 end module module_aveflow
+

@@ -3,7 +3,7 @@ module module_feedbf
 contains
 
 subroutine feedbf(km,jm,im,usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
-                  dt,beta,fx,fy,fz,f,g,h)
+                  dt,beta,fx,fy,fz,f,g,h,n)
     use common_sn ! create_new_include_statements() line 102
     real(kind=4), intent(In) :: alpha
     real(kind=4), intent(In) :: beta
@@ -20,6 +20,7 @@ subroutine feedbf(km,jm,im,usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
     integer, intent(In) :: im
     integer, intent(In) :: jm
     integer, intent(In) :: km
+    integer, intent(In) :: n
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: usum
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
@@ -32,6 +33,11 @@ subroutine feedbf(km,jm,im,usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
     print *, 'F95 VSUMSUM after bondv1:',sum(vsum)
     print *, 'F95 WSUMSUM after bondv1:',sum(wsum)
 #endif
+!    if (isMaster()) then
+!      do i=20,30
+!      write(*,*) "u",u(i,5,2),i,rank,n
+!      end do
+!    end if 
     do k = 1,km
         do j = 1,jm
             do i = 1,im
@@ -59,6 +65,7 @@ subroutine feedbf(km,jm,im,usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
             end do
         end do
     end do
+
 #ifdef WV_DEBUG
     print *, 'F95 FGHSUM after feedbf:',sum(f)+sum(g)+sum(h)
     print *, 'F95 FSUM after feedbf:',sum(f)

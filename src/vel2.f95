@@ -49,8 +49,6 @@ contains
       integer, parameter  :: u0 = 0
 
         
-
-
       do j=1,jm
         do i=1,im
          uspd(i,j)=(u(i,j,1)**2+((0.5*(v(i,j-1,1)+v(i,j,1))*dx1(i+1)&
@@ -67,8 +65,6 @@ contains
        if (isMaster()) then
         write(6,*) 'CHK_uspd=',uspd(im/2,jm/2),vspd(im/2,jm/2)
        end if
-
-
 
 !
       do k = 1,km
@@ -125,12 +121,6 @@ contains
       end do
       end do
       end do
-!
-!      do j=1,jm
-!      do i=1,im
-!       diu3(i,j,1)=0.45/0.4/(0.5*dzn(1))*uspd(i,j)
-!      end do
-!      end do
 
       do j=1,jm
       do i=1,im
@@ -161,12 +151,6 @@ contains
       end do
       end do
 !
-!      do j=1,jm
-!      do i=1,im
-!       diu6(i,j,1)=0.45/0.4/(0.5*dzn(1))*vspd(i,j)
-!      end do
-!      end do
-
       do j=1,jm
       do i=1,im
        nou6(i,j,1) = 0.5*(dy1(j+1)*w(i,j,1)+dy1(j)*w(i,j+1,1))/(dy1(j)+dy1(j+1))
@@ -304,6 +288,16 @@ contains
       end do
 #ifdef MPI
     end if
+    if (isTopRow(procPerRow)) then
+#endif
+      do k = 1,km+1
+      do j = 1,jm+1
+        diu2(0,j,k) = diu2(1,j,k)
+        diu3(0,j,k) = diu3(1,j,k)
+      end do
+      end do
+#ifdef MPI
+    end if
 #endif
 #if !defined(MPI) || (PROC_PER_ROW==1)
       do k = 1,km+1
@@ -348,12 +342,12 @@ contains
 #endif
 
 !uspd,vspd
-        do j=1,jm
-        do i=1,im
-         uspd(i,j)=u(i,j,1)/uspd(i,j)
-         vspd(i,j)=v(i,j,1)/vspd(i,j)
-        end do
-        end do
+!        do j=1,jm
+!        do i=1,im
+!         uspd(i,j)=u(i,j,1)/uspd(i,j)
+!         vspd(i,j)=v(i,j,1)/vspd(i,j)
+!        end do
+!        end do
 
 
 

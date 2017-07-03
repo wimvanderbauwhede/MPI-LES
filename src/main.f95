@@ -16,7 +16,6 @@ program main
 #else
     use module_velnw
     use module_bondv1
-    use module_bondv1_data24
     use module_velFG
 #if IFBF == 1
     use module_feedbf
@@ -36,6 +35,7 @@ program main
     integer :: n
     integer :: n0
     integer :: n1
+    integer :: nif
     integer :: nmax
     real(kind=4) :: beta
     character(len=70) :: data10
@@ -43,6 +43,7 @@ program main
     character(len=70) :: data12
     character(len=70) :: data13
     character(len=70) :: data14
+    character(len=70) :: data15
     character(len=70) :: data20
     character(len=70) :: data21
     character(len=70) :: data22
@@ -154,41 +155,10 @@ program main
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: wsum
     real(kind=4), dimension(0:kp+2)  :: z2
     real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1)  :: zbm
-!wall function
+
     real(kind=4), dimension(0:ip+1,0:jp+1)  :: uspd
     real(kind=4), dimension(0:ip+1,0:jp+1)  :: vspd
-!idata24
-    integer :: idata24
-!jdata24
-    integer :: jdata24
-
-!nspec
-    integer :: nspec
-
-
-    real(kind=4), dimension(1,1,36001,kp) :: ut_x1_2
-    real(kind=4), dimension(1,1,36001,kp) :: ut_x2_2
-    real(kind=4), dimension(1,1,36001,kp) :: vt_x1_2
-    real(kind=4), dimension(1,1,36001,kp) :: vt_x2_2
-    real(kind=4), dimension(1,1,36001,kp) :: wt_x1_2
-    real(kind=4), dimension(1,1,36001,kp) :: wt_x2_2
-
-
-    real(kind=4), dimension(1,kp,36001)  :: u_spany2
-    real(kind=4), dimension(1,kp,36001)  :: v_spany2
-    real(kind=4), dimension(1,kp,36001)  :: w_spany2
-    real(kind=4), dimension(1,kp,36001)  :: u_spany3
-    real(kind=4), dimension(1,kp,36001)  :: v_spany3
-    real(kind=4), dimension(1,kp,36001)  :: w_spany3
-
-    real(kind=4), dimension(19,kp,36001)  :: u_x1_19_spany2
-    real(kind=4), dimension(19,kp,36001)  :: v_x1_19_spany2
-    real(kind=4), dimension(19,kp,36001)  :: w_x1_19_spany2
-    real(kind=4), dimension(19,kp,36001)  :: u_x1_19_spany3
-    real(kind=4), dimension(19,kp,36001)  :: v_x1_19_spany3
-    real(kind=4), dimension(19,kp,36001)  :: w_x1_19_spany3
-
-
+  
 
 #ifdef TIMINGS
     integer (kind=4), dimension(0:9) :: timestamp
@@ -207,8 +177,8 @@ program main
     call init_netcdf_file()
 #endif
     call set(data10,data11,data20,data21,data22,data23,data24,data25,data26,&
-             data27,data30,data31,im,jm,km,ifbf,ianime,ical,n0,n1,nmax,dt,ro,&
-             vn,alpha,beta,data12,data13,data14,idata24,nspec,jdata24)
+             data27,data30,data31,im,jm,km,ifbf,ianime,ical,nif,n0,n1,nmax,dt,ro,&
+             vn,alpha,beta,data12,data13,data14,data15)
     call grid(dx1,dxl,dy1,dyl,z2,dzn,dzs,dxs,dys)
     call timdata()
     call init(km,jm,im,u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,&
@@ -222,7 +192,7 @@ program main
                 diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g,h,z2,dt,dxs,cov1, &
                 cov2,cov3,dfu1,vn,cov4,cov5,cov6,dfv1,cov7,cov8,cov9,dfw1,dzs,&
                 nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,bmask1,cmask1,&
-                dmask1,alpha,beta,fx,fy,fz,amask1,zbm,ical)
+                dmask1,alpha,beta,fx,fy,fz,amask1,zbm,ical,nif)
 !     n=n0
 
 #ifdef _OPENCL_LES_WV
@@ -246,6 +216,11 @@ program main
 #endif
     do n = n0,nmax
         time = float(n-1)*dt
+!        if (isMaster()) then
+!        do i=20,30
+!          write(*,*) "main_p",p(i,5,2),i,n,l
+!        end do
+!        end if
 ! -------calculate turbulent flow--------c
 #ifdef _OPENCL_LES_WV
         call run_LES_kernel(n, nmax)
@@ -261,11 +236,7 @@ program main
 #ifdef TIMINGS
         call system_clock(timestamp(1), clock_rate)
 #endif
-     if(jdata24.eq.0) then
         call bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
-     else
-        call bondv1_data24(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
-     end if
 #ifdef TIMINGS
         call system_clock(timestamp(2), clock_rate)
 #endif
@@ -278,13 +249,13 @@ program main
 #endif
 #if IFBF == 1
         call feedbf(km,jm,im,usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha, &
-                    dt,beta,fx,fy,fz,f,g,h)
+                    dt,beta,fx,fy,fz,f,g,h,n)
 #endif
 #ifdef TIMINGS
         call system_clock(timestamp(4), clock_rate)
 #endif
         call les(km,delx1,dx1,dy1,dzn,jm,im,diu1,diu2,diu3,diu4,diu5,diu6, &
-                 diu7,diu8,diu9,sm,f,g,h,uspd,vspd,dxs,dys)
+                 diu7,diu8,diu9,sm,f,g,h,u,v,uspd,vspd,dxs,dys,n)
 #ifdef TIMINGS
         call system_clock(timestamp(5), clock_rate)
 #endif
@@ -308,26 +279,21 @@ program main
         call timseris(n,dt,u,v,w)
 #endif
 #if IANIME == 1
-        call anime(n,n0,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,&
+      if (i_anime.eq.1) then
+        call anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,&
                    amask1,zbm)
-
-        if (idata24.eq.1) then
-        call anime_bond(n,n0,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,amask1,zbm)
-        end if
-#endif
+      end if
+      if (i_ifdata_out.eq.1) then  
         call ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,hold)
-
+      end if
+      if (i_aveflow.eq.1) then  
         call aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww, &
                      avesm,avesmsm,uwfx,avesu,avesv,avesw,avesuu,avesvv, &
                      avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14,amask1)
-
-        call timestep_out_all_k(n,n0,n1,nmax,km,jm,im,z2,data22,data23,u,w,v,amask1&
-,ut_x1_2,vt_x1_2,wt_x1_2,ut_x2_2,vt_x2_2,wt_x2_2,nspec&
-,u_spany2,v_spany2,w_spany2,u_spany3,v_spany3,w_spany3&
-,u_x1_19_spany2,v_x1_19_spany2,w_x1_19_spany2,u_x1_19_spany3,v_x1_19_spany3,w_x1_19_spany3)
-
-
-        end do
+      end if
+#endif
+     
+     end do
 #ifdef USE_NETCDF_OUTPUT
     call close_netcdf_file()
 #endif

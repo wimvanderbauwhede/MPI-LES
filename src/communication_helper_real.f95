@@ -605,72 +605,6 @@ subroutine collect3DReal4Array(array, arrayTot, leftBoundary, rightBoundary, &
 end subroutine collect3DReal4Array
 
 
-
-
-subroutine distributeamask(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
-    integer, intent(in) :: ip, jp, ipmax, jpmax, procPerRow
-    real(kind=4), dimension(0:ipmax+1,0:jpmax+1,0:kp+1) , intent(InOut) :: ua
-    real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(In) :: u
-    integer :: startRow, startCol, i, r, c, k, rank,j
-    character(70) :: cha
-    real(kind=4), dimension(ip, jp, kp) :: sendBuffer, recvBuffer
-
-    if (.not.isMaster()) then
-
-            do k=1, kp
-                do c=1, jp
-                   do r=1, ip
-                    sendBuffer(r, c, k) = u(r, c, k)
-                   end do
-                end do
-            end do
-            print*, 'GR: sendBuffer  sum: ', sum(sendBuffer)
-         
-
-!        call MPI_COMM_Rank(communicator, rank, ierror)
-!        call checkMPIError()
-!        write(*,*) 'send_rank=',rank
-
-
-            call MPI_Send(sendBuffer, (ip*jp*kp), MPI_REAL, 0, zbmTag, &
-                          communicator, ierror)
-            call checkMPIError()
-
-
-    else
-  
-        do i = 1, mpi_size - 1
-
-        call MPI_Recv(recvBuffer, (ip*jp*kp), MPI_REAL, i, zbmTag,communicator,&
-                      status, ierror)
-        call checkMPIError()
-
-!        call MPI_COMM_Rank(communicator, rank, ierror)
-!        call checkMPIError()
-
-        print*, 'GR: recvBuffer  sum: ', sum(recvBuffer)
-
-            startRow = topLeftRowValue(i, procPerRow, ip)
-            startCol = topLeftColValue(i, procPerRow, jp)
-        write(*,*) 'startRow=',startRow,'startCol=',startCol
-
-        do k=1, kp
-             do c=1, jp
-               do r=1, ip
-                ua(startRow +r, startCol + c, k) = recvBuffer(r, c, k)
-               end do
-            end do
-        end do
-   
-       
-        end do
-       end if
-    
-            
-
-end subroutine distributeamask
-
-
 subroutine distributeu(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
     integer, intent(in) :: ip, jp, ipmax, jpmax, procPerRow
     real(kind=4), dimension(0:ipmax+1,-1:jpmax+1,0:kp+1) , intent(InOut) :: ua
@@ -796,8 +730,6 @@ subroutine distributev(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
         end do
        end if
     
-            
-
 end subroutine distributev
 
 
@@ -863,141 +795,6 @@ subroutine distributew(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
             
 
 end subroutine distributew
-
-
-subroutine distributebondu(u, ip, jp, kp, ipmax, jpmax, procPerRow)
-    integer, intent(in) :: ip, jp, ipmax, jpmax, procPerRow, kp
-    real(kind=4), dimension(1,-1:jpmax+1,0:kp+1) , intent(InOut) :: u
-    integer :: startRow, startCol, i, r, c, k
-    real(kind=4), dimension(1, jp, kp) :: sendBuffer, recvBuffer
-
-    if (isMaster()) then
-        ! Send appropriate 2D section to the other ranks
-        do i = 1, procPerRow - 1
-            startRow = topLeftRowValue(i, procPerRow, ip)
-            startCol = topLeftColValue(i, procPerRow, jp)
-
-            do k=1, kp
-                do c=1, jp
-                    sendBuffer(1, c, k) = u(1, startCol + c, k)
-                end do
-            end do
-            print*, 'GR: sendBuffer  sum: ', sum(sendBuffer)
-
-
-            call MPI_Send(sendBuffer, (jp*kp), MPI_REAL, i, zbmTag, &
-                          communicator, ierror)
-            call checkMPIError()
-        end do
-    else
-        ! Receive appropriate 2D section from master
-        call MPI_Recv(recvBuffer, (jp*kp), MPI_REAL, 0, zbmTag, communicator, &
-                      status, ierror)
-        call checkMPIError()
-
-
-
-!        call MPI_COMM_Rank(communicator, rank, ierror)
-!        call checkMPIError()
-!        write(*,*) 'recv_rank=',rank
-
-
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
-        do k=1, kp
-            do c=1, jp
-                u(1, c, k) = recvBuffer(1, c, k)
-            end do
-        end do
-    end if
-end subroutine distributebondu
-
-
-subroutine distributebondv(u, ip, jp, kp, ipmax, jpmax, procPerRow)
-    integer, intent(in) :: ip, jp, ipmax, jpmax, procPerRow, kp
-    real(kind=4), dimension(1,-1:jpmax+1,0:kp+1) , intent(InOut) :: u
-    integer :: startRow, startCol, i, r, c, k
-    real(kind=4), dimension(1, jp, kp) :: sendBuffer, recvBuffer
-    if (isMaster()) then
-        ! Send appropriate 2D section to the other ranks
-        do i = 1, procPerRow - 1
-            startRow = topLeftRowValue(i, procPerRow, ip)
-            startCol = topLeftColValue(i, procPerRow, jp)
-
-            do k=1, kp
-                do c=1, jp
-                    sendBuffer(1, c, k) = u(1, startCol + c, k)
-                end do
-            end do
-            print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
-            call MPI_Send(sendBuffer, (jp*kp), MPI_REAL, i, zbmTag, &
-                          communicator, ierror)
-            call checkMPIError()
-        end do
-
-
-    else
-        ! Receive appropriate 2D section from master
-        call MPI_Recv(recvBuffer, (jp*kp), MPI_REAL, 0, zbmTag ,communicator, &
-                      status, ierror)
-        call checkMPIError()
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
-        do k=1, kp
-            do c=1, jp
-                u(1, c, k) = recvBuffer(1, c, k)
-            end do
-        end do
-    end if
-end subroutine distributebondv
-
-
-
-
-
-
-subroutine distributebondw(u, ip, jp, kp, ipmax, jpmax, procPerRow)
-    integer, intent(in) :: ip, jp, ipmax, jpmax, procPerRow, kp
-    real(kind=4), dimension(1,-1:jpmax+1,-1:kp+1) , intent(InOut) :: u
-    integer :: startRow, startCol, i, r, c, k
-    real(kind=4), dimension(1, jp, kp) :: sendBuffer, recvBuffer
-
-    if (isMaster()) then
-        ! Send appropriate 2D section to the other ranks
-        do i = 1, procPerRow - 1
-            startRow = topLeftRowValue(i, procPerRow, ip)
-            startCol = topLeftColValue(i, procPerRow, jp)
-
-            do k=1, kp
-                do c=1, jp
-                    sendBuffer(1, c, k) = u(1, startCol + c, k)
-                end do
-            end do
-            print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
-
-
-            call MPI_Send(sendBuffer, (jp*kp), MPI_REAL, i, zbmTag, &
-                          communicator, ierror)
-            call checkMPIError()
-        end do
-    else
-        ! Receive appropriate 2D section from master
-        call MPI_Recv(recvBuffer, (jp*kp), MPI_REAL, 0, zbmTag, communicator, &
-                      status, ierror)
-        call checkMPIError()
-
-
-!        call MPI_COMM_Rank(communicator, rank, ierror)
-!        call checkMPIError()
-!        write(*,*) 'recv_rank=',rank
-
-
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
-        do k=1, kp
-            do c=1, jp
-                u(1, c, k) = recvBuffer(1, c, k)
-            end do
-        end do
-    end if
-end subroutine distributebondw
 
 
 subroutine distributeusum(usuma, usum,ip, jp, kp, ipmax, jpmax, procPerRow)
@@ -1741,130 +1538,99 @@ subroutine distributeaveuu(aveuua, aveuu,ip, jp, kp, ipmax, jpmax, procPerRow)
         end do
        end if
     
-            
-
 end subroutine distributeaveuu
 
+!WV: This routine _only_ works on the bottom row of the matrix of processes.
+subroutine gatheraaa(gaaa, aaa, procPerRow)
+    integer, intent(in) ::  procPerRow
+    real(kind=4), intent(InOut) :: gaaa
+    real(kind=4), intent(In) :: aaa
+    integer :: startRow, startCol, i, j, r, c, k, rank
+    real(kind=4) :: sendBuffer, recvBuffer
 
 
-subroutine distributebondoutu(ubonda, u,ip, jp, kp, ipmax, jpmax, procPerRow)
-    integer, intent(in) :: ip, jp, kp, ipmax, jpmax, procPerRow
-    real(kind=4), dimension(1,jpmax,kp) , intent(InOut) :: ubonda
-    real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
-    integer :: startRow, startCol, i, r, c, k, rank,j
-    character(70) :: cha
-    real(kind=4), dimension( 1, jp, kp) :: sendBuffer, recvBuffer
+    call MPI_COMM_Rank(communicator, rank, ierror) ! WV: this is redundant
+    call checkMPIError()
 
-    if (isBottomRow(procPerRow)) then
+    if (rank .gt. mpi_size - procPerRow) then !WV: this is the bottom row excluding the first process
+         sendBuffer = aaa
+!         print*, 'Rank: ', rank, ' before aaa: ', aaa
+! WV: send this value to the first elt
+         call MPI_Send(sendBuffer, 1, MPI_REAL, mpi_size - procPerRow,zbmTag, &
+                       communicator, ierror)
+         call checkMPIError()
+    else if(rank .eq. mpi_size - procPerRow) then !WV: this is the first process on the bottom row
+!         print*, 'Rank: ', rank, ' before aaa: ', aaa
+ !WV: this loop receives aaa from all other elts in the bottom row and computes the max
+         do i = mpi_size - procPerRow + 1, mpi_size - 1
+             call MPI_Recv(recvBuffer, 1, MPI_REAL, i,zbmTag,communicator,&
+                           status, ierror)
+             call checkMPIError()
+             gaaa = amax1(gaaa,recvBuffer)      
+         end do
+!         print*, 'Rank: ', rank, ' after aaa: ', gaaa
+         sendBuffer = gaaa
+!WV: this loop send the max to all other elts in the bottom row
+         do i = mpi_size - procPerRow + 1, mpi_size - 1
+             call MPI_Send(sendBuffer, 1, MPI_REAL, i,zbmTag, &
+                           communicator, ierror) 
+         end do
+    end if
 
-            do k=1, kp
-                do c=1, jp
-                    sendBuffer(1, c, k) = u(ip, c, k)
-                end do
-            end do
-            print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
-         
-
-!        call MPI_COMM_Rank(communicator, rank, ierror)
-!        call checkMPIError()
-!        write(*,*) 'send_rank=',rank
-
-
-
-            call MPI_Send(sendBuffer, (jp*kp), MPI_REAL, 0, zbmTag, &
-                          communicator, ierror)
-            call checkMPIError()
+    if (rank .gt. mpi_size - procPerRow) then  !WV: this is the bottom row excluding the first process
+         call MPI_Recv(recvBuffer, 1, MPI_REAL, mpi_size - procPerRow,zbmTag,communicator,&
+                       status, ierror)
+         call checkMPIError()
+         gaaa=recvBuffer
+!    print*, 'Rank: ', rank, ' after aaa: ', gaaa
 
     end if
 
-        if (isMaster()) then
+  end subroutine gatheraaa
 
-        do i = mpi_size - procPerRow, mpi_size - 1
-
-        call MPI_Recv(recvBuffer, (jp*kp), MPI_REAL, i,zbmTag,communicator,&
-                      status, ierror)
-        call checkMPIError()
-
-!        call MPI_COMM_Rank(communicator, rank, ierror)
-!        call checkMPIError()
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
+!WV: This routine is identical to gatheraaa except that it does min rather than max. Again, bottom row only.
+subroutine gatherbbb(gbbb, bbb, procPerRow)
+    integer, intent(in) ::  procPerRow
+    real(kind=4), intent(InOut) :: gbbb
+    real(kind=4), intent(In) :: bbb
+    integer :: startRow, startCol, i, j, r, c, k, rank
+    real(kind=4) :: sendBuffer, recvBuffer
 
 
-            startRow = topLeftRowValue(i, procPerRow, ip)
-            startCol = topLeftColValue(i, procPerRow, jp)
-        write(*,*) 'startRow=',startRow,'startCol=',startCol
+    call MPI_COMM_Rank(communicator, rank, ierror)
+    call checkMPIError()
 
-        do k=1, kp
-             do c=1, jp
-                ubonda(1, startCol + c, k) = recvBuffer(1, c, k)
-            end do
-        end do
+    if (rank.gt.mpi_size - procPerRow) then
+         sendBuffer = bbb
+!         print*, 'Rank: ', rank, ' before bbb: ', bbb
+         call MPI_Send(sendBuffer, 1, MPI_REAL, mpi_size - procPerRow,zbmTag, &
+                       communicator, ierror)
+         call checkMPIError()
+    else if(rank.eq.mpi_size - procPerRow) then
+!         print*, 'Rank: ', rank, ' before bbb: ', bbb
+         do i = mpi_size - procPerRow + 1, mpi_size - 1
+             call MPI_Recv(recvBuffer, 1, MPI_REAL, i,zbmTag,communicator,&
+                           status, ierror)
+             call checkMPIError()
+             gbbb = amin1(gbbb,recvBuffer)      
+         end do
+!         print*, 'Rank: ', rank, ' after bbb: ', gbbb
+         sendBuffer = gbbb
+         do i = mpi_size - procPerRow + 1, mpi_size - 1
+             call MPI_Send(sendBuffer, 1, MPI_REAL, i,zbmTag, &
+                           communicator, ierror) 
+         end do
+    end if
 
-       
-        end do
-       end if
- end subroutine distributebondoutu
-
-
-
-subroutine distributebondoutw(wbonda, w,ip, jp, kp, ipmax, jpmax, procPerRow)
-    integer, intent(in) :: ip, jp, kp,ipmax, jpmax, procPerRow
-    real(kind=4), dimension(1,jpmax,kp) , intent(InOut) :: wbonda
-    real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
-    integer :: startRow, startCol, i, r, c, k, rank,j
-    character(70) :: cha
-    real(kind=4), dimension( 1, jp, kp) :: sendBuffer, recvBuffer
-    if (isBottomRow(procPerRow)) then
-
-            do k=1, kp
-                do c=1, jp
-                    sendBuffer(1, c, k) = w(ip, c, k)
-                end do
-            end do
-            print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
-         
-
-!        call MPI_COMM_Rank(communicator, rank, ierror)
-!        call checkMPIError()
-!        write(*,*) 'send_rank=',rank
-
-
-
-            call MPI_Send(sendBuffer, (jp*kp), MPI_REAL, 0, zbmTag, &
-                          communicator, ierror)
-            call checkMPIError()
-
+    if (rank.gt.mpi_size - procPerRow) then
+         call MPI_Recv(recvBuffer, 1, MPI_REAL, mpi_size - procPerRow,zbmTag,communicator,&
+                       status, ierror)
+         call checkMPIError()
+         gbbb=recvBuffer
+!    print*, 'Rank: ', rank, ' after bbb: ', gbbb
 
     end if
 
-        if (isMaster()) then
-  
-        do i = mpi_size - procPerRow, mpi_size - 1
+  end subroutine gatherbbb
 
-        call MPI_Recv(recvBuffer, (jp*kp), MPI_REAL, i,zbmTag,communicator,&
-                      status, ierror)
-        call checkMPIError()
-
-!        call MPI_COMM_Rank(communicator, rank, ierror)
-!        call checkMPIError()
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
-
-
-            startRow = topLeftRowValue(i, procPerRow, ip)
-            startCol = topLeftColValue(i, procPerRow, jp)
-        write(*,*) 'startRow=',startRow,'startCol=',startCol
-
-        do k=1, kp
-             do c=1, jp
-               do r=1, ip
-                wbonda(1, startCol + c, k) = recvBuffer(1, c, k)
-               end do
-            end do
-        end do
-
-       
-        end do
-       end if
-
-  end subroutine distributebondoutw
 end module

@@ -28,13 +28,13 @@ contains
 #ifdef MPI
     if (isMaster()) then
         do i=-1,(ip*procPerCol)+1
-            dx1Tot(i) = 4.
+            dx1Tot(i) = dxgrid
         end do
     end if
     call distribute1DRealRowWiseArray(dx1Tot,dx1, 2, 1, procPerRow)
 #else
       do i = -1,ip+1
-       dx1(i) = 4.
+       dx1(i) = dxgrid
       end do
 #endif
 
@@ -59,13 +59,13 @@ contains
 #ifdef MPI
     if (isMaster()) then
         do j=0,(jp*procPerRow)+1
-            dy1Tot(j) = 4.
+            dy1Tot(j) = dygrid
         end do
     end if
     call distribute1DRealColumnWiseArray(dy1Tot, dy1, 1, 1, procPerRow)
 #else
       do j = 0,jp+1
-       dy1(j) = 4.
+       dy1(j) = dygrid
       end do
 #endif
 
@@ -111,7 +111,7 @@ contains
 !      end do
 
 
-        z2(0)= 1.
+        z2(0)= 0.
         dzn(0)= 1.
 
         z2(1)= 1.
@@ -119,7 +119,7 @@ contains
 
       do k=2,15
         dzn(k)=dzn(k-1)*1.1
-        write(*,*) 'dzn=',dzn(k)
+        ! write(*,*) 'dzn=',dzn(k)
       end do
       do k=16,44
         dzn(k)=4.
@@ -136,9 +136,7 @@ contains
 
     if (isMaster()) then
       do k=1,kp
-!       write(*,*) 'a=',amask1(100,100,k)
-!       write(*,*) 'zbm(i,j)=', zbm(100,100)
-        write(*,*) 'z2grid=',z2(k)
+       ! write(*,*) 'z2grid=',z2(k)
       end do
     end if
 
@@ -174,7 +172,7 @@ contains
 #ifdef VERBOSE
       write(6,*) 'Computational Domain X,Y,Z=',dxl(ip),dyl(jp),z2(kp)
       do k = 1,kp
-      write(6,*) 'Vertical grid size=',k,dzn(k)
+      write(6,*) 'Vertical grid size=',k,dzn(k),dzs(k)
       end do
 #endif
 !

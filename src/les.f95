@@ -4,7 +4,7 @@ module module_les
 contains
 
       subroutine les(km,delx1,dx1,dy1,dzn,jm,im,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g, &
-      h,uspd,vspd,dxs,dys)
+      h,u,v,uspd,vspd,dxs,dys,n)
       use common_sn ! create_new_include_statements() line 102
         real(kind=4), dimension(kp) , intent(Out) :: delx1
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(In) :: diu1
@@ -25,15 +25,17 @@ contains
         integer, intent(In) :: im
         integer, intent(In) :: jm
         integer, intent(In) :: km
+        integer, intent(In) :: n
         real(kind=4), dimension(-1:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: sm
 !wall function
+        real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
+        real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
         real(kind=4), dimension(0:ip+1,0:jp+1) , intent(in) :: uspd
         real(kind=4), dimension(0:ip+1,0:jp+1) , intent(in) :: vspd
         real(kind=4), dimension(0:ip) , intent(in) :: dxs
         real(kind=4), dimension(0:jp) , intent(in) :: dys
 !
 !
-      cs0 = .1
 ! --length scale
         do k = 1,km
 !  WV: was          delx1(k)=(dx1(i)*dy1(j)*dzn(k))**(1./3.)
@@ -55,7 +57,7 @@ contains
       dwdxx1 =  (diu7(i  ,j,k)+diu7(i  ,j,k-1) +diu7(i+1,j,k)+diu7(i+1,j,k-1) ) *.25
       dwdyx1 =  (diu8(i,j  ,k)+diu8(i,j  ,k-1) +diu8(i,j+1,k)+diu8(i,j+1,k-1) ) *.25
       dwdzx1 =  diu9(i,j,k)
-!
+
       csx1 = cs0
 ! --abl or channel
       sm(i,j,k) = ( csx1*delx1(k) )**2  * sqrt( 2.*( dudxx1**2+dvdyx1**2+dwdzx1**2 ) +( dudyx1+dvdxx1 )**2  &
@@ -63,6 +65,11 @@ contains
       end do
       end do
       end do
+!      if (isMaster()) then
+!      do i=20,30
+!          write(*,*) "sm",sm(i,10,1),i,n
+!      end do
+!      end if
 #ifdef WV_DEBUG
     print *, 'F95 FGHSUM after calc_sm:',sum(f)+sum(g)+sum(h)
     print *, 'F95 FSUM after calc_sm:',sum(f)
@@ -130,11 +137,11 @@ contains
       visuy2=(evsy2)* ( diu2(i  ,j+1,1  )+diu4(i+1,j  ,1 ) )
       visuy1=(evsy1)* ( diu2(i  ,j  ,1  )+diu4(i+1,j-1,1 ) )
       visuz2=(evsz2)* ( diu3(i  ,j  ,2  )+diu7(i+1,j  ,1 ) )
-      visuz1=(0.4*uspd(i,j)/alog(0.5*dzn(1)/0.1))**2*uspd(i,j)
+      visuz1=(0.4*uspd(i,j)/alog(0.5*dzn(1)/0.1))**2*(u(i,j,1)/uspd(i,j))
 !
-      vfu= (visux2-visux1)/dxs(i)+(visuy2-visuy1)/dy1(j)+(visuz2-visuz1)/dzn(1)+(visuy2-visuy1)/dy1(j)+(visuz2-visuz1)/dzn(1)
+      vfu= (visux2-visux1)/dxs(i)+(visuy2-visuy1)/dy1(j)+(visuz2-visuz1)/dzn(1)
 !
-      F(i,j,1)=(F(i,j,1)+vfu)
+      f(i,j,1)=(f(i,j,1)+vfu)
       end do
       end do
 
@@ -192,11 +199,11 @@ contains
       visvy2=(evsy2)*2.*diu5(i  ,j+1,1  )
       visvy1=(evsy1)*2.*diu5(i  ,j  ,1  )
       visvz2=(evsz2)* ( diu6(i  ,j  ,2  )+diu8(i  ,j+1,1  ) )
-      visvz1=(0.4*vspd(i,j)/alog(0.5*dzn(1)/0.1))**2*vspd(i,j)
+      visvz1=(0.4*vspd(i,j)/alog(0.5*dzn(1)/0.1))**2*(v(i,j,1)/vspd(i,j))
 !
       vfv=(visvx2-visvx1)/dx1(i)+(visvy2-visvy1)/dys(j)+(visvz2-visvz1)/dzn(1)
 !
-      G(i,j,1)=(G(i,j,1)+vfv)
+      g(i,j,1)=(g(i,j,1)+vfv)
       end do
       end do
 

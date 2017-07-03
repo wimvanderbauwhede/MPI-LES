@@ -109,6 +109,7 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
 #ifdef VERBOSE
 ! --check
         if ((mod(n-1,10) == 0).and.(mod(l,20) == 0)) then
+!        if ((mod(n-1,10) == 0)) then
             print *, 'time step, iteration step, conv =',n,l,sor
         end if
 #endif
@@ -194,13 +195,14 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
     end if
 #endif
 #endif
+
     if(mod(n,1000) == 0.or.n == nmax) then
         nn = n/1000
         print *, 'timestep: ',nn,' pressure at centre: ',p(ip/2,jp/2,kp/2), &
                 'vel at centre: ', &
                 u(ip/2,jp/2,kp/2),v(ip/2,jp/2,kp/2),w(ip/2,jp/2,kp/2)
 #ifdef USE_NETCDF_OUTPUT
-!        call write_to_netcdf_file(p,u,v,w,usum,vsum,wsum,nn)
+        call write_to_netcdf_file(p,u,v,w,usum,vsum,wsum,nn)
 #endif
 #ifndef NO_IO
 #ifndef MPI

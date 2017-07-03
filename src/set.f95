@@ -1,9 +1,10 @@
+
 module module_set
 
 contains
 
       subroutine set(data10,data11,data20,data21,data22,data23,data24,data25,data26,data27,data30, &
-      data31,im,jm,km,ifbf,ianime,ical,n0,n1,nmax,dt,ro,vn,alpha,beta,data12,data13,data14,idata24,nspec,jdata24)
+      data31,im,jm,km,ifbf,ianime,ical,nif,n0,n1,nmax,dt,ro,vn,alpha,beta,data12,data13,data14,data15)
       use common_sn ! create_new_include_statements() line 102
         real(kind=4), intent(Out) :: alpha
         real(kind=4), intent(Out) :: beta
@@ -12,6 +13,7 @@ contains
         character(len=70), intent(InOut) :: data12
         character(len=70), intent(InOut) :: data13
         character(len=70), intent(InOut) :: data14
+        character(len=70), intent(InOut) :: data15
         character(len=70), intent(InOut) :: data20
         character(len=70), intent(InOut) :: data21
         character(len=70), intent(InOut) :: data22
@@ -30,32 +32,30 @@ contains
         integer, intent(Out) :: jm
         integer, intent(Out) :: km
         integer, intent(Out) :: n0
+        integer, intent(Out) :: nif
         integer, intent(Out) :: n1
         integer, intent(Out) :: nmax
         real(kind=4), intent(Out) :: ro
         real(kind=4), intent(Out) :: vn
-!idata24
-        integer, intent(Out) :: idata24
-!jdata24
-        integer, intent(Out) :: jdata24
 
 !
 !
-      data10 = './data/data10'
-      data11 = './data/data11'
-      data12 = './data/data12'
-      data13 = './data/data13'
-      data14 = './data/data14'      
-      data20 = './data/data20'
-      data21 = './data/data21'
-      data22 = './data/data22'
-      data23 = './data/data23'
-      data24 = './data/data24'
-      data25 = './data/data25'
-      data26 = './data/data26'
-      data27 = './data/data27'
-      data30 = './data/data30'
-      data31 = './data/data31'
+      data10 = '../ave_data/data10'
+      data11 = '../ave_data/data11'
+      data12 = '../data/data12'
+      data13 = '../data/data13'
+      data14 = '../data/data14'      
+      data15 = '../data/data15'      
+      data20 = '../data/data20'
+      data21 = '../data/data21'
+      data22 = '../data/data22'
+      data23 = '../data/data23'
+      data24 = '../data/data24'
+      data25 = '../data/data25'
+      data26 = '../data/data26'
+      data27 = '../data/data27'
+      data30 = '../data/data30'
+      data31 = '../data/data31'
 !      data50:tim series of wind data
 !      data51:tim series od concentration data
 ! --flow region
@@ -79,13 +79,13 @@ contains
 !      ical = 0; initial start
 !           = 1; continuous computation
       ical = 0
+      nif = 8000
       n0 = 1
       n1 = 1
 ! --setnmax
-      nmax = 10
-! --for sepctrum, nspec = nmax-n1+1
-      nspec = 10
+      nmax = 8000
 ! --time step
+! WV: NESTING: here we need to set dt based on the subgrid coordinates
       dt = 0.05
 ! --physical property set
       ro = 1.1763
@@ -99,12 +99,9 @@ contains
       write(6,*) 'IBM parameter, dt=' ,((-beta-(beta*beta-2.*alpha)**(0.5))/alpha),dt
       stop
       endif
-!--make_data24
-      idata24 = 0
-!--use_data24
-      jdata24 = 0
 ! =======================================
       return
       end subroutine set
 
 end module module_set
+

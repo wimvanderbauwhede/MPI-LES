@@ -15,7 +15,7 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
     real(kind=4), dimension(0:kp+2) , intent(In) :: z2
     real(kind=4) :: u_val
     integer :: i, j, k
-    real(kind=4) :: aaa, bbb, uout
+    real(kind=4) :: aaa, bbb, uout, gaaa, gbbb
 !    integer, intent(In) :: ical
 
 #ifdef MPI
@@ -33,10 +33,10 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
         do i = 0,1
             do k = 1,78 ! kp = 90 so OK
                 do j = 1,jm
-!                    u_val = 5.*((z2(k)+0.5*dzn(k))/600.)**0.2
+                    u_val = 5.*((z2(k)+0.5*dzn(k))/600.)**0.2
+                    u(i,j,k) = u_val
                     !print *, u_val
-!                    u(i,j,k) = u_val
-                    u(i,j,k) = 5.0
+!                    u(i,j,k) = 5.0
                     v(i,j,k) = 0.0
                     w(i,j,k) = 0.0
                 end do
@@ -95,43 +95,74 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
 ! ------------- outflow condition ------------
 !      advective condition
 !
+
+!    aaa = 0.0
+!    bbb = 0.0
+!    gaaa = 0.0
+!    gbbb = 0.0
+!    do k = 1,km
+!        do j = 1,jm
+!            aaa = amax1(aaa,u(im,j,k))
+!            bbb = amin1(bbb,u(im,j,k))
+!        end do
+!    end do
+!#ifdef MPI
+!    call gatheraaa(gaaa, aaa, procPerRow)
+!    call gatherbbb(gbbb, bbb, procPerRow)
+!#endif
+
     aaa = 0.0
-    bbb = 0.0
+    gaaa = 0.0
     do k = 1,km
         do j = 1,jm
             aaa = amax1(aaa,u(im,j,k))
+        end do
+    end do
+#ifdef MPI
+!WV what this call does: if the process is in the bottom row then gaaa is the max of all processes in that row. Otherwise it is 0
+!WV so all processes compute aaa, but only the bottom row does the gather. Very strange.
+    call gatheraaa(gaaa, aaa, procPerRow)
+#endif
+    bbb = aaa
+    gbbb = gaaa
+    do k = 1,km
+        do j = 1,jm
             bbb = amin1(bbb,u(im,j,k))
         end do
     end do
 #ifdef MPI
-    call getGlobalMaxOf(aaa)
-    call getGlobalMinOf(bbb)
-#endif
-#if GR_DEBUG
-    print*, 'GR: aaa ', aaa, ' bbb ', bbb
+    call gatherbbb(gbbb, bbb, procPerRow)
 #endif
 
-    uout = (aaa+bbb)/2.
+#if GR_DEBUG
+    print*, 'GR: gaaa ', gaaa, ' gbbb ', gbbb
+#endif
+
+    uout = (gaaa+gbbb)/2.
 #ifdef WV_DEBUG
     print *, 'F95: UOUT: ',uout
 #endif
-    do k = 1,km
-        do j = 1,jm
-            u(im,j,k) = u(im,j,k)-dt*uout *(u(im,j,k)-u(im-1,j,k))/dxs(im)
-        end do
-    end do
+    if (isBottomRow(procPerRow)) then
 
-    do k = 1,km
-        do j = 1,jm
-            v(im+1,j,k) = v(im+1,j,k)-dt*uout *(v(im+1,j,k)-v(im,j,k))/dxs(im)
-        end do
-    end do
-
-    do k = 1,km
-        do j = 1,jm
-            w(im+1,j,k) = w(im+1,j,k)-dt*uout *(w(im+1,j,k)-w(im,j,k))/dxs(im)
-        end do
-    end do
+      do k = 1,km
+          do j = 1,jm
+              u(im,j,k) = u(im,j,k)-dt*uout *(u(im,j,k)-u(im-1,j,k))/dxs(im)
+          end do
+      end do
+   
+      do k = 1,km
+          do j = 1,jm
+              v(im+1,j,k) = v(im+1,j,k)-dt*uout *(v(im+1,j,k)-v(im,j,k))/dxs(im)
+          end do
+      end do
+   
+      do k = 1,km
+          do j = 1,jm
+              w(im+1,j,k) = w(im+1,j,k)-dt*uout *(w(im+1,j,k)-w(im,j,k))/dxs(im)
+          end do
+      end do
+ 
+    end if
 #if !defined(MPI) || (PROC_PER_ROW==1)
 ! --side flow condition; periodic
     do k = 0,km+1

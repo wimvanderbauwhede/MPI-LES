@@ -53,6 +53,7 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou9
 
+
           do k = 0,kp+1
           do j = 0,jp+2
           do i = -1,ip+2
@@ -133,7 +134,7 @@ contains
       n,u,im,jm,km,v,w,p,usum,vsum,wsum, &
       delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g,h,z2,dt, &
       dxs,cov1,cov2,cov3,dfu1,vn,cov4,cov5,cov6,dfv1,cov7,cov8,cov9,dfw1,dzs,nou1,nou5,nou9,nou2, &
-      nou3,nou4,nou6,nou7,nou8,bmask1,cmask1,dmask1,alpha,beta,fx,fy,fz,amask1,zbm,ical)
+      nou3,nou4,nou6,nou7,nou8,bmask1,cmask1,dmask1,alpha,beta,fx,fy,fz,amask1,zbm,ical,nif)
       use common_sn ! create_new_include_statements() line 102
 !#if ICAL == 1
         character(len=70), intent(In) :: data30
@@ -190,6 +191,7 @@ contains
         integer, intent(InOut) :: jm
         integer, intent(InOut) :: km
         integer, intent(InOut) :: n
+        integer, intent(in) :: nif   
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou2
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou3
@@ -210,21 +212,20 @@ contains
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: wsum
         real(kind=4), dimension(0:kp+2) , intent(In) :: z2
         real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(InOut) :: zbm
-!
-!input
-    real(kind=4),allocatable :: ua(:,:,:)
-    real(kind=4),allocatable :: va(:,:,:)
-    real(kind=4),allocatable :: wa(:,:,:)
-    real(kind=4),allocatable :: usuma(:,:,:)
-    real(kind=4),allocatable :: vsuma(:,:,:)
-    real(kind=4),allocatable :: wsuma(:,:,:)
-    real(kind=4),allocatable :: pa(:,:,:)
-    real(kind=4),allocatable :: fa(:,:,:)
-    real(kind=4),allocatable :: ga(:,:,:)
-    real(kind=4),allocatable :: ha(:,:,:)
-    real(kind=4),allocatable :: folda(:,:,:)
-    real(kind=4),allocatable :: golda(:,:,:)
-    real(kind=4),allocatable :: holda(:,:,:)
+
+        real(kind=4),allocatable :: ua(:,:,:)
+        real(kind=4),allocatable :: va(:,:,:)
+        real(kind=4),allocatable :: wa(:,:,:)
+        real(kind=4),allocatable :: usuma(:,:,:)
+        real(kind=4),allocatable :: vsuma(:,:,:)
+        real(kind=4),allocatable :: wsuma(:,:,:)
+        real(kind=4),allocatable :: pa(:,:,:)
+        real(kind=4),allocatable :: fa(:,:,:)
+        real(kind=4),allocatable :: ga(:,:,:)
+        real(kind=4),allocatable :: ha(:,:,:)
+        real(kind=4),allocatable :: folda(:,:,:)
+        real(kind=4),allocatable :: golda(:,:,:)
+        real(kind=4),allocatable :: holda(:,:,:)
 
         
 
@@ -253,8 +254,9 @@ contains
 
  
         if (isMaster()) then
+        write(filename, '("../data/data30",i6.6, ".dat")') nif 
 
-        open(unit=30,file='data30048000.dat',form='unformatted',status='unknown')
+        open(unit=30,file=filename,form='unformatted',status='unknown')
         read(30) n,time
         end if
  
@@ -377,8 +379,8 @@ contains
 
 !31
         if (isMaster()) then
-
-        open(unit=31,file='data31048000.dat',form='unformatted',status='unknown')
+        write(filename, '("../data/data31",i6.6, ".dat")') nif
+        open(unit=31,file=filename,form='unformatted',status='unknown')
         end if
 
         allocate(fa(0:ipmax,0:jpmax,0:kp))
@@ -488,7 +490,9 @@ contains
 
 !#endif
 
+        call boundp1(km,jm,p,im)
 
+        call boundp2(jm,im,p,km)
 
 
 
@@ -509,9 +513,9 @@ contains
 
 !        call bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
 
-!        call boundp1(km,jm,p,im)
+        call boundp1(km,jm,p,im)
 
-!        call boundp2(jm,im,p,km)
+        call boundp2(jm,im,p,km)
 !        call velfg(km,jm,im,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6,dfv1, &
 !      diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
 !      nou4,nou6,nou7,nou8)
