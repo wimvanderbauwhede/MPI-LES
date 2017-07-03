@@ -1,5 +1,9 @@
 
 module params_common_sn
+! WV I think it would be better to have
+! use params_mpi
+! which would contain
+
 #ifdef MPI
     use communication_helper
     integer, parameter :: procPerRow = PROC_PER_ROW, procPerCol = PROC_PER_COL, dimensions = 2
@@ -24,6 +28,7 @@ module params_common_sn
 #endif
 
     integer, parameter :: bipmax = 300, bjpmax = 300, bx = 0, by = 0
+! WV: not nice
     character(300) :: datafile = '../GIS/Kyoto_1km2_4m_with_buffer.txt'
 
 !-- grid
