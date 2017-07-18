@@ -14,7 +14,7 @@ module params_common_sn
     data dimensionSizes /procPerCol,procPerRow/, periodicDimensions /.false.,.false./, &
     reorder /.false./
 #endif
-    integer, parameter :: ipmax = 300, jpmax = 300
+    integer, parameter :: ipmax = 300, jpmax = 300 !
 #ifndef TEST_SMALL_DOMAIN
 #ifdef MPI
     integer, parameter :: ip = ipmax/PROC_PER_COL ! rows per process
@@ -32,7 +32,7 @@ module params_common_sn
     character(300) :: datafile = '../GIS/Kyoto_1km2_4m_with_buffer.txt'
 
 !-- grid
-    real, parameter :: dxgrid = 4.
+    real, parameter :: dxgrid = 4. ! meters
     real, parameter :: dygrid = 4.
 
 !-- les
