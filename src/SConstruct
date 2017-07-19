@@ -76,7 +76,8 @@ if gr_debug == '1':
 WV_DEBUG=''
 wv_debug = getOpt('wv_debug', 'WV Debug', '0')
 if wv_debug =='1':
-    WV_DEBUG='-DWV_DEBUG'
+    #WV_DEBUG='-DWV_DEBUG'
+    WV_DEBUG='-DMPI_NEW_WV'
 
 NO_FILE_IO='-DNO_FILE_IO'
 ICAL = '-DICAL=0'
