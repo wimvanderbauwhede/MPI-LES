@@ -1662,7 +1662,6 @@ subroutine gatherbbb(gbbb, bbb, procPerRow)
         call MPI_AllReduce(MPI_IN_PLACE, gbbb, 1, MPI_REAL, MPI_MIN, row_comm, ierror)
         call checkMPIError()
         print*, 'gatherbbb: Rank: ', rank, ' after bbb: ', bbb, gbbb
-
     end if
     call MPI_Comm_free(row_comm,ierror)
     call checkMPIError()

@@ -3,6 +3,9 @@ module module_grid
 contains
 
       subroutine grid(dx1,dxl,dy1,dyl,z2,dzn,dzs,dxs,dys)
+#ifdef NESTED_LES
+      use nesting_support
+#endif
       use common_sn ! create_new_include_statements() line 102
         real(kind=4), dimension(-1:ip+1) , intent(Out) :: dx1
         real(kind=4), dimension(0:ip) , intent(Out) :: dxl
@@ -19,6 +22,11 @@ contains
         real(kind=4), dimension(0:ip*procPerCol) :: dxlTot
         real(kind=4), dimension(0:jp*procPerRow) :: dylTot
 #endif
+
+#ifdef NESTED_LES
+        integer :: i_s,j_s ! subgrid coordinates
+        integer i,ii,j,jj
+#endif
 !
 ! WV: I think the use of run-time im,jp,kp is dangerous, unless they are identical to ip,jp,kp
 ! WV: So I changed it to be that way
@@ -26,12 +34,25 @@ contains
 ! WV: so -1 and ip+1 are not set!!! I changed it analogous to dy1
 !      do i = 0,ip
 #ifdef MPI
+#ifndef NESTED_LES
     if (isMaster()) then
         do i=-1,(ip*procPerCol)+1
             dx1Tot(i) = dxgrid
         end do
     end if
     call distribute1DRealRowWiseArray(dx1Tot,dx1, 2, 1, procPerRow)
+
+#else
+            call currentSubgridCoords(i_s,j_s)
+            do i=-1,ip+1
+                ii = i_s*ip+i
+                if (ii>nested_grid_start_x .and. ii< nested_grid_end_x) then
+                    dx1(i) = dxgrid_nest
+                else
+                    dx1(i) = dxgrid_orig
+                end if
+            end do
+#endif
 #else
       do i = -1,ip+1
        dx1(i) = dxgrid
@@ -39,6 +60,7 @@ contains
 #endif
 
 #ifdef MPI
+#ifndef NESTED_LES
     if (isMaster()) then
         dxlTot(0) = 0.
         do i = 1, ip*procPerCol
@@ -46,6 +68,12 @@ contains
         end do
     end if
     call distribute1DRealRowWiseArray(dxlTot,dxl, 1, 0, procPerRow)
+#else
+      dxl(0) = 0.
+      do i = 1,ip
+        dxl(i) = dxl(i-1)+dx1(i)
+      end do
+#endif
 #else
       dxl(0) = 0.
       do i = 1,ip
@@ -57,6 +85,7 @@ contains
 !WV: let's set the *whole* array to this value!
       !do j = 0,jp
 #ifdef MPI
+#ifndef NESTED_LES
     if (isMaster()) then
         do j=0,(jp*procPerRow)+1
             dy1Tot(j) = dygrid
@@ -64,12 +93,24 @@ contains
     end if
     call distribute1DRealColumnWiseArray(dy1Tot, dy1, 1, 1, procPerRow)
 #else
+!            call currentSubgridCoords(i_s,j_s)
+            do j=-1,jp+1
+                jj = j_s*jp+j
+                if (jj>nested_grid_start_y .and. jj< nested_grid_end_y) then
+                    dy1(i) = dygrid_nest
+                else
+                    dy1(i) = dygrid_orig
+                end if
+            end do
+#endif
+#else
       do j = 0,jp+1
        dy1(j) = dygrid
       end do
 #endif
 
 #ifdef MPI
+#ifndef NESTED_LES
     if (isMaster()) then
         dylTot(0) = 0.
         do j=1,(jp*procPerRow)
@@ -77,6 +118,12 @@ contains
         end do
     end if
     call distribute1DRealColumnWiseArray(dylTot, dyl, 1, 0, procPerRow)
+#else
+      dyl(0) = 0.
+      do j = 1,jp
+       dyl(j) = dyl(j-1)+dy1(j)
+      end do
+#endif
 #else
       dyl(0) = 0.
       do j = 1,jp

@@ -48,6 +48,33 @@ module params_common_sn
 !-- for output-if
     integer, parameter :: i_ifdata_out=0
 
+#ifdef MPI
+#ifdef NESTED_LES
+! Nested grid location and size
+    integer, parameter :: nested_grid_x = 2000 ! 4km
+    integer, parameter :: nested_grid_start_x = 251
+    integer, parameter :: nested_grid_end_x  = nested_grid_x + nested_grid_start_x
 
+    integer, parameter :: nested_grid_y = 500 ! 1km
+    integer, parameter :: nested_grid_start_y = 276
+    integer, parameter :: nested_grid_end_y  = nested_grid_y + nested_grid_start_y
+
+! Nest grid resolution
+    real, parameter :: dxgrid_nest = 2.0
+    real, parameter :: dygrid_nest = 2.0
+    real, parameter :: dxgrid_orig = 4.0
+    real, parameter :: dygrid_orig = 4.0
+
+! Subgrid coordinates for nest
+    integer, parameter :: i_s_nest_start =  nested_grid_start_x / ip
+    integer, parameter :: i_s_nest_end =  i_s_nest_start + nested_grid_x / ip
+    integer, parameter :: j_s_nest_start =  nested_grid_start_y / ip
+    integer, parameter :: j_s_nest_end =  j_s_nest_start + nested_grid_y / ip
+
+! Time steps
+    real, parameter :: dt_nest = 0.025 ! seconds
+    real, parameter :: dt_orig = 0.025 ! seconds
+#endif
+#endif
 end module params_common_sn
 

@@ -51,6 +51,7 @@ PROC_PER_ROW=''
 PROC_PER_COL=''
 USE_NETCDF_OUTPUT=''
 with_mpi = getOpt('mpi','Use MPI','0')
+with_nesting = getOpt('nested','Nested Grid','0')
 if with_mpi == '1':
     procPerRow= getOpt('procPerRow', 'Processes Per Row', '2')
     procPerCol= getOpt('procPerCol', 'Processes Per Col', '2')
@@ -73,6 +74,10 @@ else:
         envF['LINK']=os.environ['FC']
         envF.Append(LIBS=['netcdff']) # for version more than and equal to 4.2.0 
 
+NESTED_LES=''
+if with_nesting=='1':
+	NESTED_LES='-DNESTED_LES'
+		
 GR_DEBUG=''
 gr_debug = getOpt('gr_debug', 'GR Debug', '0')
 if gr_debug == '1':
@@ -88,7 +93,7 @@ ICAL = '-DICAL=0'
 IFBF='-DIFBF=1'
 IANIME='-DIANIME=1'
 IADAM='-DIADAM=0'
-FFLAGS  = [USE_NETCDF_OUTPUT, WITH_MPI, GR_DEBUG, WV_DEBUG, PROC_PER_ROW, PROC_PER_COL, WITH_OCL, NO_FILE_IO, ICAL, IFBF,IANIME, IADAM]
+FFLAGS  = [USE_NETCDF_OUTPUT, WITH_MPI, NESTED_LES, GR_DEBUG, WV_DEBUG, PROC_PER_ROW, PROC_PER_COL, WITH_OCL, NO_FILE_IO, ICAL, IFBF,IANIME, IADAM]
 
 if with_ocl == '0':
 #    FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-fconvert=big-endian', '-mcmodel=medium', VERBOSE,TIMINGS]
@@ -106,7 +111,10 @@ fsources = []
 
 if with_mpi == '1':
     fsources += ['./communication_common.f95', './communication_helper.f95', './communication_helper_integer.f95', './communication_helper_mpi.f95', './communication_helper_real.f95']
-
+    
+if with_nesting == '1':
+	fsources += ['./nesting_support.f95']
+	
 if USE_NETCDF_OUTPUT != '':
     fsources += ['./module_LES_write_netcdf.f95']
 

@@ -86,7 +86,10 @@ contains
       nmax = 8000
 ! --time step
 ! WV: NESTING: here we need to set dt based on the subgrid coordinates
+#ifdef NESTED_LES
+#else
       dt = 0.05 ! seconds
+#endif
 ! --physical property set
       ro = 1.1763
       vn = 15.83*10.**(-6.)

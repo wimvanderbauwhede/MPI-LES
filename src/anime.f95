@@ -9,32 +9,49 @@ contains
 ! Added by WV for use with MPI_NEW_WV
 #ifdef MPI_NEW_WV
 real function calc_avg_ua(ua,i,j,k) result(avg)
-
     real, dimension(:,:,:), intent(In) :: ua
     integer, intent(In) :: i,j,k
     real :: uam1
-    uam1=ua(i-1,j,k)
-    if (i==1) uam1=ua(i,j,k)
+
+    if (i<2) then
+        uam1=ua(i,j,k)
+    else
+        uam1=ua(i-1,j,k)
+    end if
     avg =real(0.5*(uam1+ua(i,j,k)))
 end function  calc_avg_ua
 
 real function calc_avg_va(va,i,j,k) result(avg)
     real, dimension(:,:,:), intent(In) :: va
     integer, intent(In) :: i,j,k
-    real :: vam1
-    vam1=va(i-1,j,k)
-    if (i==1) vam1=va(i,jpmax,k)
-    avg =real(0.5*(vam1+va(i,j,k)))
+    real :: va_jm1
+
+    if (j<2) then
+        va_jm1=va(i,jpmax,k)
+    else
+        va_jm1=va(i,j-1,k)
+    end if
+    avg =real(0.5*(va_jm1+va(i,j,k)))
 end function  calc_avg_va
 
 
+!            do j = 1,jpmax
+!                do i = 1,ipmax
+!                    wa(i,j,0) = 0.0
+!                end do
+!            end do
+  !write(23,rec=irec) ((real(0.5*(wa(i,j,k-1)+wa(i,j,k))),i=1,ipmax),j=1,jpmax)
 real function calc_avg_wa(wa,i,j,k) result(avg)
     real, dimension(:,:,:), intent(In) :: wa
     integer, intent(In) :: i,j,k
-    real :: wam1
-    wam1=wa(i-1,j,k)
-    if (i==1) wam1=0.0
-    avg =real(0.5*(wam1+wa(i,j,k)))
+    real :: wa_km1
+
+    if (k<2) then
+        wa_km1=0.0
+    else
+        wa_km1=wa(i,j,k-1)
+    end if
+    avg =real(0.5*(wa_km1+wa(i,j,k)))
 end function  calc_avg_wa
 #endif
 
