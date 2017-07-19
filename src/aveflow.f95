@@ -5,40 +5,54 @@ contains
 subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm, &
       uwfx,avesu,avesv,avesw,avesuu,avesvv,avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14,amask1)
     use common_sn ! create_new_include_statements() line 102
+
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avel
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avep
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avesm
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avesmsm
+
     real(kind=4), dimension(ip,kp) , intent(Out) :: avesu
     real(kind=4), dimension(ip,kp) , intent(Out) :: avesuu
     real(kind=4), dimension(ip,kp) , intent(Out) :: avesv
     real(kind=4), dimension(ip,kp) , intent(Out) :: avesvv
     real(kind=4), dimension(ip,kp) , intent(Out) :: avesw
     real(kind=4), dimension(ip,kp) , intent(Out) :: avesww
+
     real(kind=4), dimension(ip,jp,0:kp) , intent(Out) :: aveu
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: aveuu
     real(kind=4), dimension(ip,jp,0:kp) , intent(Out) :: avev
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avevv
     real(kind=4), dimension(ip+1,jp,0:kp+2) , intent(Out) :: avew
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: aveww
+
+    real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
+    real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
+    real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
+    real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(In) :: p
+    real(kind=4), dimension(-1:ip+1,-1:jp+1,0:kp+1) , intent(In) :: sm
+    real(kind=4), dimension(ip,jp,kp) , intent(Out) :: uwfx
+    real(kind=4), dimension(ip,kp) , intent(InOut) :: uwfxs
+#ifdef MPI_NEW_WV
+    integer :: irec
+    character(len=70) :: filename
+#endif
+      integer :: k
+      integer :: j
+      integer :: i
+    real(kind=4), intent(In) :: time
     character(len=70), intent(In) :: data10
     character(len=70), intent(In) :: data11
+
+    ! extra
     character(len=70), intent(In) :: data13
     character(len=70), intent(In) :: data14
+    !
     integer, intent(In) :: im
     integer, intent(In) :: jm
     integer, intent(In) :: km
     integer, intent(In) :: n
     integer, intent(In) :: n1
     integer, intent(In) :: nmax
-    real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(In) :: p
-    real(kind=4), dimension(-1:ip+1,-1:jp+1,0:kp+1) , intent(In) :: sm
-    real(kind=4), intent(In) :: time
-    real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
-    real(kind=4), dimension(ip,jp,kp) , intent(Out) :: uwfx
-    real(kind=4), dimension(ip,kp) , intent(InOut) :: uwfxs
-    real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
-    real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
 
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  , intent(In)  :: amask1
     real(kind=4), dimension(0:ipmax+1,0:jpmax+1,0:kp+1)   :: amask1a
@@ -141,7 +155,7 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
                 end do
             end do
         end do
-    endif
+  endif
 
   if(n == nmax) then
       do k = 1,km
@@ -158,54 +172,53 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
                   avesm(i,j,k) = avesm(i,j,k)/real(nmax-n1+1)
                   avesmsm(i,j,k) = avesmsm(i,j,k)/real(nmax-n1+1)
               end do
-      end do
-    end do
-
-    do k = 0,km
-        do j = 1,jm
-            do i = 1,im
-                aveu(i,j,k) = aveu(i,j,k)/real(nmax-n1+1)
             end do
         end do
-    end do
-    do k = 0,km
-        do j = 1,jm
-            do i = 1,im+1
-                avew(i,j,k) = avew(i,j,k)/real(nmax-n1+1)
+
+        do k = 0,km
+            do j = 1,jm
+                do i = 1,im
+                    aveu(i,j,k) = aveu(i,j,k)/real(nmax-n1+1)
+                end do
             end do
         end do
-    end do
-
-    do k = 1,km
-        do j = 1,jm
-            do i = 1,im
-                uwfx(i,j,k) = uwfx(i,j,k)/real(nmax-n1+1) - &
-                              0.5*(aveu(i,j,k-1)+aveu(i,j,k)) * &
-                              0.5*(avew(i,j, k-1)+avew(i+1,j,k-1))
+        do k = 0,km
+            do j = 1,jm
+                do i = 1,im+1
+                    avew(i,j,k) = avew(i,j,k)/real(nmax-n1+1)
+                end do
             end do
         end do
-    end do
 
-
-    do k = 1,km
-        do j = 1,jm
-            do i = 1,im
-                aveuu(i,j,k) = sqrt(abs(aveuu(i,j,k)-aveu(i,j,k)**2))
-                avevv(i,j,k) = sqrt(abs(avevv(i,j,k)-avev(i,j,k)**2))
-                aveww(i,j,k) = sqrt(abs(aveww(i,j,k)-avew(i,j,k)**2))
+        do k = 1,km
+            do j = 1,jm
+                do i = 1,im
+                    uwfx(i,j,k) = uwfx(i,j,k)/real(nmax-n1+1) - &
+                                  0.5*(aveu(i,j,k-1)+aveu(i,j,k)) * &
+                                  0.5*(avew(i,j, k-1)+avew(i+1,j,k-1))
+                end do
             end do
         end do
-    end do
+
+        do k = 1,km
+            do j = 1,jm
+                do i = 1,im
+                    aveuu(i,j,k) = sqrt(abs(aveuu(i,j,k)-aveu(i,j,k)**2))
+                    avevv(i,j,k) = sqrt(abs(avevv(i,j,k)-avev(i,j,k)**2))
+                    aveww(i,j,k) = sqrt(abs(aveww(i,j,k)-avew(i,j,k)**2))
+                end do
+            end do
+        end do
 
 
-
-    if (isMaster()) then
-       write(filename, '("../ave_data/data10",i6.6, ".dat")') n
-       open(unit=10,file=filename,form='unformatted',status='unknown')
-    end if
-         allocate(aveua(0:ipmax,0:jpmax,0:kp))
-         call distributeaveu(aveua, aveu, ip, jp, kp, ipmax, jpmax, procPerRow)
-            if (isMaster()) then
+#ifdef MPI
+        if (isMaster()) then
+           write(filename, '("../ave_data/data10",i6.6, ".dat")') n
+           open(unit=10,file=filename,form='unformatted',status='unknown')
+        end if
+        allocate(aveua(0:ipmax,0:jpmax,0:kp))
+        call distributeaveu(aveua, aveu, ip, jp, kp, ipmax, jpmax, procPerRow)
+        if (isMaster()) then
                do k = 1,km
                   do j = 1,jm
                      do i = 1,im
@@ -214,7 +227,7 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
                   end do
                end do
                write(10) (((aveua(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
-            end if
+         end if
          deallocate(aveua)
    
          allocate(avewa(ipmax+1,jpmax,0:kp+2))
@@ -256,16 +269,15 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
                   end do
                end do
                write(10) (((avepa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
-
-       close(10)
+               close(10)
             end if
          deallocate(avepa)
 
 
-    if (isMaster()) then
-       write(filename, '("../ave_data/data11",i6.6, ".dat")') n
-       open(unit=11,file=filename,form='unformatted',status='unknown')
-    end if
+        if (isMaster()) then
+           write(filename, '("../ave_data/data11",i6.6, ".dat")') n
+           open(unit=11,file=filename,form='unformatted',status='unknown')
+        end if
          allocate(aveuua(0:ipmax,0:jpmax,0:kp))
          call distributeaveuu(aveuua, aveuu, ip, jp, kp, ipmax, jpmax, procPerRow)
          if (isMaster()) then
@@ -320,7 +332,7 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
                end do
             end do
             write(11) (((uwfxa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
-      close(11) 
+            close(11)
  
         end if
         deallocate(uwfxa)
@@ -342,10 +354,9 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
                 end do
             end do
         end do
-    
+#else
+#endif
 
-!#endif
-!#endif
     endif
 end subroutine aveflow
 

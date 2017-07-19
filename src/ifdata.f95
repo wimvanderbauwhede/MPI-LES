@@ -213,21 +213,23 @@ contains
         real(kind=4), dimension(0:kp+2) , intent(In) :: z2
         real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(InOut) :: zbm
 
-        real(kind=4),allocatable :: ua(:,:,:)
-        real(kind=4),allocatable :: va(:,:,:)
-        real(kind=4),allocatable :: wa(:,:,:)
+        real(kind=4),allocatable :: ua(:,:,:), ur(:,:,:)
+        real(kind=4),allocatable :: va(:,:,:), vr(:,:,:)
+        real(kind=4),allocatable :: wa(:,:,:), wr(:,:,:)
         real(kind=4),allocatable :: usuma(:,:,:)
         real(kind=4),allocatable :: vsuma(:,:,:)
         real(kind=4),allocatable :: wsuma(:,:,:)
-        real(kind=4),allocatable :: pa(:,:,:)
-        real(kind=4),allocatable :: fa(:,:,:)
-        real(kind=4),allocatable :: ga(:,:,:)
-        real(kind=4),allocatable :: ha(:,:,:)
+        real(kind=4),allocatable :: pa(:,:,:),pr(:,:,:)
+        real(kind=4),allocatable :: fa(:,:,:),fr(:,:,:)
+        real(kind=4),allocatable :: ga(:,:,:),gr(:,:,:)
+        real(kind=4),allocatable :: ha(:,:,:),hr(:,:,:)
         real(kind=4),allocatable :: folda(:,:,:)
         real(kind=4),allocatable :: golda(:,:,:)
         real(kind=4),allocatable :: holda(:,:,:)
 
-        
+#ifdef MPI_NEW_WV
+    character(len=70) :: filename
+#endif
 
 
 
@@ -254,12 +256,22 @@ contains
 
  
         if (isMaster()) then
-        write(filename, '("../data/data30",i6.6, ".dat")') nif 
-
-        open(unit=30,file=filename,form='unformatted',status='unknown')
-        read(30) n,time
+            write(filename, '("../data/data30",i6.6, ".dat")') nif
+            open(unit=30,file=filename,form='unformatted',status='unknown')
+            read(30) n,time
         end if
  
+#ifdef MPI_NEW_WV
+        if (isMaster()) then
+            allocate(ua(ipmax,jpmax,kp))
+            read(30) (((ua(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        end if
+        allocate(ur(ip,jp,kp))
+        call MPI_Scatter(ur, ip*jp*kp, MPI_REAL, ua, ipmax*jpmax*kp, MPI_REAL, 0, communicator, ierror)
+        u(1:ip,1:jp,1:kp)=ur
+        if (isMaster()) deallocate(ua)
+        deallocate(ur)
+#else
         allocate(ua(0:ipmax+1,-1:jpmax+1,0:kp+1))
          
         if (isMaster()) then
@@ -275,8 +287,19 @@ contains
         end do
         end do
         deallocate(ua)
- 
+#endif
 
+#ifdef MPI_NEW_WV
+        if (isMaster()) then
+            allocate(va(ipmax,jpmax,kp))
+            read(30) (((va(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        end if
+        allocate(vr(ip,jp,kp))
+        call MPI_Scatter(vr, ip*jp*(kp+2), MPI_REAL, va, ipmax*jpmax*kp, MPI_REAL, 0, communicator, ierror)
+        v(1:ip,1:jp,1:kp)=vr
+        if (isMaster()) deallocate(va)
+        deallocate(vr)
+#else
         allocate(va(0:ipmax+1,-1:jpmax+1,0:kp+1))               
         if (isMaster()) then
         read(30) (((va(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
@@ -291,7 +314,19 @@ contains
         end do
         end do
         deallocate(va)
+#endif
 
+#ifdef MPI_NEW_WV
+        if (isMaster()) then
+            allocate(wa(ipmax,jpmax,kp))
+            read(30) (((wa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        end if
+        allocate(wr(ip,jp,kp))
+        call MPI_Scatter(wr, ip*jp*(kp+2), MPI_REAL, wa, ipmax*jpmax*kp, MPI_REAL, 0, communicator, ierror)
+        w(1:ip,1:jp,1:kp)=wr
+        if (isMaster()) deallocate(wa)
+        deallocate(wr)
+#else
 
         allocate(wa(0:ipmax+1,-1:jpmax+1,-1:kp+1))
         if (isMaster()) then
@@ -307,8 +342,19 @@ contains
         end do
         end do
         deallocate(wa)
+#endif
 
-
+#ifdef MPI_NEW_WV
+        if (isMaster()) then
+            allocate(pa(ipmax,jpmax,kp))
+            read(30) (((pa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        end if
+        allocate(pr(ip,jp,kp))
+        call MPI_Scatter(pr, ip*jp*(kp+2), MPI_REAL, pa, ipmax*jpmax*kp, MPI_REAL, 0, communicator, ierror)
+        p(1:ip,1:jp,1:kp)=pr
+        if (isMaster()) deallocate(pa)
+        deallocate(pr)
+#else
         allocate(pa(0:ipmax+2,0:jpmax+2,0:kp+1))
         if (isMaster()) then
         read(30) (((pa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
@@ -323,7 +369,7 @@ contains
         end do
         end do
         deallocate(pa)
-
+#endif
 
         allocate(usuma(0:ipmax,0:jpmax,0:kp))
         if (isMaster()) then

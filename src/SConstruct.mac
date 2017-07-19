@@ -28,7 +28,7 @@ else:
 # Then build the rest of the code
 other=''
 WITH_OCL=''
-with_ocl= getOpt('ocl','Use OpenCL','1')
+with_ocl= getOpt('ocl','Use OpenCL','0')
 if with_ocl == '1':
     WITH_OCL = '-D_OPENCL_LES_WV'
     envF=initOcl(envF)
@@ -57,16 +57,21 @@ if with_mpi == '1':
     PROC_PER_ROW = '-DPROC_PER_ROW=' + procPerRow
     PROC_PER_COL = '-DPROC_PER_COL=' + procPerCol
     WITH_MPI = '-DMPI'
+    USE_NETCDF_OUTPUT='-DUSE_NETCDF_OUTPUT'
 #    envF['F95']='mpiifort'
 #    envF['F95']='mpif90'
-    envF['LINK']=envF['F95']
-
-#if other =='':
-    USE_NETCDF_OUTPUT='-DUSE_NETCDF_OUTPUT'
     if OSX==0:    
+        envF['LINK']=envF['F95']
         envF.Append(LIBS=['netcdf']) # for version less than 4.2.0
     else:
+        envF['F95']=os.environ['FC']
+        envF['LINK']=os.environ['FC']
         envF.Append(LIBS=['mpi_mpifh','netcdff']) # for version more than and equal to 4.2.0 
+else:
+    if OSX==1:    
+        envF['F95']=os.environ['FC']
+        envF['LINK']=os.environ['FC']
+        envF.Append(LIBS=['netcdff']) # for version more than and equal to 4.2.0 
 
 GR_DEBUG=''
 gr_debug = getOpt('gr_debug', 'GR Debug', '0')
@@ -76,7 +81,7 @@ if gr_debug == '1':
 WV_DEBUG=''
 wv_debug = getOpt('wv_debug', 'WV Debug', '0')
 if wv_debug =='1':
-    WV_DEBUG='-DWV_DEBUG'
+    WV_DEBUG='-DMPI_NEW_WV'
 
 NO_FILE_IO='-DNO_FILE_IO'
 ICAL = '-DICAL=0'

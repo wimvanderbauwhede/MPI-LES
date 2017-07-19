@@ -1,7 +1,42 @@
 module module_anime
-
 use communication_helper_mpi
+#ifdef MPI_NEW_WV
+    use params_common_sn
+    implicit none
+#endif
 contains
+
+! Added by WV for use with MPI_NEW_WV
+#ifdef MPI_NEW_WV
+real function calc_avg_ua(ua,i,j,k) result(avg)
+
+    real, dimension(:,:,:), intent(In) :: ua
+    integer, intent(In) :: i,j,k
+    real :: uam1
+    uam1=ua(i-1,j,k)
+    if (i==1) uam1=ua(i,j,k)
+    avg =real(0.5*(uam1+ua(i,j,k)))
+end function  calc_avg_ua
+
+real function calc_avg_va(va,i,j,k) result(avg)
+    real, dimension(:,:,:), intent(In) :: va
+    integer, intent(In) :: i,j,k
+    real :: vam1
+    vam1=va(i-1,j,k)
+    if (i==1) vam1=va(i,jpmax,k)
+    avg =real(0.5*(vam1+va(i,j,k)))
+end function  calc_avg_va
+
+
+real function calc_avg_wa(wa,i,j,k) result(avg)
+    real, dimension(:,:,:), intent(In) :: wa
+    integer, intent(In) :: i,j,k
+    real :: wam1
+    wam1=wa(i-1,j,k)
+    if (i==1) wam1=0.0
+    avg =real(0.5*(wam1+wa(i,j,k)))
+end function  calc_avg_wa
+#endif
 
 subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,amask1,zbm)
 
@@ -27,10 +62,20 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
     real(kind=4), dimension(kp+2) , intent(In) :: z2
     real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(In)  :: zbm
 !average_out
+#ifdef MPI_NEW_WV
+    integer :: irec, i,j,k
+    character(len=70) :: filename
+    real(kind=4), dimension(ip,jp,0:kp+1)  :: uani
+    real(kind=4), dimension(ip,jp,0:kp+1)  :: vani
+    real(kind=4), dimension(ip,jp,0:kp+1) :: wani
+    real(kind=4), dimension(ip,jp,0:kp+1) :: pani
+#else
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: uani
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: vani
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) :: wani
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) :: pani
+
+#endif
 !mpi_out
 !    real(kind=4), dimension(0:ipmax+1,-1:jpmax+1,0:kp+1)  :: ua
 !    real(kind=4), dimension(0:ipmax+1,-1:jpmax+1,0:kp+1)  :: va
@@ -97,13 +142,34 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 
 
 
+
        if (isMaster()) then
        write(filename, '("../out/data23",i6.6, ".dat")') n
        open(unit=23,file=filename,form='unformatted',access='direct',recl=4*ipmax*jpmax)
        end if
 
+! ---- ua ----
+
+#ifdef MPI_NEW_WV
+        if (isMaster()) then
+            allocate(ua(ipmax,jpmax,0:kp+1))
+        end if
+        call MPI_Gather(uani, ip*jp*(kp+2), MPI_REAL, ua, ip*jp*(kp+2), MPI_REAL, 0, communicator, ierror)
+        call checkMPIError()
+        ua=ua/real(avetime)
+       if (isMaster()) then
+           irec = 1
+           do  k=1,km_sl
+                write(23,rec=irec) ((calc_avg_ua(ua,i,j,k),i=1,ipmax),j=1,jpmax)
+                irec = irec + 1
+           end do
+       end if
+       if (isMaster()) then
+            deallocate(ua)
+        end if
+#else
        allocate(ua(0:ipmax+1,-1:jpmax+1,0:kp+1))
-        call distributeu(ua, uani, ip, jp, kp, ipmax, jpmax, procPerRow)
+       call distributeu(ua, uani, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
           do k = 1,km
             do j = 1,jm
@@ -134,11 +200,27 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
        irec = irec + 1
        end do
        end if
-
-
        deallocate(ua)
-
-
+#endif
+! ---- wa -----
+#ifdef MPI_NEW_WV
+        if (isMaster()) then
+            allocate(wa(ipmax,jpmax,0:kp+1))
+        end if
+        call MPI_Gather(wani, ip*jp*(kp+2), MPI_REAL, wa, ip*jp*(kp+2), MPI_REAL, 0, communicator, ierror)
+        call checkMPIError()
+        wa=wa/real(avetime)
+       if (isMaster()) then
+           irec = 1
+           do  k=1,km_sl
+                write(23,rec=irec) ((calc_avg_wa(wa,i,j,k),i=1,ipmax),j=1,jpmax)
+                irec = irec + 1
+           end do
+       end if
+       if (isMaster()) then
+            deallocate(wa)
+       end if
+#else
        allocate(wa(0:ipmax+1,-1:jpmax+1,-1:kp+1))
         call distributew(wa, wani, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
@@ -172,8 +254,25 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
        end do
        end if
        deallocate(wa)
+#endif
 
 
+! ---- va ----
+#ifdef MPI_NEW_WV
+
+        if (isMaster()) allocate(va(ipmax,jpmax,0:kp+1))
+        call MPI_Gather(vani, ip*jp*(kp+2), MPI_REAL, va, ip*jp*(kp+2), MPI_REAL, 0, communicator, ierror)
+        call checkMPIError()
+        va=va/real(avetime)
+       if (isMaster()) then
+           irec = 1
+           do  k=1,km_sl
+                write(23,rec=irec) ((calc_avg_va(wa,i,j,k),i=1,ipmax),j=1,jpmax)
+                irec = irec + 1
+           end do
+       end if
+       if (isMaster()) deallocate(va)
+#else
        allocate(va(0:ipmax+1,-1:jpmax+1,0:kp+1))
         call distributev(va, vani, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
@@ -205,13 +304,30 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
        write(23,rec=irec) ((real(0.5*(va(i,j-1,k)+va(i,j,k))),i=1,ipmax),j=1,jpmax)
        irec = irec + 1
        end do
-!------ if you output p, have to comment out this colose 
+!------ if you output p, have to comment out this close
 !       close(23)
 !----------------------
        end if
        deallocate(va)
+#endif
+
 
 !--------pressure-----------
+#ifdef MPI_NEW_WV
+        if (isMaster()) allocate(pa(ipmax,jpmax,0:kp+1))
+        call MPI_Gather(pani, ip*jp*(kp+2), MPI_REAL, pa, ip*jp*(kp+2), MPI_REAL, 0, communicator, ierror)
+        call checkMPIError()
+        pa=pa/real(avetime)
+       if (isMaster()) then
+           irec = 1
+           do  k=1,km_sl
+                write(23,rec=irec) ((pa(i,j,k),i=1,ipmax),j=1,jpmax)
+                irec = irec + 1
+           end do
+           close(23)
+       end if
+       if (isMaster()) deallocate(pa)
+#else
        allocate(pa(0:ipmax+2,0:jpmax+2,0:kp+1))
        call distributep(pa, pani, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
@@ -239,10 +355,16 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
        end do
        close(23)
        end if
-
        deallocate(pa)
+#endif
 
 
+#ifdef MPI_NEW_WV
+      uani=0.
+      vani=0.
+      wani=0.
+      pani=0.
+#else
       do k=0,km
       do j=0,jm
       do i=0,im
@@ -253,15 +375,15 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
       end do
       end do
       end do
-
-      end if
+#endif
+      end if ! timestep condition
 
 #endif
 
 end subroutine anime
 
 
-
+! WV: TODO
 !data30,31
 subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,hold)
 
@@ -320,7 +442,10 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
     real(kind=4),allocatable :: folda(:,:,:)
     real(kind=4),allocatable :: golda(:,:,:)
     real(kind=4),allocatable :: holda(:,:,:)
-
+#ifdef MPI_NEW_WV
+    integer :: irec, i,j,k
+    character(len=70) :: filename
+#endif
 
 
        if((n.eq.n1-1).or.(n.eq.nmax))  then      

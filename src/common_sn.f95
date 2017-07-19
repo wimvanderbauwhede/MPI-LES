@@ -3,6 +3,7 @@ module common_sn
 !      An IMPLICIT statement specifies a type and size for all user-defined names
 !      that begin with any letter, either a single letter or in a range of letters,
 !      appearing in the specification.
+#ifndef MPI_NEW_WV
     implicit real*4(a-h,o-z)
     implicit integer(i-n)
 !! Original line !!       real*4 nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9
@@ -26,4 +27,5 @@ module common_sn
     real a1(1:ip,1:jp+1,1:kp+1),a2(1:ip,1:jp+1,1:kp+1) ,a3(1:ip,1:jp+1,1:kp+1)
     integer irec
    character(len=70) :: filename 
+#endif
 end module common_sn

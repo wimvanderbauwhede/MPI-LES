@@ -73,9 +73,9 @@ subroutine bondv1_data24(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
     if (isTopRow(procPerRow)) then
 
 
-  call distributebondu(ua, ip, jp, kp, ipmax, jpmax, procPerRow)
-  call distributebondv(va, ip, jp, kp, ipmax, jpmax, procPerRow)
-  call distributebondw(wa, ip, jp, kp, ipmax, jpmax, procPerRow)
+      call distributebondu(ua, ip, jp, kp, ipmax, jpmax, procPerRow)
+      call distributebondv(va, ip, jp, kp, ipmax, jpmax, procPerRow)
+      call distributebondw(wa, ip, jp, kp, ipmax, jpmax, procPerRow)
 
 
 

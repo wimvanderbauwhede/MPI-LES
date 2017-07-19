@@ -1547,11 +1547,14 @@ subroutine gatheraaa(gaaa, aaa, procPerRow)
     real(kind=4), intent(In) :: aaa
     integer :: startRow, startCol, i, j, r, c, k, rank
     real(kind=4) :: sendBuffer, recvBuffer
+#ifdef MPI_NEW_WV
+    integer :: row_comm
+#endif
 
 
-    call MPI_COMM_Rank(communicator, rank, ierror) ! WV: this is redundant
+    call MPI_COMM_Rank(communicator, rank, ierror)
     call checkMPIError()
-
+#ifndef MPI_NEW_WV
     if (rank .gt. mpi_size - procPerRow) then !WV: this is the bottom row excluding the first process
          sendBuffer = aaa
 !         print*, 'Rank: ', rank, ' before aaa: ', aaa
@@ -1583,8 +1586,24 @@ subroutine gatheraaa(gaaa, aaa, procPerRow)
          call checkMPIError()
          gaaa=recvBuffer
 !    print*, 'Rank: ', rank, ' after aaa: ', gaaa
+        print*, 'gatheraaa: Rank: ', rank, ' after aaa: ', aaa, gaaa
+    end if
+#endif
+
+#ifdef MPI_NEW_WV
+    ! Create a new communicator per row
+    call MPI_Comm_split(communicator, (rank / procPerRow), rank, row_comm,ierror)
+    ! If a process is in the bottom row, use this communicator
+    if (rank >= mpi_size - procPerRow) then  !WV: this is the bottom row excluding the first process
+        gaaa = aaa
+        call MPI_AllReduce(MPI_IN_PLACE, gaaa, 1, MPI_REAL, MPI_MAX, row_comm, ierror)
+        call checkMPIError()
+        print*, 'gatheraaa: Rank: ', rank, ' after aaa: ', aaa, gaaa
 
     end if
+    call MPI_Comm_free(row_comm,ierror)
+    call checkMPIError()
+#endif
 
   end subroutine gatheraaa
 
@@ -1595,11 +1614,13 @@ subroutine gatherbbb(gbbb, bbb, procPerRow)
     real(kind=4), intent(In) :: bbb
     integer :: startRow, startCol, i, j, r, c, k, rank
     real(kind=4) :: sendBuffer, recvBuffer
-
+#ifdef MPI_NEW_WV
+    integer :: row_comm
+#endif
 
     call MPI_COMM_Rank(communicator, rank, ierror)
     call checkMPIError()
-
+#ifndef MPI_NEW_WV
     if (rank.gt.mpi_size - procPerRow) then
          sendBuffer = bbb
 !         print*, 'Rank: ', rank, ' before bbb: ', bbb
@@ -1630,7 +1651,22 @@ subroutine gatherbbb(gbbb, bbb, procPerRow)
 !    print*, 'Rank: ', rank, ' after bbb: ', gbbb
 
     end if
+#endif
 
+#ifdef MPI_NEW_WV
+    ! Create a new communicator per row
+    call MPI_Comm_split(communicator, (rank / procPerRow), rank, row_comm,ierror)
+    ! If a process is in the bottom row, use this communicator
+    if (rank >= mpi_size - procPerRow) then  !WV: this is the bottom row excluding the first process
+        gbbb = bbb
+        call MPI_AllReduce(MPI_IN_PLACE, gbbb, 1, MPI_REAL, MPI_MIN, row_comm, ierror)
+        call checkMPIError()
+        print*, 'gatherbbb: Rank: ', rank, ' after bbb: ', bbb, gbbb
+
+    end if
+    call MPI_Comm_free(row_comm,ierror)
+    call checkMPIError()
+#endif
   end subroutine gatherbbb
 
 end module
