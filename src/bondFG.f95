@@ -1,4 +1,7 @@
 module module_bondFG
+#ifdef MPI
+    use communication_helper_real
+#endif
 
 contains
 

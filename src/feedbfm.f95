@@ -1,5 +1,7 @@
 module module_feedbfm
-
+#ifdef MPI
+    use communication_helper_real
+#endif
 contains
 
 subroutine feedbfm(km,jm,im,amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
@@ -45,7 +47,9 @@ subroutine feedbfm(km,jm,im,amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
 #ifdef MPI
 !    if (isMaster()) then
 #endif
+#ifdef VERBOSE
         print*, 'zbm sum - file getting read'
+#endif
         !      print *, 'open GIS/Tokyo_20mgrid.txt'
         ! WV: the problem with this is that this input file expects the grid to be 150 x 150, because otherwise zbm segfaults!
 

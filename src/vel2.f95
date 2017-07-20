@@ -1,4 +1,7 @@
 module module_vel2
+#ifdef MPI
+    use communication_helper_real
+#endif
 contains
 
       subroutine vel2(km,jm,im,nou1,u,diu1,dx1,nou5,v,diu5,dy1,nou9,w,diu9,dzn,cov1,cov5,cov9,nou2, &

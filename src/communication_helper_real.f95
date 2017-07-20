@@ -1,6 +1,9 @@
 module communication_helper_real
 #ifdef MPI
 use communication_helper_mpi
+#ifdef NESTED_LES
+use nesting_support
+#endif
 #endif
 
 contains
@@ -54,18 +57,20 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
     integer, dimension(:), intent(in) :: neighbours
     integer, intent(in) :: procPerRow, leftThickness, rightThickness, topThickness, bottomThickness
     integer :: i, commWith, r, c, d, rowCount, colCount, depthSize
-#ifdef MPI
+
     integer :: requests(8)
-#endif
+
     real(kind=4), dimension(:,:,:), allocatable :: leftRecv, leftSend, rightSend, rightRecv
     real(kind=4), dimension(:,:,:), allocatable :: topRecv, topSend, bottomSend, bottomRecv
-#ifdef MPI
+#ifdef NESTED_LES
+!    syncTicks = 0 ! for debugging
+#endif
     if (size(neighbours, 1) .lt. 4) then
         print*, "Error: cannot have a 4-way halo exchange with less than 4 neighbours"
         call finalise_mpi()
         return
     end if
-#endif
+
     rowCount = size(array, 1) - topThickness - bottomThickness
     colCount = size(array, 2) - leftThickness - rightThickness
     depthSize = size(array, 3)
@@ -77,14 +82,17 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
     allocate(bottomSend(topThickness, colCount, depthSize))
     allocate(bottomRecv(topThickness, colCount, depthSize))
     allocate(topSend(bottomThickness, colCount, depthSize))
-#ifdef MPI
+
     do i=1,8
         requests(i)= MPI_REQUEST_NULL
     end do
-#endif
+
     ! Top edge to send, bottom edge to receive
     commWith = neighbours(topNeighbour)
     if (commWith .ne. -1) then
+#ifdef NESTED_LES
+        if ( (inNestedGrid() .and. .not. inNestedGridByRank(commWith) .and. (syncTicks == 0) ) .or. .not. (inNestedGrid() .and. .not. inNestedGridByRank(commWith))) then
+#endif
         !print*, 'rank ', rank, ' communicating with top neighbour ', commWith
         do r=1, bottomThickness
             do c=1, colCount
@@ -99,10 +107,22 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
         call MPI_IRecv(bottomRecv, topThickness*colCount*depthSize, MPI_REAL, commWith, bottomTag, &
                       communicator, requests(2), ierror)
         call checkMPIError()
+#ifdef NESTED_LES
+        else
+            ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 1,2 FOR',rank, '=>',commWith
+            requests(1) = MPI_REQUEST_NULL
+            requests(2) = MPI_REQUEST_NULL
+        end if
+#endif
     end if
+
     ! Bottom edge to send, top edge to receive
     commWith = neighbours(bottomNeighbour)
     if (commWith .ne. -1) then
+#ifdef NESTED_LES
+        if ( (inNestedGrid() .and. .not. inNestedGridByRank(commWith) .and. (syncTicks == 0) ) .or. .not. (inNestedGrid() .and. .not. inNestedGridByRank(commWith))) then
+#endif
         !print*, 'rank ', rank, ' communicating with bottom neighbour ', commWith
         do r=1, topThickness
             do c=1, colCount
@@ -119,10 +139,25 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
         call MPI_ISend(bottomSend, topThickness*colCount*depthSize, MPI_REAL, commWith, bottomTag, &
                       communicator, requests(4), ierror)
         call checkMPIError()
+
+#ifdef NESTED_LES
+        else
+            ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 3,4 FOR',rank, '=>',commWith
+            requests(3) = MPI_REQUEST_NULL
+            requests(4) = MPI_REQUEST_NULL
+        end if
+#endif
+
     end if
+
+
     ! Left edge to send, right edge to receive
     commWith = neighbours(leftNeighbour)
     if (commWith .ne. -1) then
+#ifdef NESTED_LES
+            if ( (inNestedGrid() .and. .not. inNestedGridByRank(commWith) .and. (syncTicks == 0) ) .or. .not. (inNestedGrid() .and. .not. inNestedGridByRank(commWith))) then
+#endif
         !print*, 'rank ', rank, ' communicating with left neighbour ', commWith
         do r=1, rowCount
             do c=1, rightThickness
@@ -137,10 +172,21 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
         call MPI_IRecv(rightRecv, leftThickness*rowCount*depthSize, MPI_REAL, commWith, rightTag, &
                       communicator, requests(6), ierror)
         call checkMPIError()
+#ifdef NESTED_LES
+        else
+            ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 5,6 FOR',rank, '=>',commWith
+            requests(5) = MPI_REQUEST_NULL
+            requests(6) = MPI_REQUEST_NULL
+        end if
+#endif
     end if
     ! Right edge to send, left edge to receive
     commWith = neighbours(rightNeighbour)
     if (commWith .ne. -1) then
+#ifdef NESTED_LES
+            if ( (inNestedGrid() .and. .not. inNestedGridByRank(commWith) .and. (syncTicks == 0) ) .or. .not. (inNestedGrid() .and. .not. inNestedGridByRank(commWith))) then
+#endif
         !print*, 'rank ', rank, ' communicating with right neighbour ', commWith
         do r=1, rowCount
             do c=1, leftThickness
@@ -157,13 +203,27 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
         call MPI_ISend(rightSend, leftThickness*rowCount*depthSize, MPI_REAL, commWith, rightTag, &
                       communicator, requests(8), ierror)
         call checkMPIError()
+#ifdef NESTED_LES
+        else
+            ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 7,8 FOR',rank, '=>',commWith
+            requests(7) = MPI_REQUEST_NULL
+            requests(8) = MPI_REQUEST_NULL
+        end if
+#endif
     end if
+
+    ! WV: as we set request status to null if no action, this should be OK for nesting
     do i=1,8
         if (requests(i) .ne. MPI_REQUEST_NULL) then
             call MPI_Wait(requests(i), status, ierror)
             call checkMPIError()
         end if
     end do
+
+#ifdef NESTED_LES
+     if ( (inNestedGrid() .and. .not. inNestedGridByRank(commWith) .and. (syncTicks == 0) ) .or. .not. (inNestedGrid() .and. .not. inNestedGridByRank(commWith))) then
+#endif
     if (.not. isTopRow(procPerRow)) then
         do r=1, topThickness
             do c=1, colCount
@@ -173,6 +233,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
             end do
         end do
     end if
+
     if (.not. isBottomRow(procPerRow)) then
         do r=1, bottomThickness
             do c=1, colCount
@@ -182,6 +243,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
             end do
         end do
     end if
+
     if (.not. isLeftmostColumn(procPerRow)) then
         do r=1, rowCount
             do c=1, leftThickness
@@ -191,6 +253,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
             end do
         end do
     end if
+
     if (.not. isRightmostColumn(procPerRow)) then
         do r=1, rowCount
             do c=1, rightThickness
@@ -200,6 +263,11 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
             end do
         end do
     end if
+#ifdef NESTED_LES
+    else
+        print *, 'SKIPPING ARRAY UPDATES FOR',rank, '=>',commWith
+    end if
+#endif
     call exchangeRealCorners(array, procPerRow, leftThickness, rightThickness, topThickness, bottomThickness)
     deallocate(leftRecv)
     deallocate(leftSend)
@@ -217,8 +285,9 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
     real(kind=4), dimension(:,:,:), allocatable :: topLeftRecv, topRightRecv, bottomLeftRecv, bottomRightRecv
     real(kind=4), dimension(:,:,:), allocatable :: topLeftSend, topRightSend, bottomLeftSend, bottomRightSend
     integer :: depthSize, commWith, r, c, d
-#ifdef MPI
     integer :: i, requests(8)
+#ifdef NESTED_LES
+!    syncTicks = 0 ! for debugging
 #endif
     depthSize = size(array, 3)
     allocate(topLeftRecv(bottomThickness, rightThickness, depthSize))
@@ -229,14 +298,18 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
     allocate(bottomLeftSend(topThickness, rightThickness, depthSize))
     allocate(bottomRightRecv(topThickness, leftThickness, depthSize))
     allocate(bottomRightSend(topThickness, leftThickness, depthSize))
-#ifdef MPI
+
     do i=1,8
         requests(i) = MPI_REQUEST_NULL
     end do
-#endif
+
     if (.not. isTopRow(procPerRow) .and. .not. isLeftmostColumn(procPerRow)) then
         commWith = rank - procPerRow - 1
         !print*, 'Rank ', rank, ' has a top left neighbour with rank ', commWith
+#ifdef NESTED_LES
+        if ( (inNestedGrid() .and. .not. inNestedGridByRank(commWith) .and. (syncTicks == 0) ) .or. .not. (inNestedGrid() .and. .not. inNestedGridByRank(commWith))) then
+#endif
+
         do r=1,bottomThickness
             do c=1,rightThickness
                 do d=1,depthSize
@@ -244,18 +317,30 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
                 end do
             end do
         end do
-#ifdef MPI
+
         call MPI_ISend(topLeftSend, bottomThickness*rightThickness*depthSize, MPI_REAL, &
                        commWith, topLeftTag, communicator, requests(1), ierror)
         call checkMPIError()
         call MPI_IRecv(bottomRightRecv, topThickness*leftThickness*depthSize, &
                        MPI_Real, commWith, bottomRightTag, communicator, requests(2), ierror)
         call checkMPIError()
+#ifdef NESTED_LES
+        else
+            ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 1,2 FOR',rank, '=>',commWith
+            requests(1) = MPI_REQUEST_NULL
+            requests(2) = MPI_REQUEST_NULL
+        end if
 #endif
     end if
+
     if (.not. isTopRow(procPerRow) .and. .not. isRightmostColumn(procPerRow)) then
         commWith = rank - procPerRow + 1
         !print*, 'Rank ', rank, ' has a top right neighbour with rank ', commWith
+#ifdef NESTED_LES
+        if ( (inNestedGrid() .and. .not. inNestedGridByRank(commWith) .and. (syncTicks == 0) ) .or. .not. (inNestedGrid() .and. ( .not. inNestedGridByRank(commWith)) ) ) then
+#endif
+
         do r=1, bottomThickness
             do c=1, leftThickness
                 do d=1, depthSize
@@ -263,18 +348,30 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
                 end do
             end do
         end do
-#ifdef MPI
+
         call MPI_ISend(topRightSend, bottomThickness*leftThickness*depthSize, MPI_REAL, &
                        commWith, topRightTag, communicator, requests(3), ierror)
         call checkMPIError()
         call MPI_IRecv(bottomLeftRecv, topThickness*rightThickness*depthSize, MPI_REAL, &
                        commWith, bottomLeftTag, communicator, requests(4), ierror)
         call checkMPIError()
+#ifdef NESTED_LES
+        else
+            ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 3,4 FOR',rank, '=>',commWith
+            requests(3) = MPI_REQUEST_NULL
+            requests(4) = MPI_REQUEST_NULL
+        end if
 #endif
     end if
+
     if (.not. isBottomRow(procPerRow) .and. .not. isLeftmostColumn(procPerRow)) then
         commWith = rank + procPerRow - 1
         !print*, 'Rank ', rank, ' has a bottom left neighbour with rank ', commWith
+#ifdef NESTED_LES
+        if ( (inNestedGrid() .and. .not. inNestedGridByRank(commWith) .and. (syncTicks == 0) ) .or. .not. (inNestedGrid() .and. .not. inNestedGridByRank(commWith))) then
+#endif
+
         do r=1, topThickness
             do c=1, rightThickness
                 do d=1, depthSize
@@ -283,18 +380,30 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
                 end do
             end do
         end do
-#ifdef MPI
+
         call MPI_ISend(bottomLeftSend, topThickness*rightThickness*depthSize, MPI_REAL, &
                       commWith, bottomLeftTag, communicator, requests(5), ierror)
         call checkMPIError()
         call MPI_IRecv(topRightRecv, bottomThickness*leftThickness*depthSize, MPI_REAL, &
                        commWith, topRightTag, communicator, requests(6), ierror)
         call checkMPIError()
+#ifdef NESTED_LES
+        else
+            ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 5,6 FOR',rank, '=>',commWith
+            requests(5) = MPI_REQUEST_NULL
+            requests(6) = MPI_REQUEST_NULL
+        end if
 #endif
     end if
+
     if (.not. isBottomRow(procPerRow) .and. .not. isRightmostColumn(procPerRow)) then
         commWith = rank + procPerRow + 1
         !print*, 'Rank ', rank, ' has a bottom right neighbour with rank ', commWith
+#ifdef NESTED_LES
+        if ( (inNestedGrid() .and. .not. inNestedGridByRank(commWith) .and. (syncTicks == 0) ) .or. .not. (inNestedGrid() .and. .not. inNestedGridByRank(commWith))) then
+#endif
+
         do r=1,topThickness
             do c=1,leftThickness
                 do d=1,depthSize
@@ -303,23 +412,33 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
                 end do
             end do
         end do
-#ifdef MPI
+
         call MPI_ISend(bottomRightSend, topThickness*leftThickness*depthSize, MPI_REAL, &
                        commWith, bottomRightTag, communicator, requests(7), ierror)
         call checkMPIError()
         call MPI_IRecv(topLeftRecv, bottomThickness*rightThickness*depthSize, &
                        MPI_Real, commWith, topLeftTag, communicator, requests(8), ierror)
         call checkMPIError()
+#ifdef NESTED_LES
+        else
+            ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 7,8 FOR',rank, '=>',commWith
+            requests(7) = MPI_REQUEST_NULL
+            requests(8) = MPI_REQUEST_NULL
+        end if
 #endif
     end if
-#ifdef MPI
+
     do i=1,8
         if (requests(i) .ne. MPI_REQUEST_NULL) then
             call MPI_Wait(requests(i), status, ierror)
             call checkMPIError()
         end if
     end do
+#ifdef NESTED_LES
+        if ( (inNestedGrid() .and. .not. inNestedGridByRank(commWith) .and. (syncTicks == 0) ) .or. .not. (inNestedGrid() .and. .not. inNestedGridByRank(commWith))) then
 #endif
+
     if (.not. isTopRow(procPerRow) .and. .not. isLeftmostColumn(procPerRow)) then
         do r=1,topThickness
             do c=1,leftThickness
@@ -329,6 +448,7 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
             end do
         end do
     end if
+
     if (.not. isTopRow(procPerRow) .and. .not. isRightmostColumn(procPerRow)) then
         do r=1,topThickness
             do c=1,rightThickness
@@ -356,6 +476,11 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
             end do
         end do
     end if
+#ifdef NESTED_LES
+        else
+            print *, 'SKIPPING ARRAY UPDATES FOR',rank, '=>',commWith
+        end if
+#endif
     deallocate(topLeftRecv)
     deallocate(topLeftSend)
     deallocate(topRightRecv)
@@ -458,7 +583,9 @@ subroutine distributeZBM(zbm, ip, jp, ipmax, jpmax, procPerRow)
                     sendBuffer(r, c) = zbm(startRow + r, startCol + c)
                 end do
             end do
+#ifdef GR_DEBUG
             print*, 'GR: sendBuffer zbm sum: ', sum(sendBuffer)
+#endif
             call MPI_Send(sendBuffer, (ip*jp), MPI_REAL, i, zbmTag, &
                           communicator, ierror)
             call checkMPIError()
@@ -468,7 +595,9 @@ subroutine distributeZBM(zbm, ip, jp, ipmax, jpmax, procPerRow)
         call MPI_Recv(recvBuffer, (ip*jp), MPI_REAL, 0, zbmTag, communicator, &
                       status, ierror)
         call checkMPIError()
+#ifdef GR_DEBUG
         print*, 'GR: recvBuffer zbm sum: ', sum(recvBuffer)
+#endif
         do r=1, ip
             do c=1, jp
                 zbm(r, c) = recvBuffer(r, c)
@@ -516,7 +645,9 @@ subroutine distribute1DRealRowWiseArray(arrayToBeSent, receivingArray, leftBound
                       status, ierror)
         call checkMPIError()
     end if
+#ifdef GR_DEBUG
     print*, 'GR: rank ', rank, ' row wise sum ', sum(receivingArray)
+#endif
 end subroutine distribute1DRealRowWiseArray
 
 subroutine distribute1DRealColumnWiseArray(arrayToBeSent, receivingArray, leftBoundary, rightBoundary, procPerRow)
@@ -621,8 +752,9 @@ subroutine distributeu(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
                    end do
                 end do
             end do
+#ifdef GR_DEBUG
             print*, 'GR: sendBuffer  sum: ', sum(sendBuffer)
-
+#endif
 
 !       call MPI_COMM_Rank(communicator, rank, ierror)
 !      call checkMPIError()
@@ -644,14 +776,15 @@ subroutine distributeu(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
 !        call checkMPIError()
-
+#ifdef GR_DEBUG
         print*, 'GR: recvBuffer  sum: ', sum(recvBuffer)
-
+#endif
 
             startRow = topLeftRowValue(i, procPerRow, ip)
             startCol = topLeftColValue(i, procPerRow, jp)
+#ifdef GR_DEBUG
         write(*,*) 'startRow=',startRow,'startCol=',startCol
-
+#endif
 
         do k=1, kp
              do c=1, jp
@@ -687,8 +820,9 @@ subroutine distributev(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
                    end do
                 end do
             end do
+#ifdef GR_DEBUG
             print*, 'GR: sendBuffer  sum: ', sum(sendBuffer)
-
+#endif
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
 !        call checkMPIError()
@@ -710,14 +844,15 @@ subroutine distributev(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
 !        call checkMPIError()
-
+#ifdef GR_DEBUG
         print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
-
+#endif
 
             startRow = topLeftRowValue(i, procPerRow, ip)
             startCol = topLeftColValue(i, procPerRow, jp)
+#ifdef GR_DEBUG
         write(*,*) 'startRow=',startRow,'startCol=',startCol
-
+#endif
         do k=1, kp
              do c=1, jp
                do r=1, ip
@@ -750,8 +885,9 @@ subroutine distributew(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
                    end do
                 end do
             end do
+#ifdef GR_DEBUG
             print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
-         
+#endif
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
 !        call checkMPIError()
@@ -773,13 +909,15 @@ subroutine distributew(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
 !        call checkMPIError()
+#ifdef GR_DEBUG
         print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
-
+#endif
 
             startRow = topLeftRowValue(i, procPerRow, ip)
             startCol = topLeftColValue(i, procPerRow, jp)
+#ifdef GR_DEBUG
         write(*,*) 'startRow=',startRow,'startCol=',startCol
-
+#endif
         do k=1, kp
              do c=1, jp
                do r=1, ip
@@ -813,8 +951,9 @@ subroutine distributeusum(usuma, usum,ip, jp, kp, ipmax, jpmax, procPerRow)
                    end do
                 end do
             end do
+#ifdef GR_DEBUG
             print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
-        
+#endif
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
 !        call checkMPIError()
@@ -836,13 +975,15 @@ subroutine distributeusum(usuma, usum,ip, jp, kp, ipmax, jpmax, procPerRow)
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
 !        call checkMPIError()
+#ifdef GR_DEBUG
         print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
-
+#endif
 
             startRow = topLeftRowValue(i, procPerRow, ip)
             startCol = topLeftColValue(i, procPerRow, jp)
+#ifdef GR_DEBUG
         write(*,*) 'startRow=',startRow,'startCol=',startCol
-
+#endif
 
         do k=1, kp
              do c=1, jp
@@ -877,8 +1018,9 @@ subroutine distributep(pa, p,ip, jp, kp, ipmax, jpmax, procPerRow)
                    end do
                 end do
             end do
+#ifdef GR_DEBUG
             print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
-         
+#endif
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
 !        call checkMPIError()
@@ -900,12 +1042,14 @@ subroutine distributep(pa, p,ip, jp, kp, ipmax, jpmax, procPerRow)
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
 !        call checkMPIError()
+#ifdef GR_DEBUG
         print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
-
+#endif
             startRow = topLeftRowValue(i, procPerRow, ip)
             startCol = topLeftColValue(i, procPerRow, jp)
+#ifdef GR_DEBUG
         write(*,*) 'startRow=',startRow,'startCol=',startCol
-
+#endif
         do k=1, kp
              do c=1, jp
                do r=1, ip
@@ -938,8 +1082,9 @@ subroutine distributef(fa, f,ip, jp, kp, ipmax, jpmax, procPerRow)
                    end do
                 end do
             end do
+#ifdef GR_DEBUG
             print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
-         
+#endif
 
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
@@ -962,13 +1107,15 @@ subroutine distributef(fa, f,ip, jp, kp, ipmax, jpmax, procPerRow)
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
 !        call checkMPIError()
+#ifdef GR_DEBUG
         print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
-
+#endif
 
             startRow = topLeftRowValue(i, procPerRow, ip)
             startCol = topLeftColValue(i, procPerRow, jp)
+#ifdef GR_DEBUG
         write(*,*) 'startRow=',startRow,'startCol=',startCol
-
+#endif
         do k=1, kp
              do c=1, jp
                do r=1, ip
@@ -1002,8 +1149,9 @@ subroutine distributefold(folda, fold,ip, jp, kp, ipmax, jpmax, procPerRow)
                    end do
                 end do
             end do
+#ifdef GR_DEBUG
             print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
-
+#endif
          
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
@@ -1026,14 +1174,15 @@ subroutine distributefold(folda, fold,ip, jp, kp, ipmax, jpmax, procPerRow)
 
         call MPI_COMM_Rank(communicator, rank, ierror)
         call checkMPIError()
-
+#ifdef GR_DEBUG
         print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
-
+#endif
 
             startRow = topLeftRowValue(i, procPerRow, ip)
             startCol = topLeftColValue(i, procPerRow, jp)
+#ifdef GR_DEBUG
         write(*,*) 'startRow=',startRow,'startCol=',startCol
-
+#endif
         do k=1, kp
              do c=1, jp
                do r=1, ip
@@ -1547,11 +1696,14 @@ subroutine gatheraaa(gaaa, aaa, procPerRow)
     real(kind=4), intent(In) :: aaa
     integer :: startRow, startCol, i, j, r, c, k, rank
     real(kind=4) :: sendBuffer, recvBuffer
+#ifdef MPI_NEW_WV
+    integer :: row_comm
+#endif
 
 
-    call MPI_COMM_Rank(communicator, rank, ierror) ! WV: this is redundant
+    call MPI_COMM_Rank(communicator, rank, ierror)
     call checkMPIError()
-
+#ifndef MPI_NEW_WV
     if (rank .gt. mpi_size - procPerRow) then !WV: this is the bottom row excluding the first process
          sendBuffer = aaa
 !         print*, 'Rank: ', rank, ' before aaa: ', aaa
@@ -1582,9 +1734,27 @@ subroutine gatheraaa(gaaa, aaa, procPerRow)
                        status, ierror)
          call checkMPIError()
          gaaa=recvBuffer
-!    print*, 'Rank: ', rank, ' after aaa: ', gaaa
-
+#ifdef WV_DEBUG
+        print*, 'gatheraaa: Rank: ', rank, ' after aaa: ', aaa, gaaa
+#endif
     end if
+#endif
+
+#ifdef MPI_NEW_WV
+    ! Create a new communicator per row
+    call MPI_Comm_split(communicator, (rank / procPerRow), rank, row_comm,ierror)
+    ! If a process is in the bottom row, use this communicator
+    if (rank >= mpi_size - procPerRow) then  !WV: this is the bottom row excluding the first process
+        gaaa = aaa
+        call MPI_AllReduce(MPI_IN_PLACE, gaaa, 1, MPI_REAL, MPI_MAX, row_comm, ierror)
+        call checkMPIError()
+#ifdef WV_DEBUG
+        print*, 'gatheraaa: Rank: ', rank, ' after aaa: ', aaa, gaaa
+#endif
+    end if
+    call MPI_Comm_free(row_comm,ierror)
+    call checkMPIError()
+#endif
 
   end subroutine gatheraaa
 
@@ -1595,11 +1765,13 @@ subroutine gatherbbb(gbbb, bbb, procPerRow)
     real(kind=4), intent(In) :: bbb
     integer :: startRow, startCol, i, j, r, c, k, rank
     real(kind=4) :: sendBuffer, recvBuffer
-
+#ifdef MPI_NEW_WV
+    integer :: row_comm
+#endif
 
     call MPI_COMM_Rank(communicator, rank, ierror)
     call checkMPIError()
-
+#ifndef MPI_NEW_WV
     if (rank.gt.mpi_size - procPerRow) then
          sendBuffer = bbb
 !         print*, 'Rank: ', rank, ' before bbb: ', bbb
@@ -1630,7 +1802,23 @@ subroutine gatherbbb(gbbb, bbb, procPerRow)
 !    print*, 'Rank: ', rank, ' after bbb: ', gbbb
 
     end if
+#endif
 
+#ifdef MPI_NEW_WV
+    ! Create a new communicator per row
+    call MPI_Comm_split(communicator, (rank / procPerRow), rank, row_comm,ierror)
+    ! If a process is in the bottom row, use this communicator
+    if (rank >= mpi_size - procPerRow) then  !WV: this is the bottom row excluding the first process
+        gbbb = bbb
+        call MPI_AllReduce(MPI_IN_PLACE, gbbb, 1, MPI_REAL, MPI_MIN, row_comm, ierror)
+        call checkMPIError()
+#ifdef WV_DEBUG
+        print*, 'gatherbbb: Rank: ', rank, ' after bbb: ', bbb, gbbb
+#endif
+    end if
+    call MPI_Comm_free(row_comm,ierror)
+    call checkMPIError()
+#endif
   end subroutine gatherbbb
 
 end module
