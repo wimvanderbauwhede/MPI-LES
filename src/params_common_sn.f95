@@ -39,8 +39,8 @@ module params_common_sn
     real, parameter :: cs0 = 0.14 !smagorinsky constant
  
 !-- parameter for anime
-    integer, parameter :: i_anime=0
-    integer, parameter :: avetime=20, km_sl=80
+    integer, parameter :: i_anime=1
+    integer, parameter :: avetime=2, km_sl=80 ! WV: was 20
 
 !-- parameter for aveflow
     integer, parameter :: i_aveflow=0
