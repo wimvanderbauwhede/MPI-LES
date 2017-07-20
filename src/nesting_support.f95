@@ -25,10 +25,10 @@ contains
         integer, intent(Out) :: i_s,j_s
         integer :: local_rank, local_rank_cart
         call MPI_COMM_Rank(communicator, local_rank, ierror)
-        print *, 'World Rank:',local_rank, 'Comm:',cartTopComm
+!        print *, 'World Rank:',local_rank, 'Comm:',cartTopComm
         call checkMPIError()
         call MPI_COMM_Rank(cartTopComm, local_rank_cart, ierror)
-        print *, 'Cart Rank:',local_rank_cart, 'Comm:',cartTopComm
+!        print *, 'Cart Rank:',local_rank_cart, 'Comm:',cartTopComm
         call checkMPIError()
         call calcSubgridCoords(local_rank_cart,i_s,j_s)
     end subroutine currentSubgridCoords

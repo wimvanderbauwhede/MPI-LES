@@ -63,7 +63,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
     real(kind=4), dimension(:,:,:), allocatable :: leftRecv, leftSend, rightSend, rightRecv
     real(kind=4), dimension(:,:,:), allocatable :: topRecv, topSend, bottomSend, bottomRecv
 #ifdef NESTED_LES
-    syncTicks = 0 ! for debugging
+!    syncTicks = 0 ! for debugging
 #endif
     if (size(neighbours, 1) .lt. 4) then
         print*, "Error: cannot have a 4-way halo exchange with less than 4 neighbours"
@@ -110,6 +110,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 1,2 FOR',rank, '=>',commWith
             requests(1) = MPI_REQUEST_NULL
             requests(2) = MPI_REQUEST_NULL
         end if
@@ -142,6 +143,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 3,4 FOR',rank, '=>',commWith
             requests(3) = MPI_REQUEST_NULL
             requests(4) = MPI_REQUEST_NULL
         end if
@@ -173,6 +175,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 5,6 FOR',rank, '=>',commWith
             requests(5) = MPI_REQUEST_NULL
             requests(6) = MPI_REQUEST_NULL
         end if
@@ -203,6 +206,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 7,8 FOR',rank, '=>',commWith
             requests(7) = MPI_REQUEST_NULL
             requests(8) = MPI_REQUEST_NULL
         end if
@@ -260,6 +264,8 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
         end do
     end if
 #ifdef NESTED_LES
+    else
+        print *, 'SKIPPING ARRAY UPDATES FOR',rank, '=>',commWith
     end if
 #endif
     call exchangeRealCorners(array, procPerRow, leftThickness, rightThickness, topThickness, bottomThickness)
@@ -281,7 +287,7 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
     integer :: depthSize, commWith, r, c, d
     integer :: i, requests(8)
 #ifdef NESTED_LES
-    syncTicks = 0 ! for debugging
+!    syncTicks = 0 ! for debugging
 #endif
     depthSize = size(array, 3)
     allocate(topLeftRecv(bottomThickness, rightThickness, depthSize))
@@ -321,6 +327,7 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 1,2 FOR',rank, '=>',commWith
             requests(1) = MPI_REQUEST_NULL
             requests(2) = MPI_REQUEST_NULL
         end if
@@ -351,6 +358,7 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 3,4 FOR',rank, '=>',commWith
             requests(3) = MPI_REQUEST_NULL
             requests(4) = MPI_REQUEST_NULL
         end if
@@ -382,6 +390,7 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 5,6 FOR',rank, '=>',commWith
             requests(5) = MPI_REQUEST_NULL
             requests(6) = MPI_REQUEST_NULL
         end if
@@ -413,6 +422,7 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
+            print *, 'SKIPPING TRANSFERS 7,8 FOR',rank, '=>',commWith
             requests(7) = MPI_REQUEST_NULL
             requests(8) = MPI_REQUEST_NULL
         end if
@@ -467,6 +477,8 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
         end do
     end if
 #ifdef NESTED_LES
+        else
+            print *, 'SKIPPING ARRAY UPDATES FOR',rank, '=>',commWith
         end if
 #endif
     deallocate(topLeftRecv)

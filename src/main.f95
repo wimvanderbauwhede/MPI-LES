@@ -1,4 +1,10 @@
 program main
+#ifdef MPI
+    use communication_helper_mpi
+#ifdef NESTED_LES
+    use nesting_support
+#endif
+#endif
     use module_init
     use module_grid
     use module_set
@@ -23,9 +29,6 @@ program main
     use module_les
     use module_press
     use module_adam
-#endif
-#ifdef NESTED_LES
-    use nesting_support
 #endif
     use common_sn
     real(kind=4) :: alpha
@@ -175,6 +178,9 @@ program main
     call setupCartesianVirtualTopology(dimensions, dimensionSizes, &
                                        periodicDimensions, coordinates, &
                                        neighbours, reorder)
+#ifdef NESTED_LES
+    syncTicks = 0
+#endif
 #endif
 #ifdef USE_NETCDF_OUTPUT
     call init_netcdf_file()
@@ -223,11 +229,9 @@ program main
         time = float(n-1)*dt
 #else
         if (inNestedGrid()) then
-            time = float(n-1)*dt_nest
             syncTicks = syncTicks+1
             if (syncTicks == dt_nest/dt_orig) syncTicks = 0
         else
-            time = float(n-1)*dt_orig
             syncTicks = 0
         end if
 #endif

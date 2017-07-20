@@ -1,5 +1,7 @@
-
 module module_set
+#ifdef NESTED_LES
+      use nesting_support
+#endif
 
 contains
 
@@ -85,11 +87,20 @@ contains
 ! --setnmax
       nmax = 8000
 ! --time step
-! WV: NESTING: here we need to set dt based on the subgrid coordinates
-#ifdef NESTED_LES
+! WV: NESTING: we need to set dt based on the subgrid coordinates in params_common_sn
+#ifndef NESTED_LES
+        dt = 0.05 ! seconds
 #else
-      dt = 0.05 ! seconds
+        if (inNestedGrid()) then
+!            print *, 'Process ',rank, ' is in nested grid'
+            dt = dt_nest
+        else
+!            print *, 'Process ',rank, ' is in orig grid'
+            dt = dt_orig
+        end if
 #endif
+
+
 ! --physical property set
       ro = 1.1763
       vn = 15.83*10.**(-6.)
