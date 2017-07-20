@@ -161,7 +161,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
       end do
 #else
       do k=0,km
-          do j=0,jm
+          do j=1,jm
               do i=1,im
                   uani(i,j,k)=uani(i,j,k)+u(i,j,k)
                   vani(i,j,k)=vani(i,j,k)+v(i,j,k)
