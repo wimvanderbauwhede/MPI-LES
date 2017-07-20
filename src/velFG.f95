@@ -1,5 +1,7 @@
 module module_velFG
-
+#ifdef MPI
+    use communication_helper_mpi
+#endif
       use module_vel2 ! add_module_decls() line 156
 contains
 

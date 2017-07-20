@@ -1,5 +1,7 @@
 module module_boundsm
-
+#ifdef MPI
+    use communication_helper_real
+#endif
 contains
 
 subroutine boundsm(km,jm,sm,im)

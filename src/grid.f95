@@ -1,5 +1,7 @@
 module module_grid
-
+#ifdef MPI
+    use communication_helper_real
+#endif
 contains
 
       subroutine grid(dx1,dxl,dy1,dyl,z2,dzn,dzs,dxs,dys)
@@ -45,11 +47,54 @@ contains
 #else
             call currentSubgridCoords(i_s,j_s)
             do i=-1,ip+1
-                ii = i_s*ip+i
-                if (ii>nested_grid_start_x .and. ii< nested_grid_end_x) then
+                ii = i_s*ip !+i ! for example 1*75; start=75, end=225
+                if (ii>=nested_grid_start_x .and. ii< nested_grid_end_x) then
+                    ! In the nested grid
+                    ! Now, what about the neightbours?
+                    if (i<1) then
+                    ! Left halo
+                     if (i_s>0 .and. .not. inNestedGridByCoord(i_s-1,j_s)) then
+                        ! Neighbour is orig
+                        dx1(i) = dxgrid_orig
+                     else
+                        dx1(i) = dxgrid_nest
+                     end if
+                    else if (i>ip) then
+                    ! Right halo
+                     if (i_s<procPerRow-1 .and. .not. inNestedGridByCoord(i_s+1,j_s)) then
+                        ! Neighbour is orig
+                        dx1(i) = dxgrid_orig
+                     else
+                        dx1(i) = dxgrid_nest
+                     end if
+                    else
+                    ! Core
                     dx1(i) = dxgrid_nest
+                    end if
                 else
+                    ! In the original grid
+                    ! Now, what about the neightbours?
+                    if (i<1) then
+                    ! Left halo
+                     if (i_s>0 .and. .not. inNestedGridByCoord(i_s-1,j_s)) then
+                        ! Neighbour is nest NN|OO
+                        dx1(i) = dxgrid_nest
+                     else
+                       ! OO|OO
+                        dx1(i) = dxgrid_orig
+                     end if
+                    else if (i>ip) then
+                    ! Right halo
+                     if (i_s<procPerRow-1 .and. .not. inNestedGridByCoord(i_s+1,j_s)) then
+                        ! Neighbour is nest OO|NN
+                        dx1(i) = dxgrid_nest
+                     else
+                        dx1(i) = dxgrid_orig
+                     end if
+                    else
+                    ! Core
                     dx1(i) = dxgrid_orig
+                    end if
                 end if
             end do
 #endif
@@ -94,14 +139,67 @@ contains
     call distribute1DRealColumnWiseArray(dy1Tot, dy1, 1, 1, procPerRow)
 #else
 !            call currentSubgridCoords(i_s,j_s)
+!            do j=-1,jp+1
+!                jj = j_s*jp+j
+!                if (jj>nested_grid_start_y .and. jj< nested_grid_end_y) then
+!                    dy1(i) = dygrid_nest
+!                else
+!                    dy1(i) = dygrid_orig
+!                end if
+!            end do
+
             do j=-1,jp+1
-                jj = j_s*jp+j
-                if (jj>nested_grid_start_y .and. jj< nested_grid_end_y) then
-                    dy1(i) = dygrid_nest
+                jj = j_s*jp !+j
+                if (jj>=nested_grid_start_y .and. jj< nested_grid_end_y) then
+                    ! In the nested grid
+                    ! Now, what about the neightbours?
+                    if (j<1) then
+                    ! Bottom halo
+                     jf (j_s>0 .and. .not. inNestedGridByCoord(i_s,j_s-1)) then
+                        ! Neighbour is orig
+                        dy1(j) = dygrid_orig
+                     else
+                        dy1(j) = dygrid_nest
+                     end if
+                    else if (j>jp) then
+                    ! Top halo
+                     if (j_s<procPerRow-1 .and. .not. inNestedGridByCoord(i_s,j_s+1)) then
+                        ! Neighbour is orig
+                        dy1(j) = dygrid_orig
+                     else
+                        dy1(j) = dygrid_nest
+                     end if
+                    else
+                    ! Core
+                    dy1(j) = dygrid_nest
+                    end if
                 else
+                    ! In the original grid
+                    ! Now, what about the neightbours?
+                    if (j<1) then
+                    ! Bottom halo
+                     if (j_s>0 .and. .not. inNestedGridByCoord(i_s,j_s-1)) then
+                        ! Neighbour is nest NN|OO
+                        dy1(j) = dygrid_nest
+                     else
+                       ! OO|OO
+                        dy1(j) = dygrid_orig
+                     end if
+                    else if (j>jp) then
+                    ! Top halo
+                     if (j_s<procPerRow-1 .and. .not. inNestedGridByCoord(i_s,j_s+1)) then
+                        ! Neighbour is nest OO|NN
+                        dy1(j) = dygrid_nest
+                     else
+                        dy1(j) = dygrid_orig
+                     end if
+                    else
+                    ! Core
                     dy1(i) = dygrid_orig
+                    end if
                 end if
             end do
+
 #endif
 #else
       do j = 0,jp+1

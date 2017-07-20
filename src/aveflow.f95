@@ -5,7 +5,9 @@ contains
 subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm, &
       uwfx,avesu,avesv,avesw,avesuu,avesvv,avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14,amask1)
     use common_sn ! create_new_include_statements() line 102
-
+#ifdef MPI
+    use communication_helper_real
+#endif
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avel
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avep
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avesm

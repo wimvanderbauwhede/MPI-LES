@@ -24,6 +24,9 @@ program main
     use module_press
     use module_adam
 #endif
+#ifdef NESTED_LES
+    use nesting_support
+#endif
     use common_sn
     real(kind=4) :: alpha
     integer :: ianime
@@ -215,7 +218,20 @@ program main
     call system_clock(timestamp(8), clock_rate)
 #endif
     do n = n0,nmax
+
+#ifndef NESTED_LES
         time = float(n-1)*dt
+#else
+        if (inNestedGrid()) then
+            time = float(n-1)*dt_nest
+            syncTicks = syncTicks+1
+            if (syncTicks == dt_nest/dt_orig) syncTicks = 0
+        else
+            time = float(n-1)*dt_orig
+            syncTicks = 0
+        end if
+#endif
+
 !        if (isMaster()) then
 !        do i=20,30
 !          write(*,*) "main_p",p(i,5,2),i,n,l

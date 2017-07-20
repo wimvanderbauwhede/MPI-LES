@@ -26,6 +26,7 @@ else:
 
 
 # Then build the rest of the code
+verbose = getOpt('v','Verbose','1')
 other=''
 WITH_OCL=''
 with_ocl= getOpt('ocl','Use OpenCL','0')
@@ -36,7 +37,6 @@ if with_ocl == '1':
 else:
     envF['F95']=os.environ['FC']
     envF['LINK']=os.environ['FC']
-    verbose = getOpt('v','Verbose','1')
     VERBOSE = '-DVERBOSE'
     if verbose == '0':
         VERBOSE = ''
@@ -96,10 +96,10 @@ IADAM='-DIADAM=0'
 FFLAGS  = [USE_NETCDF_OUTPUT, WITH_MPI, NESTED_LES, GR_DEBUG, WV_DEBUG, PROC_PER_ROW, PROC_PER_COL, WITH_OCL, NO_FILE_IO, ICAL, IFBF,IANIME, IADAM]
 
 if with_ocl == '0':
-#    FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-fconvert=big-endian', '-mcmodel=medium', VERBOSE,TIMINGS]
-     FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-fconvert=big-endian', '-mcmodel=medium', '-fno-range-check','-fbounds-check','-Wuninitialized','-ffpe-trap=invalid,zero,overflow', VERBOSE,TIMINGS]
-     FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-fconvert=big-endian', '-mcmodel=medium','-fbounds-check', VERBOSE,TIMINGS]
-#    FFLAGS += ['-cpp','-Ofast', '-m64', '-Wall','-ffree-form', '-fconvert=big-endian', VERBOSE,TIMINGS]
+#    FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium', VERBOSE,TIMINGS]
+#     FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium', '-fno-range-check','-fbounds-check','-Wuninitialized','-ffpe-trap=invalid,zero,overflow', VERBOSE,TIMINGS]
+     FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium','-fbounds-check', VERBOSE,TIMINGS]
+#    FFLAGS += ['-cpp','-Ofast', '-m64', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', VERBOSE,TIMINGS]
 
 csources=[]
 CC= os.environ['CC']

@@ -1,11 +1,14 @@
 module module_boundp
-
+#ifdef MPI
+    use communication_helper_real
+#endif
 implicit none
 
 contains
 
 subroutine boundp2(jm,im,p,km)
     use common_sn ! create_new_include_statements() line 102
+
     integer, intent(In) :: im
     integer, intent(In) :: jm
     integer, intent(In) :: km

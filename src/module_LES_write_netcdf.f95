@@ -8,6 +8,9 @@ module module_LES_write_netcdf
 
   use netcdf
   use common_sn
+#ifdef MPI
+    use communication_helper_real
+#endif
   implicit none
   integer :: ncid, ncid_p, ncid_u,ncid_v,ncid_w,ncid_uvwsum
   integer :: pres_varid, pres_varid_p
