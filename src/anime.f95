@@ -2,7 +2,7 @@ module module_anime
 #ifdef MPI
     use communication_helper_real
 #endif
-
+#define MPI_NEW_WV2
 
 #ifdef MPI_NEW_WV2
     use params_common_sn

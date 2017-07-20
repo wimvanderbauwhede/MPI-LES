@@ -3,8 +3,8 @@ module module_grid
     use communication_helper_real
 #ifdef NESTED_LES
       use nesting_support
+      implicit none
 #endif
-    implicit none
 #endif
 contains
 
