@@ -28,7 +28,7 @@ else:
 # Then build the rest of the code
 other=''
 WITH_OCL=''
-with_ocl= getOpt('ocl','Use OpenCL','1')
+with_ocl= getOpt('ocl','Use OpenCL','0')
 if with_ocl == '1':
     WITH_OCL = '-D_OPENCL_LES_WV'
     envF=initOcl(envF)
@@ -64,7 +64,7 @@ if with_mpi == '1':
 #if other =='':
     USE_NETCDF_OUTPUT='-DUSE_NETCDF_OUTPUT'
     if OSX==0:    
-        envF.Append(LIBS=['netcdf']) # for version less than 4.2.0
+        envF.Append(LIBS=['netcdff']) # for version >= 4.2.0
     else:
         envF.Append(LIBS=['mpi_mpifh','netcdff']) # for version more than and equal to 4.2.0 
 
@@ -128,9 +128,10 @@ if OSX == 1:
     LIBPATH = ['/opt/local/lib','/opt/local/lib/openmpi-gcc49/']
 else:
 # test for devtoolset-2 ... so better use a var $DEVTOOLSETROOT?
-    if os.path.exists('/opt/rh/devtoolset-2'):
-        INCLPATH = ['/opt/rh/devtoolset-2/root/usr/include' ]
-        LIBPATH = '/opt/rh/devtoolset-2/root/usr/lib'
+    DEVTOOLSETROOT = os.environ.get('DEVTOOLSETROOT')	 	
+    if DEVTOOLSETROOT is not None:
+        INCLPATH = [DEVTOOLSETROOT+'/usr/include' ]
+        LIBPATH = [DEVTOOLSETROOT+'/usr/lib']
     else:
 # reasonable default ...
   	NETCDF = os.environ.get('NETCDF_DIR')
