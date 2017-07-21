@@ -191,6 +191,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 
        if (isMaster()) then
            ua=ua/real(avetime)
+!           print *,sum(ua)
            irec = 1
            do  k=1,km_sl
                 write(23,rec=irec) ((calc_avg_ua(ua,i,j,k),i=1,ipmax),j=1,jpmax)
@@ -217,7 +218,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
          end do
         end do
        end do
-
+!       print *,sum(ua)
 !boundary
        do k = 1,km
          do j = 1,jpmax
@@ -243,7 +244,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 
        if (isMaster()) then
            wa=wa/real(avetime)
-           irec = 1
+!           irec = 1
            do  k=1,km_sl
                 write(23,rec=irec) ((calc_avg_wa(wa,i,j,k),i=1,ipmax),j=1,jpmax)
                 irec = irec + 1
@@ -296,7 +297,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 
        if (isMaster()) then
            va=va/real(avetime)
-           irec = 1
+!           irec = 1
            do  k=1,km_sl
                 write(23,rec=irec) ((calc_avg_va(va,i,j,k),i=1,ipmax),j=1,jpmax)
                 irec = irec + 1
@@ -352,7 +353,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 
        if (isMaster()) then
            pa=pa/real(avetime)
-           irec = 1
+!           irec = 1
            do  k=1,km_sl
                 write(23,rec=irec) ((pa(i,j,k),i=1,ipmax),j=1,jpmax)
                 irec = irec + 1
