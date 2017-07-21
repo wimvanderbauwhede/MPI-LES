@@ -85,7 +85,11 @@ contains
       n0 = 1
       n1 = 1
 ! --setnmax
+#ifndef WV_TEST
       nmax = 8000
+#else
+      nmax = 20
+#endif
 ! --time step
 ! WV: NESTING: we need to set dt based on the subgrid coordinates in params_common_sn
 #ifndef NESTED_LES

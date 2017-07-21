@@ -1,6 +1,9 @@
 module module_anime
 #ifdef MPI
     use communication_helper_real
+#ifdef NESTED_LES
+    use nesting_support
+#endif
 #ifdef MPI_NEW_WV
     use params_common_sn
     implicit none
@@ -9,8 +12,8 @@ module module_anime
 
 contains
 
-! Added by WV for use with MPI_NEW_WV
-#ifdef MPI_NEW_WV
+! Added by WV for use with MPI_NEW_WV2
+#ifdef MPI_NEW_WV2
 real function calc_avg_ua(ua,i,j,k) result(avg)
     real, dimension(:,:,:), intent(In) :: ua
     integer, intent(In) :: i,j,k
@@ -37,14 +40,6 @@ real function calc_avg_va(va,i,j,k) result(avg)
     avg =real(0.5*(va_jm1+va(i,j,k)))
 end function  calc_avg_va
 
-
-!            do j = 1,jpmax
-!                do i = 1,ipmax
-!                    wa(i,j,0) = 0.0
-!                end do
-!            end do
-! do  k=1,km_sl
-  !write(23,rec=irec) ((real(0.5*(wa(i,j,k-1)+wa(i,j,k))),i=1,ipmax),j=1,jpmax)
 real function calc_avg_wa(wa,i,j,k) result(avg)
     real, dimension(:,:,:), intent(In) :: wa
     integer, intent(In) :: i,j,k
@@ -87,11 +82,11 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
     integer :: irec, i,j,k
     character(len=70) :: filename
 #endif
-#ifdef MPI_NEW_WV
-    real(kind=4), dimension(ip,jp,0:kp+1)  :: uani
-    real(kind=4), dimension(ip,jp,0:kp+1)  :: vani
-    real(kind=4), dimension(ip,jp,0:kp+1) :: wani
-    real(kind=4), dimension(ip,jp,0:kp+1) :: pani
+#ifdef MPI_NEW_WV2
+    real(kind=4), dimension(ip,jp,kp)  :: uani
+    real(kind=4), dimension(ip,jp,kp)  :: vani
+    real(kind=4), dimension(ip,jp,kp) :: wani
+    real(kind=4), dimension(ip,jp,kp) :: pani
 #else
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: uani
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: vani
@@ -148,7 +143,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 !      end if
 
 !average_out
-#ifndef MPI_NEW_WV
+#ifndef MPI_NEW_WV2
       do k=0,km
       do j=0,jm
       do i=0,im
@@ -160,7 +155,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
       end do
       end do
 #else
-      do k=0,km
+      do k=1,km
           do j=1,jm
               do i=1,im
                   uani(i,j,k)=uani(i,j,k)+u(i,j,k)
@@ -171,7 +166,9 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
           end do
       end do
 #endif
-
+#ifdef NESTED_LES
+    if (syncTicks == 0 ) then
+#endif
        if(n.ge.n1.and.mod(n,avetime).eq.0) then !default
 !       if(mod(n,avetime).eq.0) then !default
 
@@ -182,16 +179,16 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 
 ! ---- ua ----
 
-#ifdef MPI_NEW_WV
+#ifdef MPI_NEW_WV2
         if (isMaster()) then
-            allocate(ua(ipmax,jpmax,0:kp+1))
+            allocate(ua(ipmax,jpmax,kp))
         end if
-        call MPI_Gather(uani, ip*jp*(kp+2), MPI_REAL, ua, ip*jp*(kp+2), MPI_REAL, 0, communicator, ierror)
+        call MPI_Gather(uani, ip*jp*kp, MPI_REAL, ua, ip*jp*kp, MPI_REAL, 0, communicator, ierror)
         call checkMPIError()
 
        if (isMaster()) then
            ua=ua/real(avetime)
-!           print *,sum(ua)
+           print *,ua(ipmax/2,jpmax/2,kp/2)
            irec = 1
            do  k=1,km_sl
                 write(23,rec=irec) ((calc_avg_ua(ua,i,j,k),i=1,ipmax),j=1,jpmax)
@@ -218,7 +215,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
          end do
         end do
        end do
-!       print *,sum(ua)
+       print *,ua(ipmax/2,jpmax/2,kp/2)
 !boundary
        do k = 1,km
          do j = 1,jpmax
@@ -235,11 +232,11 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
        deallocate(ua)
 #endif
 ! ---- wa -----
-#ifdef MPI_NEW_WV
+#ifdef MPI_NEW_WV2
         if (isMaster()) then
-            allocate(wa(ipmax,jpmax,0:kp+1))
+            allocate(wa(ipmax,jpmax,kp))
         end if
-        call MPI_Gather(wani, ip*jp*(kp+2), MPI_REAL, wa, ip*jp*(kp+2), MPI_REAL, 0, communicator, ierror)
+        call MPI_Gather(wani, ip*jp*kp, MPI_REAL, wa, ip*jp*kp, MPI_REAL, 0, communicator, ierror)
         call checkMPIError()
 
        if (isMaster()) then
@@ -289,10 +286,10 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 
 
 ! ---- va ----
-#ifdef MPI_NEW_WV
-        if (isMaster()) allocate(va(ipmax,jpmax,0:kp+1))
+#ifdef MPI_NEW_WV2
+        if (isMaster()) allocate(va(ipmax,jpmax,kp))
 
-        call MPI_Gather(vani, ip*jp*(kp+2), MPI_REAL, va, ip*jp*(kp+2), MPI_REAL, 0, communicator, ierror)
+        call MPI_Gather(vani, ip*jp*kp, MPI_REAL, va, ip*jp*kp, MPI_REAL, 0, communicator, ierror)
         call checkMPIError()
 
        if (isMaster()) then
@@ -346,9 +343,9 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 
 
 !--------pressure-----------
-#ifdef MPI_NEW_WV
-       if (isMaster()) allocate(pa(ipmax,jpmax,0:kp+1))
-       call MPI_Gather(pani, ip*jp*(kp+2), MPI_REAL, pa, ip*jp*(kp+2), MPI_REAL, 0, communicator, ierror)
+#ifdef MPI_NEW_WV2
+       if (isMaster()) allocate(pa(ipmax,jpmax,kp))
+       call MPI_Gather(pani, ip*jp*kp, MPI_REAL, pa, ip*jp*kp, MPI_REAL, 0, communicator, ierror)
        call checkMPIError()
 
        if (isMaster()) then
@@ -393,7 +390,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 #endif
 
 
-#ifdef MPI_NEW_WV
+#ifdef MPI_NEW_WV2
       uani=0.
       vani=0.
       wani=0.
@@ -411,7 +408,9 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
       end do
 #endif
       end if ! timestep condition
-
+#ifdef NESTED_LES
+    end if
+#endif
 #endif
 
 end subroutine anime

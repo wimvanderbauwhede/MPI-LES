@@ -10,6 +10,10 @@ contains
 
 subroutine getGlobalSumOf(value)
     real(kind=4), intent(inout) :: value
+#ifdef NESTED_LES
+    if (syncTicks == 0 ) then
+#endif
+
 #ifdef GR_DEBUG
     print*, 'Rank: ', rank, ' before sum: ', value
 #endif
@@ -20,10 +24,18 @@ subroutine getGlobalSumOf(value)
 #ifdef MPI
     call checkMPIError()
 #endif
+#ifdef NESTED_LES
+    end if
+#endif
+
 end subroutine getGlobalSumOf
 
 subroutine getGlobalMaxOf(value)
     real(kind=4), intent(inout) :: value
+#ifdef NESTED_LES
+    if (syncTicks == 0 ) then
+#endif
+
 #ifdef GR_DEBUG
     print*, 'Rank: ', rank, ' before max: ', value
 #endif
@@ -34,10 +46,17 @@ subroutine getGlobalMaxOf(value)
 #ifdef MPI
     call checkMPIError()
 #endif
+#ifdef NESTED_LES
+    end if
+#endif
+
 end subroutine getGlobalMaxOf
 
 subroutine getGlobalMinOf(value)
     real(kind=4), intent(inout) :: value
+#ifdef NESTED_LES
+    if (syncTicks == 0 ) then
+#endif
 #ifdef GR_DEBUG
     print*, 'Rank: ', rank, ' before min: ', value
 #endif
@@ -48,11 +67,15 @@ subroutine getGlobalMinOf(value)
 #ifdef MPI
     call checkMPIError()
 #endif
+#ifdef NESTED_LES
+    end if
+#endif
 end subroutine getGlobalMinOf
 
 subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
                                 rightThickness, topThickness, &
                                 bottomThickness)
+
     real(kind=4), dimension(:,:,:), intent(inout) :: array
     integer, dimension(:), intent(in) :: neighbours
     integer, intent(in) :: procPerRow, leftThickness, rightThickness, topThickness, bottomThickness
@@ -110,7 +133,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
-            print *, 'SKIPPING TRANSFERS 1,2 FOR',rank, '=>',commWith
+            ! print *, 'SKIPPING TRANSFERS 1,2 FOR',rank, '=>',commWith
             requests(1) = MPI_REQUEST_NULL
             requests(2) = MPI_REQUEST_NULL
         end if
@@ -143,7 +166,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
-            print *, 'SKIPPING TRANSFERS 3,4 FOR',rank, '=>',commWith
+            ! print *, 'SKIPPING TRANSFERS 3,4 FOR',rank, '=>',commWith
             requests(3) = MPI_REQUEST_NULL
             requests(4) = MPI_REQUEST_NULL
         end if
@@ -175,7 +198,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
-            print *, 'SKIPPING TRANSFERS 5,6 FOR',rank, '=>',commWith
+            ! print *, 'SKIPPING TRANSFERS 5,6 FOR',rank, '=>',commWith
             requests(5) = MPI_REQUEST_NULL
             requests(6) = MPI_REQUEST_NULL
         end if
@@ -206,7 +229,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
-            print *, 'SKIPPING TRANSFERS 7,8 FOR',rank, '=>',commWith
+            ! print *, 'SKIPPING TRANSFERS 7,8 FOR',rank, '=>',commWith
             requests(7) = MPI_REQUEST_NULL
             requests(8) = MPI_REQUEST_NULL
         end if
@@ -265,7 +288,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
     end if
 #ifdef NESTED_LES
     else
-        print *, 'SKIPPING ARRAY UPDATES FOR',rank, '=>',commWith
+        ! print *, 'SKIPPING ARRAY UPDATES FOR',rank, '=>',commWith
     end if
 #endif
     call exchangeRealCorners(array, procPerRow, leftThickness, rightThickness, topThickness, bottomThickness)
@@ -327,7 +350,7 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
-            print *, 'SKIPPING TRANSFERS 1,2 FOR',rank, '=>',commWith
+            ! print *, 'SKIPPING TRANSFERS 1,2 FOR',rank, '=>',commWith
             requests(1) = MPI_REQUEST_NULL
             requests(2) = MPI_REQUEST_NULL
         end if
@@ -358,7 +381,7 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
-            print *, 'SKIPPING TRANSFERS 3,4 FOR',rank, '=>',commWith
+            ! print *, 'SKIPPING TRANSFERS 3,4 FOR',rank, '=>',commWith
             requests(3) = MPI_REQUEST_NULL
             requests(4) = MPI_REQUEST_NULL
         end if
@@ -390,7 +413,7 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
-            print *, 'SKIPPING TRANSFERS 5,6 FOR',rank, '=>',commWith
+            ! print *, 'SKIPPING TRANSFERS 5,6 FOR',rank, '=>',commWith
             requests(5) = MPI_REQUEST_NULL
             requests(6) = MPI_REQUEST_NULL
         end if
@@ -422,7 +445,7 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
 #ifdef NESTED_LES
         else
             ! Skip the transfer, set the request status accordingly
-            print *, 'SKIPPING TRANSFERS 7,8 FOR',rank, '=>',commWith
+            ! print *, 'SKIPPING TRANSFERS 7,8 FOR',rank, '=>',commWith
             requests(7) = MPI_REQUEST_NULL
             requests(8) = MPI_REQUEST_NULL
         end if
@@ -478,7 +501,7 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
     end if
 #ifdef NESTED_LES
         else
-            print *, 'SKIPPING ARRAY UPDATES FOR',rank, '=>',commWith
+            ! print *, 'SKIPPING ARRAY UPDATES FOR',rank, '=>',commWith
         end if
 #endif
     deallocate(topLeftRecv)
@@ -733,6 +756,7 @@ subroutine collect3DReal4Array(array, arrayTot, leftBoundary, rightBoundary, &
         call checkMPIError()
 #endif
     end if
+
 end subroutine collect3DReal4Array
 
 
@@ -1510,6 +1534,13 @@ subroutine distributeaveu(aveua, aveu,ip, jp, kp, ipmax, jpmax, procPerRow)
     integer :: startRow, startCol, i, r, c, k, rank,j
     character(70) :: cha
     real(kind=4), dimension(ip,jp, kp) :: sendBuffer, recvBuffer
+#ifdef NESTED_LES
+    if (syncTicks == 0 ) then
+#endif
+#ifdef NESTED_LES
+    end if
+#endif
+
     if (.not.isMaster()) then
 
             do k=1, kp
@@ -1636,6 +1667,7 @@ subroutine distributeaveuu(aveuua, aveuu,ip, jp, kp, ipmax, jpmax, procPerRow)
     integer :: startRow, startCol, i, r, c, k, rank,j
     character(70) :: cha
     real(kind=4), dimension(ip,jp, kp) :: sendBuffer, recvBuffer
+
     if (.not.isMaster()) then
 
             do k=1, kp
@@ -1741,21 +1773,32 @@ subroutine gatheraaa(gaaa, aaa, procPerRow)
 #endif
 
 #ifdef MPI_NEW_WV
+#ifdef NESTED_LES
+    if (syncTicks==0) then
+#endif
+print *,'Create a new communicator per row', rank
     ! Create a new communicator per row
     call MPI_Comm_split(communicator, (rank / procPerRow), rank, row_comm,ierror)
+    print *,'checkMPIError'
+    call checkMPIError()
     ! If a process is in the bottom row, use this communicator
     if (rank >= mpi_size - procPerRow) then  !WV: this is the bottom row excluding the first process
+        print *,'this is the bottom row excluding the first process'
         gaaa = aaa
         call MPI_AllReduce(MPI_IN_PLACE, gaaa, 1, MPI_REAL, MPI_MAX, row_comm, ierror)
         call checkMPIError()
-#ifdef WV_DEBUG
+!#ifdef WV_DEBUG
         print*, 'gatheraaa: Rank: ', rank, ' after aaa: ', aaa, gaaa
-#endif
+!#endif
+    else
+        print *, 'do nothing'
     end if
     call MPI_Comm_free(row_comm,ierror)
     call checkMPIError()
 #endif
-
+#ifdef NESTED_LES
+    end if
+#endif
   end subroutine gatheraaa
 
 !WV: This routine is identical to gatheraaa except that it does min rather than max. Again, bottom row only.
@@ -1805,6 +1848,9 @@ subroutine gatherbbb(gbbb, bbb, procPerRow)
 #endif
 
 #ifdef MPI_NEW_WV
+#ifdef NESTED_LES
+    if (syncTicks==0) then
+#endif
     ! Create a new communicator per row
     call MPI_Comm_split(communicator, (rank / procPerRow), rank, row_comm,ierror)
     ! If a process is in the bottom row, use this communicator
@@ -1818,7 +1864,11 @@ subroutine gatherbbb(gbbb, bbb, procPerRow)
     end if
     call MPI_Comm_free(row_comm,ierror)
     call checkMPIError()
+#ifdef NESTED_LES
+    end if
 #endif
+#endif
+
   end subroutine gatherbbb
 
 end module

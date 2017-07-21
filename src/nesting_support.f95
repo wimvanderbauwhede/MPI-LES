@@ -2,6 +2,7 @@ module nesting_support
     use params_common_sn
     use communication_helper_mpi
     implicit none
+!    integer, dimension(0:procPerCol*procPerRow-1) :: syncTicks
     integer :: syncTicks
     save syncTicks
 
@@ -48,6 +49,7 @@ contains
     logical function inNestedGrid() result(in_grid)
             integer :: local_rank
             call MPI_COMM_Rank(communicator, local_rank, ierror)
+!            print *, 'rank in inNestedGrid():',local_rank,rank
             call checkMPIError()
             in_grid = inNestedGridByRank(local_rank)
     end function inNestedGrid

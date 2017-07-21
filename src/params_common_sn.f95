@@ -36,7 +36,7 @@ module params_common_sn
 #ifndef TEST_NESTED_LES
     character(300) :: datafile = '../GIS/Kyoto_1km2_4m_with_buffer.txt'
 #else
-    character(300) :: datafile = '../GIS/Kyoto_1km2_4m_nest_2m_with_buffer.txt'
+    character(300) :: datafile = '../GIS/Kyoto_1km2_4m_with_buffer_nest_2_4_2_4_100_100_200_200.txt'
 #endif
 
 !-- grid
