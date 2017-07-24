@@ -100,10 +100,12 @@ module params_common_sn
 ! Time steps
 #ifdef TEST_NESTED_LES
     real, parameter :: dt_nest = 0.025 ! seconds
+    real, parameter :: dt_orig = 0.025 ! seconds
 #else
     real, parameter :: dt_nest = 0.05 ! seconds
-#endif
     real, parameter :: dt_orig = 0.05 ! seconds
+#endif
+
 
 
 #endif

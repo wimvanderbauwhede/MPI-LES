@@ -4,7 +4,7 @@ module nesting_support
     implicit none
 !    integer, dimension(0:procPerCol*procPerRow-1) :: syncTicks
     integer :: syncTicks
-    save syncTicks
+!    save syncTicks
 
 contains
     subroutine calcSubgridCoords(local_rank,i_s,j_s)
@@ -22,6 +22,13 @@ contains
 !        j_s = rank % procPerRow !=> column, base 0
     end subroutine calcSubgridCoords
 
+    subroutine calcRankBySubgridCoords(i_s,j_s,local_rank)
+        integer, intent(Out) :: i_s,j_s
+        integer, intent(Out) :: local_rank
+        local_rank = i_s*procPerRow+j_s
+    end subroutine calcRankBySubgridCoords
+
+
     subroutine currentSubgridCoords(i_s,j_s)
         integer, intent(Out) :: i_s,j_s
         integer :: local_rank, local_rank_cart
@@ -38,7 +45,7 @@ contains
             integer, intent(In) :: local_rank
             integer :: i_s, j_s
             call calcSubgridCoords(local_rank,i_s,j_s)
-            in_grid = i_s >= i_s_nest_start .and. i_s <= i_s_nest_end .and. j_s >= j_s_nest_start .and. j_s <= j_s_nest_end
+            in_grid = (local_rank > 0) .and. i_s >= i_s_nest_start .and. i_s <= i_s_nest_end .and. j_s >= j_s_nest_start .and. j_s <= j_s_nest_end
     end function inNestedGridByRank
 
     logical function inNestedGridByCoord(i_s,j_s) result(in_grid)

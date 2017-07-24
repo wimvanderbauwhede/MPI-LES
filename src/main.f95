@@ -170,7 +170,8 @@ program main
     integer (kind=4), dimension(0:9) :: timestamp
 #endif
 #ifdef NESTED_LES
-    integer :: syncTicksLocal
+!    integer :: syncTicksLocal
+    logical :: inNest
 #endif
 #ifdef MPI
     call initialise_mpi()
@@ -182,7 +183,8 @@ program main
                                        periodicDimensions, coordinates, &
                                        neighbours, reorder)
 #ifdef NESTED_LES
-    syncTicksLocal = 1
+    syncTicksLocal = 0
+    syncTicks = 0
 #endif
 #endif
 #ifdef USE_NETCDF_OUTPUT
@@ -226,22 +228,38 @@ program main
 !    nmax=201
     call system_clock(timestamp(8), clock_rate)
 #endif
+#ifdef NESTED_LES
+inNest = inNestedGrid()
+#endif
     do n = n0,nmax
         time = float(n-1)*dt
 
 #ifdef NESTED_LES
-print *,  'TEST n:',n,'rank:',rank,'ticks:',syncTicks
-        if (inNestedGridByRank(rank)) then
-            syncTicksLocal = syncTicksLocal+1
-            if (syncTicksLocal == int(dt_orig/dt_nest)) then
-                syncTicksLocal = 0
+        if (rank==0) print *, time
+!print *,'before orig/nest test', rank
+        if (inNest) then
+!            syncTicksLocal = syncTicksLocal+1
+!            if (syncTicksLocal == int(dt_orig/dt_nest)) then
+            if (mod(n,int(dt_orig/dt_nest))==0) then
+!                syncTicksLocal = 0
+                syncTicks = 0
+!                print *,n,'barrier nest', rank
+!                call MPI_Barrier(communicator,ierror)
+!                print *,'AFTER barrier nest',rank
+            else
+!                print *,n,'NO barrier nest', rank
+                syncTicks = 1
             end if
-            print *,  'NEST: n:',n,'rank:',rank,'ticks:',syncTicks
+!            print *,  'NEST: n:',n,'rank:',rank,'ticks:',syncTicks
         else
-            syncTicksLocal = 0
-            print *,  'orig: n:',n,'rank:',rank,'ticks:',syncTicks
+            syncTicks = 0
+!            print *,  'orig: n:',n,'rank:',rank,'ticks:',syncTicks
+!            print *,'barrier orig',rank
+!
+!            print *,'AFTER barrier orig',rank
         end if
-        call MPI_Barrier(communicator,ierror)
+!        if (syncTicks == 0) call MPI_Barrier(communicator,ierror)
+!                print *,'AFTER barrier',rank
         call checkMPIError()
 #endif
 
@@ -256,22 +274,22 @@ print *,  'TEST n:',n,'rank:',rank,'ticks:',syncTicks
 #else
 ! -------calculate turbulent flow--------c
 #ifdef TIMINGS
-        print *, n,rank, 'run_LES_reference: time step = ',n
+        !!print *, n,rank, 'run_LES_reference: time step = ',n
 #endif
 #ifdef TIMINGS
         call system_clock(timestamp(0), clock_rate)
 #endif
-print *, n,rank, 'velnw'
+!print *, n,rank, 'velnw'
         call velnw(km,jm,im,p,ro,dxs,u,dt,f,dys,v,g,dzs,w,h) !WV: no MPI
 #ifdef TIMINGS
         call system_clock(timestamp(1), clock_rate)
 #endif
-print *, n,rank, 'bondv1'
+!print *, n,rank, 'bondv1'
         call bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs) !WV: via halos + gatheraaa/bbb. Sideflow etc should be OK as in outer domain ???
 #ifdef TIMINGS
         call system_clock(timestamp(2), clock_rate)
 #endif
-print *, n,rank, 'velfg'
+!print *, n,rank, 'velfg'
         call velfg(km,jm,im,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn, &
                    vn,f,cov4,cov5,cov6,dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9, &
                    dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
@@ -280,25 +298,25 @@ print *, n,rank, 'velfg'
         call system_clock(timestamp(3), clock_rate)
 #endif
 #if IFBF == 1
-print *, n,rank, 'feedbf'
+!!print *, n,rank, 'feedbf'
         call feedbf(km,jm,im,usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha, &
                     dt,beta,fx,fy,fz,f,g,h,n) ! WV: no MPI
 #endif
 #ifdef TIMINGS
         call system_clock(timestamp(4), clock_rate)
 #endif
-print *, n,rank, 'les'
+!!print *, n,rank, 'les'
         call les(km,delx1,dx1,dy1,dzn,jm,im,diu1,diu2,diu3,diu4,diu5,diu6, &
                  diu7,diu8,diu9,sm,f,g,h,u,v,uspd,vspd,dxs,dys,n) ! WV: no MPI
 #ifdef TIMINGS
         call system_clock(timestamp(5), clock_rate)
 #endif
-print *, n,rank, 'adam'
+!!print *, n,rank, 'adam'
         call adam(n,nmax,data21,fold,im,jm,km,gold,hold,fghold,f,g,h) ! WV: no MPI
 #ifdef TIMINGS
         call system_clock(timestamp(6), clock_rate)
 #endif
-print *, n,rank, 'press'
+!print *, n,rank, 'press'
         call press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s, &
                    cn3l,cn3s,cn4l,cn4s,n, nmax,data20,usum,vsum,wsum) !WV getGlobalSumOf and exchangeRealHalos (in boundp)
 #ifdef TIMINGS
@@ -315,7 +333,7 @@ print *, n,rank, 'press'
         call timseris(n,dt,u,v,w)
 #endif
 #if IANIME == 1
-    print *, n,rank, 'NO ANIME!'
+    !print *, n,rank, 'NO ANIME!'
       if (i_anime.eq.1) then
         call anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,&
                    amask1,zbm) !WV: I put the sync condition in this code
