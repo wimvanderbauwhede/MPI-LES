@@ -91,7 +91,7 @@ contains
 #ifdef NESTED_LES
         if (inNestedGrid()) then
 !            print *, 'Process ',rank, ' is in nested grid'
-            nmax = nmax* dt_orig / dt_nest
+            nmax = nmax*(dt_orig / dt_nest)
         else
             nmax = nmax+1
         end if
@@ -103,7 +103,7 @@ contains
         nmax = 20
 #ifdef NESTED_LES
         if (inNestedGrid()) then
-            nmax = nmax*dt_orig/dt_nest
+            nmax = nmax*(dt_orig/dt_nest)
         else
             nmax = nmax+1
         end if

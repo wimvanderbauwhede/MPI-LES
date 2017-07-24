@@ -201,7 +201,7 @@ program main
     call init(km,jm,im,u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,&
               amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
 !    n0=200
-#ifndef WV_DEBUG_MPI
+!#ifndef WV_DEBUG_MPI
     call ifdata( &
 !#if ICAL == 1
                 data30,data31, fold,gold,hold,fghold, time, &
@@ -211,7 +211,7 @@ program main
                 cov2,cov3,dfu1,vn,cov4,cov5,cov6,dfv1,cov7,cov8,cov9,dfw1,dzs,&
                 nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,bmask1,cmask1,&
                 dmask1,alpha,beta,fx,fy,fz,amask1,zbm,ical,nif)
-#endif
+!#endif
 !     n=n0
 
 #ifdef _OPENCL_LES_WV
@@ -359,14 +359,15 @@ if (n>2) then
 
 #if IANIME == 1
     !print *, n,rank, 'NO ANIME!'
-      if (i_anime.eq.1) then
+      if (i_anime .eq. 1) then
         call anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,&
                    amask1,zbm) !WV: I put the sync condition in this code
       end if
-      if (i_ifdata_out.eq.1) then  
+      ! WV: sorry, not supported at the moment
+      if (i_ifdata_out .eq. 1) then
         call ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,hold) !WV: TODO: put the sync condition in this code
       end if
-      if (i_aveflow.eq.1) then  
+      if (i_aveflow .eq. 1) then
         call aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww, &
                      avesm,avesmsm,uwfx,avesu,avesv,avesw,avesuu,avesvv, &
                      avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14,amask1)  !WV: TODO: put the sync condition in this code

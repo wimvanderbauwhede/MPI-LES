@@ -231,8 +231,6 @@ contains
     character(len=70) :: filename
 #endif
 
-
-
 #if IADAM == 1
         character(len=70) :: data21dummy
         integer :: n1,n2
@@ -250,18 +248,15 @@ contains
 !           = 10;continuous data write
 !
 !#if ICAL == 1
-
-
        if(ical == 1) then
 
- 
         if (isMaster()) then
             write(filename, '("../data/data30",i6.6, ".dat")') nif
             open(unit=30,file=filename,form='unformatted',status='unknown')
             read(30) n,time
         end if
  
-#ifdef MPI_NEW_WV
+#ifdef MPI_NEW_WV2
         if (isMaster()) then
             allocate(ua(ipmax,jpmax,kp))
             read(30) (((ua(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
@@ -289,7 +284,7 @@ contains
         deallocate(ua)
 #endif
 
-#ifdef MPI_NEW_WV
+#ifdef MPI_NEW_WV2
         if (isMaster()) then
             allocate(va(ipmax,jpmax,kp))
             read(30) (((va(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
@@ -316,7 +311,7 @@ contains
         deallocate(va)
 #endif
 
-#ifdef MPI_NEW_WV
+#ifdef MPI_NEW_WV2
         if (isMaster()) then
             allocate(wa(ipmax,jpmax,kp))
             read(30) (((wa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
@@ -344,7 +339,7 @@ contains
         deallocate(wa)
 #endif
 
-#ifdef MPI_NEW_WV
+#ifdef MPI_NEW_WV2
         if (isMaster()) then
             allocate(pa(ipmax,jpmax,kp))
             read(30) (((pa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
@@ -554,22 +549,14 @@ contains
 
      end if
 
-
-!        call bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
-
-
-
 #ifdef NESTED_LES
             call boundp1(n,km,jm,p,im)
-#else
-            call boundp1(km,jm,p,im)
-#endif
-
-#ifdef NESTED_LES
             call boundp2(n,jm,im,p,km)
 #else
+            call boundp1(km,jm,p,im)
             call boundp2(jm,im,p,km)
 #endif
+
 !        call velfg(km,jm,im,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6,dfv1, &
 !      diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
 !      nou4,nou6,nou7,nou8)

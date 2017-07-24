@@ -13,10 +13,7 @@ module params_common_sn
     logical :: reorder
     data dimensionSizes /procPerCol,procPerRow/, periodicDimensions /.false.,.false./, &
     reorder /.false./
-#endif
 
-#ifndef TEST_SMALL_DOMAIN
-#ifdef MPI
 #ifndef NESTED_LES
     integer, parameter :: ipmax = 300, jpmax = 300 !
     integer, parameter :: ip = ipmax/PROC_PER_COL ! rows per process
@@ -24,10 +21,12 @@ module params_common_sn
 #endif
     integer, parameter :: kp=80
 #else
+! No MPI
+#ifndef TEST_SMALL_DOMAIN
     integer, parameter :: ip = 300, jp = 300, kp = 80 ! so @4m, max is 1200m x 1200m
-#endif
 #else
     integer, parameter :: ip = 25, jp = 25, kp = 80
+#endif
 #endif
 
 ! WV: unused:   integer, parameter :: bipmax = 300, bjpmax = 300, bx = 0, by = 0
@@ -87,8 +86,8 @@ module params_common_sn
     real, parameter :: dygrid_orig = 4.0
 
 ! Subgrid size
-    integer, parameter :: ipmax =orig_grid_x + nested_grid_x*(1 - dxgrid_nest/dxgrid_orig)
-    integer, parameter :: jpmax = orig_grid_y + nested_grid_y*(1 - dygrid_nest/dygrid_orig)
+    integer, parameter :: ipmax =orig_grid_x + nested_grid_x*(1 - (dxgrid_nest/dxgrid_orig))
+    integer, parameter :: jpmax = orig_grid_y + nested_grid_y*(1 - (dygrid_nest/dygrid_orig))
     integer, parameter :: ip = ipmax / PROC_PER_COL ! rows per process
     integer, parameter :: jp = ipmax / PROC_PER_ROW ! columns per process
 ! Subgrid coordinates for nest

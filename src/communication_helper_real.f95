@@ -1327,7 +1327,7 @@ subroutine distributeifu(ua, ip, jp, kp, ipmax, jpmax, procPerRow)
                   end do
                 end do
             end do
-            print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
+            ! print *, 'GR: sendBuffer sum: ', sum(sendBuffer)
 
             call MPI_Send(sendBuffer, (ip*jp*kp), MPI_REAL, i, zbmTag, &
                           communicator, ierror)
@@ -1346,7 +1346,7 @@ subroutine distributeifu(ua, ip, jp, kp, ipmax, jpmax, procPerRow)
 !        write(*,*) 'recv_rank=',rank
 
 
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
+        ! print *, 'GR: recvBuffer sum: ', sum(recvBuffer)
         do k=1, kp
             do c=1, jp
              do r=1, ip
@@ -1377,7 +1377,7 @@ subroutine distributeifw(wa, ip, jp, kp, ipmax, jpmax, procPerRow)
                  end do
                 end do
             end do
-            print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
+            ! print *, 'GR: sendBuffer sum: ', sum(sendBuffer)
 
 
             call MPI_Send(sendBuffer, (ip*jp*kp), MPI_REAL, i, zbmTag, &
@@ -1397,7 +1397,7 @@ subroutine distributeifw(wa, ip, jp, kp, ipmax, jpmax, procPerRow)
 !        write(*,*) 'recv_rank=',rank
 
 
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
+        ! print *, 'GR: recvBuffer sum: ', sum(recvBuffer)
         do k=1, kp
             do c=1, jp
              do r=1, ip
@@ -1428,7 +1428,7 @@ subroutine distributeifusum(usuma, ip, jp, kp, ipmax, jpmax, procPerRow)
                  end do
                 end do
             end do
-            print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
+            ! print *, 'GR: sendBuffer sum: ', sum(sendBuffer)
 
 
             call MPI_Send(sendBuffer, (ip*jp*kp), MPI_REAL, i, zbmTag, &
@@ -1448,7 +1448,7 @@ subroutine distributeifusum(usuma, ip, jp, kp, ipmax, jpmax, procPerRow)
 !        write(*,*) 'recv_rank=',rank
 
 
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
+        ! print *, 'GR: recvBuffer sum: ', sum(recvBuffer)
         do k=1, kp
             do c=1, jp
              do r=1, ip
@@ -1480,7 +1480,7 @@ subroutine distributeifp(pa, ip, jp, kp, ipmax, jpmax, procPerRow)
                  end do
                 end do
             end do
-            print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
+            ! print *, 'GR: sendBuffer sum: ', sum(sendBuffer)
 
 
             call MPI_Send(sendBuffer, (ip*jp*kp), MPI_REAL, i, zbmTag, &
@@ -1500,7 +1500,7 @@ subroutine distributeifp(pa, ip, jp, kp, ipmax, jpmax, procPerRow)
 !        write(*,*) 'recv_rank=',rank
 
 
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
+        ! print *, 'GR: recvBuffer sum: ', sum(recvBuffer)
         do k=1, kp
             do c=1, jp
              do r=1, ip
@@ -1531,8 +1531,7 @@ subroutine distributeiff(fa, ip, jp, kp, ipmax, jpmax, procPerRow)
                  end do
                 end do
             end do
-            print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
-
+            ! print *, 'GR: sendBuffer sum: ', sum(sendBuffer)
 
             call MPI_Send(sendBuffer, (ip*jp*kp), MPI_REAL, i, zbmTag, &
                           communicator, ierror)
@@ -1549,7 +1548,7 @@ subroutine distributeiff(fa, ip, jp, kp, ipmax, jpmax, procPerRow)
 !        write(*,*) 'recv_rank=',rank
 
 
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
+        ! print *, 'GR: recvBuffer sum: ', sum(recvBuffer)
         do k=1, kp
             do c=1, jp
              do r=1, ip
@@ -1580,7 +1579,7 @@ subroutine distributeiffold(folda, ip, jp, kp, ipmax, jpmax, procPerRow)
                  end do
                 end do
             end do
-            print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
+            ! print *, 'GR: sendBuffer sum: ', sum(sendBuffer)
 
             call MPI_Send(sendBuffer, (ip*jp*kp), MPI_REAL, i, zbmTag, &
                           communicator, ierror)
@@ -1599,7 +1598,7 @@ subroutine distributeiffold(folda, ip, jp, kp, ipmax, jpmax, procPerRow)
 !        write(*,*) 'recv_rank=',rank
 
 
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
+        ! print *, 'GR: recvBuffer sum: ', sum(recvBuffer)
         do k=1, kp
             do c=1, jp
              do r=1, ip
@@ -1634,7 +1633,7 @@ subroutine distributeaveu(aveua, aveu,ip, jp, kp, ipmax, jpmax, procPerRow)
                    end do
                 end do
             end do
-            print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
+            ! print *, 'GR: sendBuffer sum: ', sum(sendBuffer)
         
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
@@ -1658,7 +1657,7 @@ subroutine distributeaveu(aveua, aveu,ip, jp, kp, ipmax, jpmax, procPerRow)
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
 !        call checkMPIError()
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
+        ! print *, 'GR: recvBuffer sum: ', sum(recvBuffer)
 
 
             startRow = topLeftRowValue(i, procPerRow, ip)
@@ -1698,7 +1697,7 @@ subroutine distributeavew(avewa, avew,ip, jp, kp, ipmax, jpmax, procPerRow)
                    end do
                 end do
             end do
-            print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
+            ! print *, 'GR: sendBuffer sum: ', sum(sendBuffer)
          
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
@@ -1721,7 +1720,7 @@ subroutine distributeavew(avewa, avew,ip, jp, kp, ipmax, jpmax, procPerRow)
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
 !        call checkMPIError()
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
+        ! print *, 'GR: recvBuffer sum: ', sum(recvBuffer)
 
 
             startRow = topLeftRowValue(i, procPerRow, ip)
@@ -1761,7 +1760,7 @@ subroutine distributeaveuu(aveuua, aveuu,ip, jp, kp, ipmax, jpmax, procPerRow)
                    end do
                 end do
             end do
-            print*, 'GR: sendBuffer sum: ', sum(sendBuffer)
+            ! print *, 'GR: sendBuffer sum: ', sum(sendBuffer)
          
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
@@ -1784,7 +1783,7 @@ subroutine distributeaveuu(aveuua, aveuu,ip, jp, kp, ipmax, jpmax, procPerRow)
 
 !        call MPI_COMM_Rank(communicator, rank, ierror)
 !        call checkMPIError()
-        print*, 'GR: recvBuffer sum: ', sum(recvBuffer)
+        ! print *, 'GR: recvBuffer sum: ', sum(recvBuffer)
 
 
             startRow = topLeftRowValue(i, procPerRow, ip)

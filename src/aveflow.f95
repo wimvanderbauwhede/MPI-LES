@@ -93,6 +93,7 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
     real(kind=4),allocatable :: uwfxa(:,:,:)
     real(kind=4),allocatable :: avepa(:,:,:)
 
+! WV: This is the first timestep. As there is no MPI comms, this is OK
     if(n == n1) then
         do k = 1,km
             do j = 1,jm
@@ -125,7 +126,7 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
             end do
         end do
     end if
-
+! WV: Ditto
     if(n >= n1) then
         do k = 1,km
             do j = 1,jm
@@ -160,6 +161,8 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
   endif
 
   if(n == nmax) then
+  !WV: I reason that for this n, syncTicks should always be 0
+  print *, rank,syncTicks
       do k = 1,km
           do j = 1,jm
               do i = 1,im
@@ -359,7 +362,7 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
 #else
 #endif
 
-    endif
+    endif ! n==nmax
 end subroutine aveflow
 
 end module module_aveflow

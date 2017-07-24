@@ -167,9 +167,12 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
       end do
 #endif
 #ifdef NESTED_LES
-    if (syncTicks == 0 ) then
+    if (syncTicks == 0 .and. n > 2) then
+      if(n.ge.n1.and.mod(n*int(dt_orig/dt_nest),avetime).eq.0) then !default
+#else
+      if(n.ge.n1.and.mod(n,avetime).eq.0) then !default
 #endif
-       if(n.ge.n1.and.mod(n,avetime).eq.0) then !default
+
 !       if(mod(n,avetime).eq.0) then !default
 
            if (isMaster()) then
@@ -188,7 +191,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 
        if (isMaster()) then
            ua=ua/real(avetime)
-           print *,ua(ipmax/2,jpmax/2,kp/2)
+!           print *,ua(ipmax/2,jpmax/2,kp/2)
            irec = 1
            do  k=1,km_sl
                 write(23,rec=irec) ((calc_avg_ua(ua,i,j,k),i=1,ipmax),j=1,jpmax)
@@ -215,7 +218,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
          end do
         end do
        end do
-       print *,ua(ipmax/2,jpmax/2,kp/2)
+!       print *,ua(ipmax/2,jpmax/2,kp/2)
 !boundary
        do k = 1,km
          do j = 1,jpmax
@@ -480,10 +483,13 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
     character(len=70) :: filename
 #endif
 
-
+! WV: considering  do n = n0,nmax, and n1 = 1, n != n1-1
+#ifdef NESTED_LES
+    if (syncTicks == 0 .and. n > 2) then
+       if(  n == nmax ) then !default
+#else
        if((n.eq.n1-1).or.(n.eq.nmax))  then      
-!       if((mod(n,12000).eq.0).or.(n.eq.nmax))  then      
-
+#endif
         if (isMaster()) then
         write(filename, '("../data/data30",i6.6, ".dat")') n
 
@@ -555,14 +561,14 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
        allocate(usuma(0:ipmax,0:jpmax,0:kp))
         call distributeusum(usuma, usum, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im 
-                    usuma(i,j,k) = usum(i,j,k)
+              do k = 1,km
+                do j = 1,jm
+                    do i = 1,im
+                        usuma(i,j,k) = usum(i,j,k)
+                    end do
                 end do
-            end do
-          end do
-        write(30) (((usuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+              end do
+              write(30) (((usuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
         end if
         deallocate(usuma)
 
@@ -570,41 +576,35 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
       allocate(vsuma(0:ipmax,0:jpmax,0:kp))
         call distributeusum(vsuma, vsum, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
-                    vsuma(i,j,k) = vsum(i,j,k)
+              do k = 1,km
+                do j = 1,jm
+                    do i = 1,im
+                        vsuma(i,j,k) = vsum(i,j,k)
+                    end do
                 end do
-            end do
-          end do
-        write(30) (((vsuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+              end do
+              write(30) (((vsuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
         end if
         deallocate(vsuma)
 
-
-     allocate(wsuma(0:ipmax,0:jpmax,0:kp))
-        call distributeusum(wsuma, wsum, ip, jp, kp, ipmax, jpmax, procPerRow)
+       allocate(wsuma(0:ipmax,0:jpmax,0:kp))
+       call distributeusum(wsuma, wsum, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
-                    wsuma(i,j,k) = wsum(i,j,k)
+              do k = 1,km
+                do j = 1,jm
+                    do i = 1,im
+                        wsuma(i,j,k) = wsum(i,j,k)
+                    end do
                 end do
-            end do
-          end do
-        write(30) (((wsuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
-        close(30)
- 
+              end do
+            write(30) (((wsuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+            close(30)
         end if
         deallocate(wsuma)
 
-
-
-
         if (isMaster()) then
-        write(filename, '("../data/data31",i6.6, ".dat")') n
-        open(unit=31,file=filename,form='unformatted',status='replace')
-
+             write(filename, '("../data/data31",i6.6, ".dat")') n
+             open(unit=31,file=filename,form='unformatted',status='replace')
         end if
 
 
@@ -700,7 +700,9 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
         deallocate(holda)
 
         end if
-
+#ifdef NESTED_LES
+    end if
+#endif
 end subroutine ifdata_out
 
 
