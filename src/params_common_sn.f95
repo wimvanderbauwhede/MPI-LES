@@ -33,11 +33,11 @@ module params_common_sn
 ! WV: unused:   integer, parameter :: bipmax = 300, bjpmax = 300, bx = 0, by = 0
 ! WV: not nice
 
-#ifndef TEST_NESTED_LES
-    character(300) :: datafile = '../GIS/Kyoto_1km2_4m_with_buffer.txt'
-#else
+!#ifndef TEST_NESTED_LES
+!    character(300) :: datafile = '../GIS/Kyoto_1km2_4m_with_buffer.txt'
+!#else
     character(300) :: datafile = '../GIS/Kyoto_1km2_4m_with_buffer_nest_2_4_2_4_100_100_200_200.txt'
-#endif
+!#endif
 
 !-- grid
     real, parameter :: dxgrid = 4. ! meters
@@ -65,24 +65,24 @@ module params_common_sn
 ! Nested grid location and size
     integer, parameter :: nested_grid_start_x = 100 !250
     integer, parameter :: nested_grid_start_y = 100 !275
-#ifdef TEST_NESTED_LES
+!#ifdef TEST_NESTED_LES
     integer, parameter :: nested_grid_x = 200 !2000 ! 4km
     integer, parameter :: nested_grid_y = 200 !500 ! 1km
-#else
-    integer, parameter :: nested_grid_x = 100 !2000 ! 4km
-    integer, parameter :: nested_grid_y = 100 !500 ! 1km
-#endif
+!#else
+!    integer, parameter :: nested_grid_x = 100 !2000 ! 4km
+!    integer, parameter :: nested_grid_y = 100 !500 ! 1km
+!#endif
 
     integer, parameter :: nested_grid_end_x  = nested_grid_x + nested_grid_start_x
     integer, parameter :: nested_grid_end_y  = nested_grid_y + nested_grid_start_y
 ! Nest grid resolution
-#ifdef TEST_NESTED_LES
+!#ifdef TEST_NESTED_LES
     real, parameter :: dxgrid_nest = 2.0
     real, parameter :: dygrid_nest = 2.0
-#else
-    real, parameter :: dxgrid_nest = 4.0 !2.0
-    real, parameter :: dygrid_nest = 4.0 !2.0
-#endif
+!#else
+!    real, parameter :: dxgrid_nest = 4.0 !2.0
+!    real, parameter :: dygrid_nest = 4.0 !2.0
+!#endif
     real, parameter :: dxgrid_orig = 4.0
     real, parameter :: dygrid_orig = 4.0
 
@@ -98,13 +98,13 @@ module params_common_sn
     integer, parameter :: j_s_nest_end =  j_s_nest_start + nested_grid_y / ip - 1
 
 ! Time steps
-#ifdef TEST_NESTED_LES
+!#ifdef TEST_NESTED_LES
     real, parameter :: dt_nest = 0.025 ! seconds
     real, parameter :: dt_orig = 0.025 ! seconds
-#else
-    real, parameter :: dt_nest = 0.05 ! seconds
-    real, parameter :: dt_orig = 0.05 ! seconds
-#endif
+!#else
+!    real, parameter :: dt_nest = 0.05 ! seconds
+!    real, parameter :: dt_orig = 0.05 ! seconds
+!#endif
 
 
 
