@@ -496,6 +496,7 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
 #else
     call MPI_Waitall(8, requests, statuses, ierror)
 #endif
+
 #ifdef NESTED_LES2
         if ( (inNestedGrid() .and. .not. inNestedGridByRank(commWith) .and. (syncTicks == 0) ) .or. .not. (inNestedGrid() .and. .not. inNestedGridByRank(commWith))) then
 #endif
@@ -1878,9 +1879,10 @@ subroutine gatheraaa(gaaa, aaa, procPerRow)
     end if
     call MPI_Comm_free(row_comm,ierror)
     call checkMPIError()
-#endif
+
 #ifdef NESTED_LES
     end if
+#endif
 #endif
   end subroutine gatheraaa
 

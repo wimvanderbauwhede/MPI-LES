@@ -318,7 +318,7 @@ inNest = inNestedGrid()
 #ifdef TIMINGS
         call system_clock(timestamp(6), clock_rate)
 #endif
-#ifndef WV_DEBUG_MPI
+
 !print *, n,rank, 'press'
         call press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s, &
                    cn3l,cn3s,cn4l,cn4s,n, nmax,data20,usum,vsum,wsum) !WV getGlobalSumOf and exchangeRealHalos (in boundp)
@@ -335,6 +335,7 @@ inNest = inNestedGrid()
 #ifdef TIMSERIS_FIXED
         call timseris(n,dt,u,v,w)
 #endif
+#ifndef WV_DEBUG_MPI
 #if IANIME == 1
     !print *, n,rank, 'NO ANIME!'
       if (i_anime.eq.1) then
