@@ -4,9 +4,17 @@ module module_boundsm
 #endif
 contains
 
-subroutine boundsm(km,jm,sm,im)
-    use common_sn ! create_new_include_statements() line 102
+#ifdef NESTED_LES
+subroutine boundsm(n,km,jm,sm,im)
+   use common_sn ! create_new_include_statements() line 102
     implicit none
+    integer, intent(In) :: n
+#else
+subroutine boundsm(km,jm,sm,im)
+   use common_sn ! create_new_include_statements() line 102
+    implicit none
+#endif
+
     integer, intent(In) :: im
     integer, intent(In) :: jm
     integer, intent(In) :: km
@@ -66,7 +74,13 @@ subroutine boundsm(km,jm,sm,im)
     end do
 #ifdef MPI
 ! --halo exchanges
+#ifdef NESTED_LES
+   if (syncTicks == 0  .and. n > 2) then
+#endif
     call exchangeRealHalos(sm, procPerRow, neighbours, 2, 1, 2, 1)
+#ifdef NESTED_LES
+   end if
+#endif
 #endif
 end subroutine boundsm
 

@@ -94,7 +94,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
     logical :: nestToOrig
 #endif
 #ifdef NESTED_LES
-        if (syncTicks == 0) then
+    if (syncTicks == 0) then
 #endif
 
     if (size(neighbours, 1) .lt. 4) then
@@ -707,7 +707,7 @@ subroutine distribute1DRealRowWiseArray(arrayToBeSent, receivingArray, leftBound
     receivingSize = size(receivingArray, 1)
     if (isMaster()) then
         allocate(sendBuffer(receivingSize))
-#ifdef VERBOSE
+#ifdef GR_DEBUG
         print*, ' Rank ', rank, ' needs to row wise send ', receivingSize, &
                 ' values out of ', totalSize, ' values to each process with a ', &
                 ' left boundary of ', leftBoundary, ' and a right boundary of ', &
@@ -719,7 +719,7 @@ subroutine distribute1DRealRowWiseArray(arrayToBeSent, receivingArray, leftBound
             ! MPI_Send
             startI = 1 + ((i / procPerRow) * (receivingSize - leftBoundary - rightBoundary))
             endI = startI + receivingSize - 1
-#ifdef VERBOSE
+#ifdef GR_DEBUG
             print*, ' Rank ', i, ' is getting values row wise, (', startI, ',', endI, ')'
 #endif
             do currentI=startI,endI
@@ -758,7 +758,7 @@ subroutine distribute1DRealColumnWiseArray(arrayToBeSent, receivingArray, leftBo
     receivingSize = size(receivingArray, 1)
     if (isMaster()) then
         allocate(sendBuffer(receivingSize))
-#ifdef VERBOSE
+#ifdef GR_DEBUG
         print*, ' Rank ', rank, ' needs to column wise send ', receivingSize, &
                 ' values out of ', totalSize, ' values to each process with a ', &
                 ' left boundary of ', leftBoundary, ' and a right boundary of ', &
@@ -770,7 +770,7 @@ subroutine distribute1DRealColumnWiseArray(arrayToBeSent, receivingArray, leftBo
             ! MPI_Send
             startI = 1 + (modulo(i, procPerRow) * (receivingSize - leftBoundary - rightBoundary))
             endI = startI + receivingSize - 1
-#ifdef VERBOSE
+#ifdef GR_DEBUG
             print*, ' Rank ', i, ' is getting values column wise, (', startI, ',', endI, ')'
 #endif
             do currentI=startI,endI
@@ -1812,14 +1812,15 @@ subroutine gatheraaa(gaaa, aaa, procPerRow)
     real(kind=4), intent(In) :: aaa
     integer :: startRow, startCol, i, j, r, c, k, rank
     real(kind=4) :: sendBuffer, recvBuffer
-#ifdef MPI_NEW_WV
-    integer :: row_comm
-#endif
+!#ifdef MPI_NEW_WV
+!    integer :: row_comm
+!#endif
 
 
+#ifndef MPI_NEW_WV
     call MPI_COMM_Rank(communicator, rank, ierror)
     call checkMPIError()
-#ifndef MPI_NEW_WV
+
     if (rank .gt. mpi_size - procPerRow) then !WV: this is the bottom row excluding the first process
          sendBuffer = aaa
 !         print*, 'Rank: ', rank, ' before aaa: ', aaa
@@ -1861,15 +1862,15 @@ subroutine gatheraaa(gaaa, aaa, procPerRow)
     if (syncTicks==0) then
 #endif
 !print *,'Create a new communicator per row', rank
-    ! Create a new communicator per row
-    call MPI_Comm_split(communicator, (rank / procPerRow), rank, row_comm,ierror)
-!    print *,'checkMPIError',rank
-    call checkMPIError()
-    ! If a process is in the bottom row, use this communicator
+!    ! Create a new communicator per row
+!    call MPI_Comm_split(communicator, (rank / procPerRow), rank, row_comm,ierror)
+!!    print *,'checkMPIError',rank
+!    call checkMPIError()
+!    ! If a process is in the bottom row, use this communicator
     if (rank >= mpi_size - procPerRow) then  !WV: this is the bottom row excluding the first process
 !        print *,'this is the bottom row excluding the first process'
         gaaa = aaa
-        call MPI_AllReduce(MPI_IN_PLACE, gaaa, 1, MPI_REAL, MPI_MAX, row_comm, ierror)
+        call MPI_AllReduce(MPI_IN_PLACE, gaaa, 1, MPI_REAL, MPI_MAX, bottomRowComm, ierror)
         call checkMPIError()
 #ifdef WV_DEBUG
         print*, 'gatheraaa: Rank: ', rank, ' after aaa: ', aaa, gaaa
@@ -1877,8 +1878,8 @@ subroutine gatheraaa(gaaa, aaa, procPerRow)
 !    else
 !        print *, 'do nothing'
     end if
-    call MPI_Comm_free(row_comm,ierror)
-    call checkMPIError()
+!    call MPI_Comm_free(row_comm,ierror)
+!    call checkMPIError()
 
 #ifdef NESTED_LES
     end if
@@ -1893,13 +1894,14 @@ subroutine gatherbbb(gbbb, bbb, procPerRow)
     real(kind=4), intent(In) :: bbb
     integer :: startRow, startCol, i, j, r, c, k, rank
     real(kind=4) :: sendBuffer, recvBuffer
-#ifdef MPI_NEW_WV
-    integer :: row_comm
-#endif
+!#ifdef MPI_NEW_WV
+!    integer :: row_comm
+!#endif
 
+#ifndef MPI_NEW_WV
     call MPI_COMM_Rank(communicator, rank, ierror)
     call checkMPIError()
-#ifndef MPI_NEW_WV
+
     if (rank.gt.mpi_size - procPerRow) then
          sendBuffer = bbb
 !         print*, 'Rank: ', rank, ' before bbb: ', bbb
@@ -1937,18 +1939,18 @@ subroutine gatherbbb(gbbb, bbb, procPerRow)
     if (syncTicks==0) then
 #endif
     ! Create a new communicator per row
-    call MPI_Comm_split(communicator, (rank / procPerRow), rank, row_comm,ierror)
+!    call MPI_Comm_split(communicator, (rank / procPerRow), rank, row_comm,ierror)
     ! If a process is in the bottom row, use this communicator
     if (rank >= mpi_size - procPerRow) then  !WV: this is the bottom row excluding the first process
         gbbb = bbb
-        call MPI_AllReduce(MPI_IN_PLACE, gbbb, 1, MPI_REAL, MPI_MIN, row_comm, ierror)
+        call MPI_AllReduce(MPI_IN_PLACE, gbbb, 1, MPI_REAL, MPI_MIN, bottomRowComm, ierror)
         call checkMPIError()
 #ifdef WV_DEBUG
         print*, 'gatherbbb: Rank: ', rank, ' after bbb: ', bbb, gbbb
 #endif
     end if
-    call MPI_Comm_free(row_comm,ierror)
-    call checkMPIError()
+!    call MPI_Comm_free(row_comm,ierror)
+!    call checkMPIError()
 #ifdef NESTED_LES
     end if
 #endif

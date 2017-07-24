@@ -44,7 +44,12 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
     integer, parameter  :: nmaxp = 50 ! WV was 50
     real, parameter  :: omega = 1.
 
+#ifdef NESTED_LES
+    call bondfg(n,km,jm,f,im,g,h)
+#else
     call bondfg(km,jm,f,im,g,h)
+#endif
+
 
     do k = 1,km
         do j = 1,jm
@@ -59,7 +64,9 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
         end do
     end do
 !
+
 !    rhs=0
+
     rhsav = 0.0
     area = 0.0
     do k = 1,km
@@ -70,10 +77,18 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
             end do
         end do
     end do
+
 #ifdef MPI
+#ifdef NESTED_LES
+    if (n>2) then
+#endif
     call getGlobalSumOf(rhsav)
     call getGlobalSumOf(area)
+#ifdef NESTED_LES
+    end if
 #endif
+#endif
+
 #if GR_DEBUG
     print*, 'GR: rhsav ', rhsav, ' area ', area
 #endif
@@ -85,6 +100,9 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
             end do
         end do
     end do
+
+!#ifndef WV_DEBUG_MPI
+
 ! --SOR
     do l = 1,nmaxp
         sor = 0.0
@@ -102,9 +120,17 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
                     end do
                 end do
             end do
+#ifdef NESTED_LES
+            call boundp1(n,km,jm,p,im)
+#else
             call boundp1(km,jm,p,im)
+#endif
         end do
+#ifdef NESTED_LES
+        call boundp2(n,jm,im,p,km)
+#else
         call boundp2(jm,im,p,km)
+#endif
 #ifndef NO_IO
 #ifdef VERBOSE
 ! --check
@@ -114,14 +140,28 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
         end if
 #endif
 #endif
+
+#ifndef NO_GLOBAL_SOR
+
 #ifdef MPI
+#ifdef NESTED_LES
+    if (n>2) then
+#endif
         call getGlobalSumOf(sor)
+#ifdef NESTED_LES
+    end if
+#endif
 #endif
         if (sor < pjuge) then
             exit
         end if
-    end do
+! NO_GLOBAL_SOR
+#endif
 
+    end do
+!print *,rank,'SOR iterations:',l
+! WV_DEBUG_MPI
+!#endif
     pav = 0.0
     pco = 0.0
     do k = 1,km
@@ -132,10 +172,16 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
             end do
         end do
     end do
-!
+
 #ifdef MPI
+#ifdef NESTED_LES
+    if (n>2) then
+#endif
     call getGlobalSumOf(pav)
     call getGlobalSumOf(pco)
+#ifdef NESTED_LES
+    end if
+#endif
 #endif
 #if GR_DEBUG
     print*, 'GR: pav ', pav, ' pco ', pco
@@ -153,17 +199,28 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
 #ifdef WV_DEBUG
     print *, "F95: P_SUM_ADJ=",sum(p)
 #endif
+#ifdef NESTED_LES
+    call boundp1(n,km,jm,p,im)
+#else
     call boundp1(km,jm,p,im)
+#endif
 #ifdef WV_DEBUG
     print *, "F95: P_SUM_1=",sum(p)
 #endif
+#ifdef NESTED_LES
+    call boundp2(n,jm,im,p,km)
+#else
     call boundp2(jm,im,p,km)
+#endif
 #ifdef WV_DEBUG
     print *, "F95: P_SUM_BOUND=",sum(p)
 #endif
 
 #ifndef NO_IO
 #ifdef VERBOSE
+#ifdef MPI
+    if (rank == mpi_size / 2 + procPerRow / 2 - 1 ) then
+#endif
     if (mod(n-1,20) == 0) then
         write(6,*) '=mac= time step, iteration step, conv =',n,l,sor
     end if
@@ -193,6 +250,9 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
     if (mod(n-1,20) == 0) then
         write(6,*) 'Check_CFL,u*dt/dx,v*dt/dy,w*dt/dz=',cflu,cflv,cflw
     end if
+#ifdef MPI
+    end if
+#endif
 #endif
 #endif
 
@@ -218,7 +278,8 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
 #endif
 #endif
     end if
-!
+! WV_DEBUG_MPI
+!#endif
 end subroutine press
 
 end module module_press

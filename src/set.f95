@@ -85,32 +85,32 @@ contains
       n0 = 1
       n1 = 1
 ! --setnmax
+
 #ifndef WV_TEST
-
-
       nmax = 8000
 #ifdef NESTED_LES
         if (inNestedGrid()) then
 !            print *, 'Process ',rank, ' is in nested grid'
             nmax = nmax* dt_orig / dt_nest
-        end if
-#endif
-
-#else
-      nmax = 20
-#ifndef NESTED_LES
-        dt = 0.05 ! seconds
-#else
-        if (inNestedGrid()) then
-!            print *, 'Process ',rank, ' is in nested grid'
-            dt = dt_nest
         else
-!            print *, 'Process ',rank, ' is in orig grid'
-            dt = dt_orig
+            nmax = nmax+1
+        end if
+#endif
+
+#else
+! WV_TEST
+
+        nmax = 20
+#ifdef NESTED_LES
+        if (inNestedGrid()) then
+            nmax = nmax*dt_orig/dt_nest
+        else
+            nmax = nmax+1
         end if
 #endif
 
 #endif
+
 ! --time step
 ! WV: NESTING: we need to set dt based on the subgrid coordinates in params_common_sn
 #ifndef NESTED_LES

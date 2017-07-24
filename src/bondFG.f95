@@ -5,9 +5,16 @@ module module_bondFG
 
 contains
 
+#ifdef NESTED_LES
+subroutine bondfg(n,km,jm,f,im,g,h)
+    use common_sn ! create_new_include_statements() line 102
+    implicit none
+    integer, intent(In) :: n
+#else
 subroutine bondfg(km,jm,f,im,g,h)
     use common_sn ! create_new_include_statements() line 102
     implicit none
+#endif
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: f
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: g
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: h
@@ -45,9 +52,15 @@ subroutine bondfg(km,jm,f,im,g,h)
     end do
 #ifdef MPI
 ! --halo exchanges
+#ifdef NESTED_LES
+   if (syncTicks == 0  .and. n > 2) then
+#endif
     call exchangeRealHalos(f, procPerRow, neighbours, 1, 0, 1, 0)
     call exchangeRealHalos(g, procPerRow, neighbours, 1, 0, 1, 0)
     call exchangeRealHalos(h, procPerRow, neighbours, 1, 0, 1, 0)
+#ifdef NESTED_LES
+   end if
+#endif
 #endif
 end subroutine bondFG
 

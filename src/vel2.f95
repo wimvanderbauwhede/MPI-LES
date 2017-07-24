@@ -4,9 +4,17 @@ module module_vel2
 #endif
 contains
 
+#ifdef NESTED_LES
+      subroutine vel2(n,km,jm,im,nou1,u,diu1,dx1,nou5,v,diu5,dy1,nou9,w,diu9,dzn,cov1,cov5,cov9,nou2, &
+      diu2,cov2,nou3,diu3,dzs,cov3,nou4,diu4,cov4,nou6,diu6,cov6,nou7,diu7,cov7,nou8,diu8,cov8,uspd,vspd)
+      use common_sn ! create_new_include_statements() line 102
+
+        integer, intent(In) :: n
+#else
       subroutine vel2(km,jm,im,nou1,u,diu1,dx1,nou5,v,diu5,dy1,nou9,w,diu9,dzn,cov1,cov5,cov9,nou2, &
       diu2,cov2,nou3,diu3,dzs,cov3,nou4,diu4,cov4,nou6,diu6,cov6,nou7,diu7,cov7,nou8,diu8,cov8,uspd,vspd)
       use common_sn ! create_new_include_statements() line 102
+#endif
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov2
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov3
@@ -64,8 +72,8 @@ contains
      +0.5*(u(i-1,j+1,1)+u(i,j+1,1))*dy1(j))/(dy1(j)+dy1(j+1)))**2)**0.5
         end do
         end do
-
-       if (isMaster()) then
+! WV: to get a point somewhere near the middle of the domain
+       if (rank == mpi_size / 2 + procPerRow / 2 - 1 ) then
         write(6,*) 'CHK_uspd=',uspd(im/2,jm/2),vspd(im/2,jm/2)
        end if
 
@@ -315,6 +323,9 @@ contains
 #endif
 
 #ifdef MPI
+#ifdef NESTED_LES
+   if (syncTicks == 0  .and. n > 2) then
+#endif
     call exchangeRealHalos(nou1, procPerRow, neighbours, 1, 2, 2, 2)
     call exchangeRealHalos(diu1, procPerRow, neighbours, 1, 2, 2, 2)
     call exchangeRealHalos(cov1, procPerRow, neighbours, 1, 2, 2, 2)
@@ -342,6 +353,9 @@ contains
     call exchangeRealHalos(nou9, procPerRow, neighbours, 1, 2, 1, 2)
     call exchangeRealHalos(diu9, procPerRow, neighbours, 1, 2, 1, 2)
     call exchangeRealHalos(cov9, procPerRow, neighbours, 1, 2, 1, 2)
+#ifdef NESTED_LES
+   end if
+#endif
 #endif
 
 !uspd,vspd

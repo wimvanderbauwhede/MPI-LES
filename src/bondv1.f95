@@ -61,11 +61,12 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
 
 #if ICAL == 0
 !    if(ical == 0.and.n == 1) then
-!#ifdef NESTED_LES
-!    if(syncTicks == 0 .and. n < 3) then
-!#else
+#ifdef NESTED_LES
+    if(syncTicks == 0 .and. n == 2) then
+#else
     if(n == 1) then
-!#endif
+#endif
+
 #ifdef MPI
         ! GR: Actually make this distributed rather than this awful mess
         do a=1, procPerCol
@@ -78,22 +79,11 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
                     end do
                 end do
             end do
-!#ifdef NESTED_LES
-!            if (syncTicks .eq. 0) then
-!#endif
-            !print *, rank,'sync:',syncTicks,'bondv1 BHX'
 
             call exchangeRealHalos(u, procPerRow, neighbours, 2, 1, 3, 0)
             call exchangeRealHalos(v, procPerRow, neighbours, 2, 1, 3, 0)
             call exchangeRealHalos(w, procPerRow, neighbours, 2, 1, 3, 0)
-            !print *, rank,'sync:',syncTicks,'bondv1 AHX'
-!#ifdef NESTED_LES
-!            end if
-!#endif
         end do
-!#ifdef NESTED_LES
-!    if (syncTicks == 0) call MPI_Barrier(communicator, ierror)
-!#endif
 #endif
         do k = 1,km
             do j = 1,jm
@@ -115,21 +105,6 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
 !      advective condition
 !
 
-!    aaa = 0.0
-!    bbb = 0.0
-!    gaaa = 0.0
-!    gbbb = 0.0
-!    do k = 1,km
-!        do j = 1,jm
-!            aaa = amax1(aaa,u(im,j,k))
-!            bbb = amin1(bbb,u(im,j,k))
-!        end do
-!    end do
-!#ifdef MPI
-!    call gatheraaa(gaaa, aaa, procPerRow)
-!    call gatherbbb(gbbb, bbb, procPerRow)
-!#endif
-
     aaa = 0.0
     gaaa = 0.0
     do k = 1,km
@@ -140,9 +115,9 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
 #ifdef MPI
 !WV what this call does: if the process is in the bottom row then gaaa is the max of all processes in that row. Otherwise it is 0
 !WV so all processes compute aaa, but only the bottom row does the gather. Very strange.
- !print *, rank,'sync:',syncTicks,'bondv1 BGA'
+! print *, rank,'sync:',syncTicks,'bondv1 BGA'
     call gatheraaa(gaaa, aaa, procPerRow)
- !print *, rank,'sync:',syncTicks,'bondv1 AGA'
+! print *, rank,'sync:',syncTicks,'bondv1 AGA'
 #endif
     bbb = aaa
     gbbb = gaaa
@@ -152,9 +127,9 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
         end do
     end do
 #ifdef MPI
- !print *, rank,'sync:',syncTicks,'bondv1 BGB'
+! print *, rank,'sync:',syncTicks,'bondv1 BGB'
     call gatherbbb(gbbb, bbb, procPerRow)
- !print *, rank,'sync:',syncTicks,'bondv1 AGB'
+! print *, rank,'sync:',syncTicks,'bondv1 AGB'
 #endif
 
 #if GR_DEBUG
@@ -214,7 +189,7 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
 #endif
     ! call assumes column (jp) index from 1, not -1 hence values are +2 from original code
 !#ifdef NESTED_LES
-!    if (syncTicks == 0) then
+    if (syncTicks == 0) then
 !#endif
 !print *, rank,'sync:',syncTicks,'bondv1 BSF'
     call sideflowRightLeft(u, procPerRow, jp+2, 2, 0, 0, 0, 0)
@@ -225,29 +200,26 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
     call sideflowLeftRight(w, procPerRow, 3, jp+3, 0, 0, 1, 0)
 !print *, rank,'sync:',syncTicks,'bondv1 ASF'
 !#ifdef NESTED_LES
-!    end if
+    end if
 !#endif
 
 #endif
 
 ! =================================
 #ifdef MPI
-!#ifdef NESTED_LES
-!    if (syncTicks == 0) call MPI_Barrier(communicator, ierror)
-!#endif
-!#ifdef NESTED_LES
-!            if (syncTicks .eq. 0) then
-!#endif
 
-!print *, rank,'sync:',syncTicks,'bondv1 BHX2'
+#ifdef NESTED_LES
+   if (syncTicks == 0  .and. n > 2) then
+#endif
+
+!    print *, 'n:', n,'r:',rank,'sync:',syncTicks,'bondv1 BHX2'
 ! --halo exchanges
     call exchangeRealHalos(u, procPerRow, neighbours, 2, 1, 1, 1)
     call exchangeRealHalos(v, procPerRow, neighbours, 2, 1, 1, 1)
     call exchangeRealHalos(w, procPerRow, neighbours, 2, 1, 1, 1)
-!print *, rank,'sync:',syncTicks,'bondv1 AHX2'
-!#ifdef NESTED_LES
-!            end if
-!#endif
+#ifdef NESTED_LES
+            end if
+#endif
 
 #endif
 

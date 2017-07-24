@@ -45,13 +45,17 @@ else:
     if other !='':
         TIMINGS = '-D'+other
 
-# GR: MPI specific build config
+# MPI specific build config
 WITH_MPI=''
 PROC_PER_ROW=''
 PROC_PER_COL=''
 USE_NETCDF_OUTPUT=''
 with_mpi = getOpt('mpi','Use MPI','0')
 with_nesting = getOpt('nested','Nested Grid','0')
+
+# WV: I observe that the SOR is never actually converging anyway, so no point in computing the global error
+NO_GLOBAL_SOR='-DNO_GLOBAL_SOR'
+
 if with_mpi == '1':
     procPerRow= getOpt('procPerRow', 'Processes Per Row', '2')
     procPerCol= getOpt('procPerCol', 'Processes Per Col', '2')
@@ -86,7 +90,12 @@ if gr_debug == '1':
 WV_DEBUG=''
 wv_debug = getOpt('wv_debug', 'WV Debug', '0')
 if wv_debug =='1':
-    WV_DEBUG='-DMPI_NEW_WV'
+    WV_DEBUG='-DWV_DEBUG'
+
+MPI_NEW_WV=''
+mpi_new_wv = getOpt('mpi_new_wv', 'New MPI code (WV)', '0')
+if mpi_new_wv =='1':
+    MPI_NEW_WV='-DMPI_NEW_WV'
 
 WV_TEST = '-DWV_TEST'
 WV_DEBUG_MPI = '-DWV_DEBUG_MPI'
@@ -95,7 +104,7 @@ ICAL = '-DICAL=0'
 IFBF='-DIFBF=1'
 IANIME='-DIANIME=0'
 IADAM='-DIADAM=0'
-FFLAGS  = [USE_NETCDF_OUTPUT, WITH_MPI, NESTED_LES, GR_DEBUG, WV_DEBUG,WV_TEST,WV_DEBUG_MPI, PROC_PER_ROW, PROC_PER_COL, WITH_OCL, NO_FILE_IO, ICAL, IFBF,IANIME, IADAM,VERBOSE,TIMINGS]
+FFLAGS  = [USE_NETCDF_OUTPUT, WITH_MPI, NESTED_LES,NO_GLOBAL_SOR, GR_DEBUG, WV_DEBUG,MPI_NEW_WV,WV_TEST,WV_DEBUG_MPI, PROC_PER_ROW, PROC_PER_COL, WITH_OCL, NO_FILE_IO, ICAL, IFBF,IANIME, IADAM,VERBOSE,TIMINGS]
 
 if with_ocl == '0':
 #    FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium' ]

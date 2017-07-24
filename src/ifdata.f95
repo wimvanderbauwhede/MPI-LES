@@ -531,16 +531,14 @@ contains
         close(31)
         end if
 
-
-
-
 !#endif
 
-        call boundp1(km,jm,p,im)
 
-        call boundp2(jm,im,p,km)
-
-
+#ifdef NESTED_LES
+            call boundp2(n,jm,im,p,km)
+#else
+            call boundp2(jm,im,p,km)
+#endif
 
 
 ! WV: I added this routine to explicitly set all arrays to zero
@@ -559,9 +557,19 @@ contains
 
 !        call bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
 
-        call boundp1(km,jm,p,im)
 
-        call boundp2(jm,im,p,km)
+
+#ifdef NESTED_LES
+            call boundp1(n,km,jm,p,im)
+#else
+            call boundp1(km,jm,p,im)
+#endif
+
+#ifdef NESTED_LES
+            call boundp2(n,jm,im,p,km)
+#else
+            call boundp2(jm,im,p,km)
+#endif
 !        call velfg(km,jm,im,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6,dfv1, &
 !      diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
 !      nou4,nou6,nou7,nou8)

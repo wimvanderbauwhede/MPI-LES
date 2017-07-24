@@ -5,6 +5,9 @@ implicit none
 
 integer(kind=4) :: rank, cartRank, mpi_size, ierror, status(MPI_STATUS_SIZE)
 integer :: communicator, cartTopComm
+#ifdef MPI_NEW_WV
+    integer :: bottomRowComm
+#endif
 
 contains
 
@@ -54,6 +57,25 @@ subroutine setupCartesianVirtualTopology(dimensions, dimensionSizes, periodicDim
     call checkMPIError()
     call MPI_Cart_Shift(cartTopComm, 1, 1, neighbours(leftNeighbour), neighbours(rightNeighbour), ierror)
 end subroutine setupCartesianVirtualTopology
+
+#ifdef MPI_NEW_WV
+subroutine createBottomRowCommunicator(procPerRow)
+    integer, intent(In) :: procPerRow
+    integer :: row_comm
+!print *,'Create a new communicator per row', rank
+    ! Create a new communicator per row
+    ! WV: should this be cartTopComm?
+    call MPI_Comm_split(communicator, (rank / procPerRow), rank, row_comm,ierror)
+    call checkMPIError()
+    ! If a process is in the bottom row, use this communicator
+    if (rank >= mpi_size - procPerRow) then  !WV: this is the bottom row
+        bottomRowComm = row_comm
+    else
+        call MPI_Comm_free(row_comm,ierror)
+        call checkMPIError()
+    end if
+end subroutine createBottomRowCommunicator
+#endif
 
 logical function isMaster()
     isMaster = rank .eq. 0

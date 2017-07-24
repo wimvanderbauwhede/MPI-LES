@@ -78,8 +78,11 @@ contains
 #endif
 
 !
+#ifdef NESTED_LES
+      call boundsm(n,km,jm,sm,im)
+#else
       call boundsm(km,jm,sm,im)
-
+#endif
 #ifdef WV_DEBUG
     print *, 'F95 FGHSUM after boundsm:',sum(f)+sum(g)+sum(h)
     print *, 'F95 FSUM after boundsm:',sum(f)

@@ -5,9 +5,14 @@ module module_boundp
 implicit none
 
 contains
-
+#ifdef NESTED_LES
+subroutine boundp2(n,jm,im,p,km)
+    use common_sn ! create_new_include_statements() line 102
+    integer, intent(In) :: n
+#else
 subroutine boundp2(jm,im,p,km)
     use common_sn ! create_new_include_statements() line 102
+#endif
 
     integer, intent(In) :: im
     integer, intent(In) :: jm
@@ -23,13 +28,25 @@ subroutine boundp2(jm,im,p,km)
         end do
     end do
 #ifdef MPI
+#ifdef NESTED_LES
+   if (syncTicks == 0  .and. n > 2) then
+#endif
 ! --halo exchanges
     call exchangeRealHalos(p, procPerRow, neighbours, 1, 2, 1, 2)
+#ifdef NESTED_LES
+   end if
+#endif
 #endif
 end subroutine boundp2
 
+#ifdef NESTED_LES
+subroutine boundp1(n,km,jm,p,im)
+    integer, intent(In) :: n
+#else
 subroutine boundp1(km,jm,p,im)
     use common_sn ! create_new_include_statements() line 102
+#endif
+
     integer, intent(In) :: im
     integer, intent(In) :: jm
     integer, intent(In) :: km
@@ -76,7 +93,13 @@ subroutine boundp1(km,jm,p,im)
 #endif
 #ifdef MPI
 ! --halo exchanges
+#ifdef NESTED_LES
+   if (syncTicks == 0  .and. n > 2) then
+#endif
     call exchangeRealHalos(p, procPerRow, neighbours, 1, 2, 1, 2)
+#ifdef NESTED_LES
+   end if
+#endif
 #endif
 end subroutine boundp1
 

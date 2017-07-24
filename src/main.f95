@@ -182,6 +182,9 @@ program main
     call setupCartesianVirtualTopology(dimensions, dimensionSizes, &
                                        periodicDimensions, coordinates, &
                                        neighbours, reorder)
+#ifdef MPI_NEW_WV
+    call createBottomRowCommunicator(procPerRow)
+#endif
 #ifdef NESTED_LES
     syncTicksLocal = 0
     syncTicks = 0
@@ -198,6 +201,7 @@ program main
     call init(km,jm,im,u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,&
               amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
 !    n0=200
+#ifndef WV_DEBUG_MPI
     call ifdata( &
 !#if ICAL == 1
                 data30,data31, fold,gold,hold,fghold, time, &
@@ -207,6 +211,7 @@ program main
                 cov2,cov3,dfu1,vn,cov4,cov5,cov6,dfv1,cov7,cov8,cov9,dfw1,dzs,&
                 nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,bmask1,cmask1,&
                 dmask1,alpha,beta,fx,fy,fz,amask1,zbm,ical,nif)
+#endif
 !     n=n0
 
 #ifdef _OPENCL_LES_WV
@@ -220,7 +225,11 @@ program main
 #ifdef _OPENCL_LES_WV
     print *,'MAIN: calling OpenCL run_LES_kernel for ', nmax-n0+1, ' time steps, domain = ',im,'x',jm,'x',km
 #else
+#ifndef MPI
     print *,'MAIN: running reference LES code for ', nmax-n0+1, ' time steps, domain = ',im,'x',jm,'x',km
+#else
+    if (rank==0) print *,'MAIN: running reference LES code for ', nmax-n0+1, ' time steps, domain = ',im,'x',jm,'x',km
+#endif
 #endif
 #endif
 ! --main loop
@@ -235,15 +244,12 @@ inNest = inNestedGrid()
         time = float(n-1)*dt
 
 #ifdef NESTED_LES
-        if (rank==0) print *, time
+!        if (rank==0) print *, n,time
 !print *,'before orig/nest test', rank
-!        if (inNest) then
-        if (.true. .or. inNest) then
-!            syncTicksLocal = syncTicksLocal+1
-!            if (syncTicksLocal == int(dt_orig/dt_nest)) then
-!            if (mod(n,int(dt_orig/dt_nest))==0) then
-            if (mod(n,2)==0) then
-!                syncTicksLocal = 0
+        if (inNest) then
+!        if (.true. .or. inNest) then
+            if (mod(n,int(dt_orig/dt_nest))==0) then
+!            if (mod(n,2)==0) then
                 syncTicks = 0
 !                print *,n,'barrier nest', rank
 !                call MPI_Barrier(communicator,ierror)
@@ -262,8 +268,8 @@ inNest = inNestedGrid()
         end if
 !        if (syncTicks == 0) call MPI_Barrier(communicator,ierror)
 !                print *,'AFTER barrier',rank
-        call checkMPIError()
 #endif
+!print *, 'n:',n, 't:',syncTicks, 'r:',rank,u(im/2,jm/2,km/2),v(im/2,jm/2,km/2),p(im/2,jm/2,km/2)
 
 !        if (isMaster()) then
 !        do i=20,30
@@ -287,18 +293,31 @@ inNest = inNestedGrid()
         call system_clock(timestamp(1), clock_rate)
 #endif
 !print *, n,rank, 'bondv1'
+
         call bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs) !WV: via halos + gatheraaa/bbb. Sideflow etc should be OK as in outer domain ???
+#ifdef WV_DEBUG_MPI
+if (n>2) then
+#endif
 #ifdef TIMINGS
         call system_clock(timestamp(2), clock_rate)
 #endif
 !print *, n,rank, 'velfg'
+
+#ifdef NESTED_LES
+        call velfg(n,km,jm,im,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn, &
+                   vn,f,cov4,cov5,cov6,dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9, &
+                   dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
+                   nou4,nou6,nou7,nou8,uspd,vspd) !WV: calls vel2 which uses halos
+#else
         call velfg(km,jm,im,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn, &
                    vn,f,cov4,cov5,cov6,dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9, &
                    dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
-                   nou4,nou6,nou7,nou8,uspd,vspd) !WV: calls vel2 which uses halos, should be OK;
+                   nou4,nou6,nou7,nou8,uspd,vspd) !WV: calls vel2 which uses halos
+#endif
 #ifdef TIMINGS
         call system_clock(timestamp(3), clock_rate)
 #endif
+
 #if IFBF == 1
 !!print *, n,rank, 'feedbf'
         call feedbf(km,jm,im,usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha, &
@@ -307,12 +326,14 @@ inNest = inNestedGrid()
 #ifdef TIMINGS
         call system_clock(timestamp(4), clock_rate)
 #endif
+
 !!print *, n,rank, 'les'
         call les(km,delx1,dx1,dy1,dzn,jm,im,diu1,diu2,diu3,diu4,diu5,diu6, &
-                 diu7,diu8,diu9,sm,f,g,h,u,v,uspd,vspd,dxs,dys,n) ! WV: no MPI
+                 diu7,diu8,diu9,sm,f,g,h,u,v,uspd,vspd,dxs,dys,n) ! WV: calls boundsm which uses halos
 #ifdef TIMINGS
         call system_clock(timestamp(5), clock_rate)
 #endif
+
 !!print *, n,rank, 'adam'
         call adam(n,nmax,data21,fold,im,jm,km,gold,hold,fghold,f,g,h) ! WV: no MPI
 #ifdef TIMINGS
@@ -335,7 +356,7 @@ inNest = inNestedGrid()
 #ifdef TIMSERIS_FIXED
         call timseris(n,dt,u,v,w)
 #endif
-#ifndef WV_DEBUG_MPI
+
 #if IANIME == 1
     !print *, n,rank, 'NO ANIME!'
       if (i_anime.eq.1) then
@@ -351,8 +372,11 @@ inNest = inNestedGrid()
                      avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14,amask1)  !WV: TODO: put the sync condition in this code
       end if
 #endif
-! WV_DEBUG_MPI
+
+#ifdef WV_DEBUG_MPI
+    end if ! n>2
 #endif
+
      end do
 #ifdef USE_NETCDF_OUTPUT
     call close_netcdf_file()
