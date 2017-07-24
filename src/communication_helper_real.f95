@@ -82,7 +82,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
     integer, intent(in) :: procPerRow, leftThickness, rightThickness, topThickness, bottomThickness
     integer :: i, commWith, r, c, d, rowCount, colCount, depthSize
 
-    integer :: requests(8),
+    integer :: requests(8)
 #ifdef MPI_NEW_WV
     integer :: statuses(MPI_STATUS_SIZE,8)
 #endif
