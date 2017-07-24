@@ -97,7 +97,8 @@ contains
 #endif
 
 #else
-      nmax = 20
+! WV_TEST: very short run
+      nmax = 40
 #ifndef NESTED_LES
         dt = 0.05 ! seconds
 #else

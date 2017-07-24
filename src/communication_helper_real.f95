@@ -81,9 +81,9 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
     integer, dimension(:), intent(in) :: neighbours
     integer, intent(in) :: procPerRow, leftThickness, rightThickness, topThickness, bottomThickness
     integer :: i, commWith, r, c, d, rowCount, colCount, depthSize
-
-    integer :: requests(8), statuses(8)
-
+#ifdef MPI_NEW_WV
+    integer :: requests(8), statuses(MPI_STATUS_SIZE,8)
+#endif
     real(kind=4), dimension(:,:,:), allocatable :: leftRecv, leftSend, rightSend, rightRecv
     real(kind=4), dimension(:,:,:), allocatable :: topRecv, topSend, bottomSend, bottomRecv
 #ifdef NESTED_LES2
@@ -249,6 +249,7 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
     end if
 
     ! WV: as we set request status to null if no action, this should be OK for nesting
+#ifndef MPI_NEW_WV
     do i=1,8
         if (requests(i) .ne. MPI_REQUEST_NULL) then
 !        print *, rank, 'WAIT for ',i
@@ -257,8 +258,10 @@ subroutine exchangeRealHalos(array, procPerRow, neighbours, leftThickness, &
 !            print *, rank, 'DONE WAIT for ',i
         end if
     end do
-!    print *, rank, 'DONE WAITING'
-!    call MPI_Waitall(8, requests, statuses, ierror)
+    print *, rank, 'DONE WAITING'
+#else
+    call MPI_Waitall(8, requests, statuses, ierror)
+#endif
 #ifdef NESTED_LES2
      if ( (inNestedGrid() .and. .not. inNestedGridByRank(commWith) .and. (syncTicks == 0) ) .or. .not. (inNestedGrid() .and. .not. inNestedGridByRank(commWith))) then
 #endif
@@ -330,6 +333,10 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
     real(kind=4), dimension(:,:,:), allocatable :: topLeftSend, topRightSend, bottomLeftSend, bottomRightSend
     integer :: depthSize, commWith, r, c, d
     integer :: i, requests(8)
+#ifdef MPI_NEW_WV
+    integer :: statuses(MPI_STATUS_SIZE,8)
+#endif
+
 #ifdef NESTED_LES2
 !    syncTicks = 0 ! for debugging
 #endif
@@ -478,13 +485,16 @@ subroutine exchangeRealCorners(array, procPerRow, leftThickness, rightThickness,
 #endif
     end if
 
+#ifndef MPI_NEW_WV
     do i=1,8
         if (requests(i) .ne. MPI_REQUEST_NULL) then
             call MPI_Wait(requests(i), status, ierror)
             call checkMPIError()
         end if
     end do
-!    call MPI_Waitall(8, requests, statuses, ierror)
+#else
+    call MPI_Waitall(8, requests, statuses, ierror)
+#endif
 #ifdef NESTED_LES2
         if ( (inNestedGrid() .and. .not. inNestedGridByRank(commWith) .and. (syncTicks == 0) ) .or. .not. (inNestedGrid() .and. .not. inNestedGridByRank(commWith))) then
 #endif

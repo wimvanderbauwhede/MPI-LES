@@ -235,12 +235,13 @@ inNest = inNestedGrid()
         time = float(n-1)*dt
 
 #ifdef NESTED_LES
-        if (rank==0) print *, time
+        if (rank==0) print *, 'time:',time
 !print *,'before orig/nest test', rank
-        if (inNest) then
+        if (.true. .or. inNest) then
 !            syncTicksLocal = syncTicksLocal+1
 !            if (syncTicksLocal == int(dt_orig/dt_nest)) then
-            if (mod(n,int(dt_orig/dt_nest))==0) then
+!            if (mod(n,int(dt_orig/dt_nest))==0) then
+            if (mod(n,2)==0) then
 !                syncTicksLocal = 0
                 syncTicks = 0
 !                print *,n,'barrier nest', rank
@@ -286,6 +287,8 @@ inNest = inNestedGrid()
 #endif
 !print *, n,rank, 'bondv1'
         call bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs) !WV: via halos + gatheraaa/bbb. Sideflow etc should be OK as in outer domain ???
+        print *,syncTicks,rank,u(im/2,jm/2,km/2),v(im/2,jm/2,km/2)
+
 #ifdef TIMINGS
         call system_clock(timestamp(2), clock_rate)
 #endif
@@ -316,6 +319,7 @@ inNest = inNestedGrid()
 #ifdef TIMINGS
         call system_clock(timestamp(6), clock_rate)
 #endif
+#ifndef WV_DEBUG_MPI
 !print *, n,rank, 'press'
         call press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s, &
                    cn3l,cn3s,cn4l,cn4s,n, nmax,data20,usum,vsum,wsum) !WV getGlobalSumOf and exchangeRealHalos (in boundp)
@@ -347,7 +351,8 @@ inNest = inNestedGrid()
                      avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14,amask1)  !WV: TODO: put the sync condition in this code
       end if
 #endif
-     
+!WV_DEBUG_MPI
+#endif
      end do
 #ifdef USE_NETCDF_OUTPUT
     call close_netcdf_file()
