@@ -9,7 +9,7 @@ my $mm = 1;
 my $y = 2000;
 for my $y  (2000 .. 2017) {
 for my $mm (1 .. 12) {
-    if ($mm<10) {$d='0'.$mm}
+    if ($mm<10) {$mm='0'.$mm}
 for my $d  (1 .. 31) {
     if ($d<10) {$d='0'.$d}
 for my $h  (0 .. 23) {

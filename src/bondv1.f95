@@ -188,9 +188,9 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
 !    if (syncTicks == 0) call MPI_Barrier(communicator, ierror)
 #endif
     ! call assumes column (jp) index from 1, not -1 hence values are +2 from original code
-!#ifdef NESTED_LES
+#ifdef NESTED_LES
     if (syncTicks == 0) then
-!#endif
+#endif
 !print *, rank,'sync:',syncTicks,'bondv1 BSF'
     call sideflowRightLeft(u, procPerRow, jp+2, 2, 0, 0, 0, 0)
     call sideflowLeftRight(u, procPerRow, 3, jp+3, 0, 0, 0, 0)
@@ -199,9 +199,9 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
     call sideflowRightLeft(w, procPerRow, jp+2, 2, 0, 0, 1, 0)
     call sideflowLeftRight(w, procPerRow, 3, jp+3, 0, 0, 1, 0)
 !print *, rank,'sync:',syncTicks,'bondv1 ASF'
-!#ifdef NESTED_LES
+#ifdef NESTED_LES
     end if
-!#endif
+#endif
 
 #endif
 

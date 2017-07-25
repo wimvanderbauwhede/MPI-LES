@@ -107,8 +107,9 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
     real(kind=4),allocatable :: wa(:,:,:)
     real(kind=4),allocatable :: pa(:,:,:)
     real(kind=4),allocatable :: amask1a(:,:,:)
-
-
+#ifdef NESTED_LES
+    integer :: nn
+#endif
 !    if(n == n0.or.n == nmax.or.mod(n,1000) == 0.) then
 !        do k = 1,km
 !            do j = 1,jm
@@ -168,7 +169,14 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 #endif
 #ifdef NESTED_LES
     if (syncTicks == 0 .and. n > 2) then
-      if(n.ge.n1.and.mod(n*int(dt_orig/dt_nest),avetime).eq.0) then !default
+    ! WV this seems incorrect. n in orig has half as many steps as n in nest.
+    ! So we should probably test if we are in nest and if so divide n by 2, and then apply avetime
+    nn = n
+    if (inNestedGrid()) then
+        nn = n/int(dt_orig/dt_nest)
+    end if
+    if(n.ge.n1.and.mod(nn,avetime).eq.0) then !default
+!      if(n.ge.n1.and.mod(n*int(dt_orig/dt_nest),avetime).eq.0) then !default
 #else
       if(n.ge.n1.and.mod(n,avetime).eq.0) then !default
 #endif
