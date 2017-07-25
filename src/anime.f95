@@ -107,6 +107,8 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
     real(kind=4),allocatable :: wa(:,:,:)
     real(kind=4),allocatable :: pa(:,:,:)
     real(kind=4),allocatable :: amask1a(:,:,:)
+
+    real(kind=4) :: o2n
 #ifdef NESTED_LES
     integer :: nn
 #endif
@@ -142,19 +144,25 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 !      end do
 !      end do
 !      end if
-
+    o2n=1.
 #ifdef NESTED_LES
-    if (syncTicks == 0) then
+    if (inNestedGrid()) then
+        o2n = dt_orig/dt_nest
+    end if
 #endif
+
+!#ifdef NESTED_LES
+!    if (syncTicks == 0) then
+!#endif
 !average_out
 #ifndef MPI_NEW_WV2
       do k=0,km
       do j=0,jm
       do i=0,im
-      uani(i,j,k)=uani(i,j,k)+u(i,j,k)
-      vani(i,j,k)=vani(i,j,k)+v(i,j,k)
-      wani(i,j,k)=wani(i,j,k)+w(i,j,k)
-      pani(i,j,k)=pani(i,j,k)+p(i,j,k)
+      uani(i,j,k)=uani(i,j,k)+u(i,j,k)/o2n
+      vani(i,j,k)=vani(i,j,k)+v(i,j,k)/o2n
+      wani(i,j,k)=wani(i,j,k)+w(i,j,k)/o2n
+      pani(i,j,k)=pani(i,j,k)+p(i,j,k)/o2n
       end do
       end do
       end do
@@ -162,10 +170,10 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
       do k=1,km
           do j=1,jm
               do i=1,im
-                  uani(i,j,k)=uani(i,j,k)+u(i,j,k)
-                  vani(i,j,k)=vani(i,j,k)+v(i,j,k)
-                  wani(i,j,k)=wani(i,j,k)+w(i,j,k)
-                  pani(i,j,k)=pani(i,j,k)+p(i,j,k)
+                  uani(i,j,k)=uani(i,j,k)+u(i,j,k)/o2n
+                  vani(i,j,k)=vani(i,j,k)+v(i,j,k)/o2n
+                  wani(i,j,k)=wani(i,j,k)+w(i,j,k)/o2n
+                  pani(i,j,k)=pani(i,j,k)+p(i,j,k)/o2n
               end do
           end do
       end do
@@ -174,21 +182,22 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 !    end if
 !#endif
 !
-!#ifdef NESTED_LES
-!    if (syncTicks == 0) then
-!#endif
+#ifdef NESTED_LES
+    if (syncTicks == 0) then
+#endif
 
     ! Normalizing the time step
 #ifdef NESTED_LES
     nn = n
     if (inNestedGrid()) then
-        nn = n0+(n-n0)/int(dt_orig/dt_nest)
+!        o2n = dt_orig/dt_nest
+        nn = n0+(n-n0)/int(o2n)
     end if
     if(n>=n1 .and. mod(nn,avetime) == 0) then !default
 #else
     if(n.ge.n1.and.mod(n,avetime).eq.0) then !default
 #endif
-!        print *, n,nn,rank,uani(ip/2,jp/2,kp/2)
+        print *, n,nn,rank,uani(ip/2,jp/2,kp/2)
 !       if(mod(n,avetime).eq.0) then !default
 
            if (isMaster()) then
