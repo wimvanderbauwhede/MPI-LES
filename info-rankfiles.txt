@@ -44,3 +44,15 @@ rank 2=+n2 slot=1-2
 $ mpirun -H aa,bb,cc,dd -rf myrankfile ./a.out
 
 Starting with Open MPI v1.7, all socket/core slot locations are be specified as logical indexes (the Open MPI v1.6 series used physical indexes). You can use tools such as HWLOC’s "lstopo" to find the logical indexes of socket and cores. 
+
+
+----
+MPICH has no rankfile. Instead we have to use a hosts file with consecutive ranks. The problem is that this does not allow to group processes by column.
+OTOH, generating such a file should be easy enough. What we should do first is determine if a process is in the nest or not. 
+
+shell$ cat hosts
+   # This is a sample host file
+   donner:2     # The first 2 procs are scheduled to run here
+   foo:3        # The next 3 procs run on this host
+   shakey:2     # The last 2 procs run on this host
+
