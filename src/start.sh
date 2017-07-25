@@ -9,7 +9,9 @@ export FC="/opt/app/openmpi/2.0.1/gnu-4.8/bin/mpif90"
 #scons ocl=0 mpi=1 procPerRow=${procPerRow} procPerCol=${procPerCol}
 
 #-- wv_debug
-scons wv_debug=1 ocl=0 mpi=1 procPerRow=${procPerRow} procPerCol=${procPerCol}
+#scons wv_debug=1 ocl=0 mpi=1 procPerRow=${procPerRow} procPerCol=${procPerCol}
+#-- nested
+scons wv_debug=1 ocl=0 mpi=1 nested=1 procPerRow=${procPerRow} procPerCol=${procPerCol}
 
 tssrun -W 24:00  -A p=$((procPerRow*procPerCol)) mpiexec -n $((procPerRow*procPerCol))  ./les_main_mpi
 
