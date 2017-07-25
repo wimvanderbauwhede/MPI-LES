@@ -188,11 +188,11 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 
     ! Normalizing the time step
 #ifdef NESTED_LES
-    nn = n
-    if (inNestedGrid()) then
+!    nn = n
+!    if (inNestedGrid()) then
 !        o2n = dt_orig/dt_nest
         nn = n0+(n-n0)/int(o2n)
-    end if
+!    end if
     if(n>=n1 .and. mod(nn,avetime) == 0) then !default
 #else
     if(n.ge.n1.and.mod(n,avetime).eq.0) then !default
