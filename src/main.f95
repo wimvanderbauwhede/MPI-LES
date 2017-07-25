@@ -242,7 +242,7 @@ program main
 inNest = inNestedGrid()
 #endif
     do n = n0,nmax
-        time = float(n-1)*dt
+        time = float(n-n0)*dt
 
 #ifdef NESTED_LES
 !        if (rank==0) print *, n,time
@@ -296,7 +296,7 @@ inNest = inNestedGrid()
 #endif
 !print *, n,rank, 'bondv1'
 
-        call bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs) !WV: via halos + gatheraaa/bbb. Sideflow etc should be OK as in outer domain ???
+        call bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs) !WV: via halos + gatheraaa/bbb. Sideflow etc should be OK as in outer domain ???
 #ifdef WV_DEBUG_MPI
 if (n>n_nest0) then
 #endif

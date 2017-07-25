@@ -8,13 +8,13 @@ module module_bondv1
 
 contains
 
-subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
+subroutine bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs)
     use common_sn ! create_new_include_statements() line 102
     implicit none
     real(kind=4), intent(In) :: dt
     real(kind=4), dimension(0:ip) , intent(In) :: dxs
     real(kind=4), dimension(-1:kp+2) , intent(In) :: dzn
-    integer, intent(In) :: im, jm, km, n
+    integer, intent(In) :: im, jm, km, n, n0
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: u
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: v
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(InOut) :: w
@@ -67,7 +67,7 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
 #ifdef NESTED_LES
     if(syncTicks == 0 .and. n == n_nest0) then
 #else
-    if(n == n1) then
+    if(n == n0) then
 #endif
 
 #ifdef MPI

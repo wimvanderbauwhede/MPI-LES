@@ -256,7 +256,7 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
 #endif
 #endif
 
-    if(mod(n,1000) == 0.or.n == nmax) then
+    if(mod(n,1000) == 0 .or. n == nmax) then
         nn = n/1000
         print *, 'timestep: ',nn,' pressure at centre: ',p(ip/2,jp/2,kp/2), &
                 'vel at centre: ', &

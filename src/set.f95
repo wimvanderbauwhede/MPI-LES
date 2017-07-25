@@ -88,26 +88,16 @@ contains
 
 #ifndef WV_TEST
       nmax = 8000
-#ifdef NESTED_LES
-        if (inNestedGrid()) then
-!            print *, 'Process ',rank, ' is in nested grid'
-            nmax = nmax*(dt_orig / dt_nest)
-        else
-            nmax = nmax+1
-        end if
-#endif
-
 #else
-! WV_TEST
         nmax = 20
-#ifdef NESTED_LES
-        if (inNestedGrid()) then
-            nmax = nmax*(dt_orig/dt_nest)
-        else
-            nmax = nmax+1
-        end if
 #endif
 
+#ifdef NESTED_LES
+        if (inNestedGrid()) then
+            nmax = nmax*(dt_orig/dt_nest) ! 40
+!        else
+!            nmax = nmax !+1 ! 20
+        end if
 #endif
 
 ! --time step

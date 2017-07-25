@@ -143,6 +143,9 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 !      end do
 !      end if
 
+#ifdef NESTED_LES
+    if (syncTicks == 0) then
+#endif
 !average_out
 #ifndef MPI_NEW_WV2
       do k=0,km
@@ -167,22 +170,25 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
           end do
       end do
 #endif
-#ifdef NESTED_LES
-!    if (syncTicks == 0 .and. n > 2) then
-    if (syncTicks == 0) then
-    ! WV this seems incorrect. n in orig has half as many steps as n in nest.
-    ! So we should probably test if we are in nest and if so divide n by 2, and then apply avetime
-    !WV: code below causes the system to hang
-!    nn = n
-!    if (inNestedGrid()) then
-!        nn = n/int(dt_orig/dt_nest)
+!#ifdef NESTED_LES
 !    end if
-!    if(n.ge.n1.and.mod(nn,avetime).eq.0) then !default
-      if(n.ge.n1.and.mod(n*int(dt_orig/dt_nest),avetime).eq.0) then !default
-#else
-      if(n.ge.n1.and.mod(n,avetime).eq.0) then !default
-#endif
+!#endif
+!
+!#ifdef NESTED_LES
+!    if (syncTicks == 0) then
+!#endif
 
+    ! Normalizing the time step
+#ifdef NESTED_LES
+    nn = n
+    if (inNestedGrid()) then
+        nn = n0+(n-n0)/int(dt_orig/dt_nest)
+    end if
+    if(n>=n1 .and. mod(nn,avetime) == 0) then !default
+#else
+    if(n.ge.n1.and.mod(n,avetime).eq.0) then !default
+#endif
+!        print *, n,nn,rank,uani(ip/2,jp/2,kp/2)
 !       if(mod(n,avetime).eq.0) then !default
 
            if (isMaster()) then
@@ -213,34 +219,34 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
        allocate(ua(0:ipmax+1,-1:jpmax+1,0:kp+1))
        call distributeu(ua, uani, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
-                 ua(i,j,k) = uani(i,j,k)
+            do k = 1,km
+                do j = 1,jm
+                    do i = 1,im
+                     ua(i,j,k) = uani(i,j,k)
+                    end do
                 end do
             end do
-          end do
 
-       do k=1,km
-        do j=1,jpmax
-         do i=1,ipmax
-            ua(i,j,k)=ua(i,j,k)/real(avetime)
-         end do
-        end do
-       end do
-!       print *,ua(ipmax/2,jpmax/2,kp/2)
-!boundary
-       do k = 1,km
-         do j = 1,jpmax
-            ua(0,j,k) = ua(1,j,k)
-         end do
-       end do
+            do k=1,km
+                do j=1,jpmax
+                 do i=1,ipmax
+                    ua(i,j,k)=ua(i,j,k)/real(avetime)
+                 end do
+                end do
+            end do
+            !       print *,ua(ipmax/2,jpmax/2,kp/2)
+            !boundary
+            do k = 1,km
+                 do j = 1,jpmax
+                    ua(0,j,k) = ua(1,j,k)
+                 end do
+            end do
 
-       irec = 1
-       do  k=1,km_sl
-       write(23,rec=irec) ((real(0.5*(ua(i-1,j,k)+ua(i,j,k))),i=1,ipmax),j=1,jpmax)
-       irec = irec + 1
-       end do
+            irec = 1
+            do  k=1,km_sl
+              write(23,rec=irec) ((real(0.5*(ua(i-1,j,k)+ua(i,j,k))),i=1,ipmax),j=1,jpmax)
+              irec = irec + 1
+            end do
        end if
        deallocate(ua)
 #endif
@@ -262,39 +268,39 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
            deallocate(wa)
        end if
 #else
-       allocate(wa(0:ipmax+1,-1:jpmax+1,-1:kp+1))
+        allocate(wa(0:ipmax+1,-1:jpmax+1,-1:kp+1))
         call distributew(wa, wani, ip, jp, kp, ipmax, jpmax, procPerRow)
-       if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
-                 wa(i,j,k) = wani(i,j,k)
+        if (isMaster()) then
+            do k = 1,km
+                do j = 1,jm
+                    do i = 1,im
+                     wa(i,j,k) = wani(i,j,k)
+                    end do
                 end do
             end do
-          end do
 
-       do k=1,km
-        do j=1,jpmax
-         do i=1,ipmax
-            wa(i,j,k)=wa(i,j,k)/real(avetime)
-         end do
-        end do
-       end do
+            do k=1,km
+                do j=1,jpmax
+                 do i=1,ipmax
+                    wa(i,j,k)=wa(i,j,k)/real(avetime)
+                 end do
+                end do
+            end do
 
-!boundary
+        !boundary
             do j = 1,jpmax
                 do i = 1,ipmax
                     wa(i,j,0) = 0.0
                 end do
             end do
 
-!       do  k=1,km
-       do  k=1,km_sl
-       write(23,rec=irec) ((real(0.5*(wa(i,j,k-1)+wa(i,j,k))),i=1,ipmax),j=1,jpmax)
-       irec = irec + 1
-       end do
-       end if
-       deallocate(wa)
+        !       do  k=1,km
+            do  k=1,km_sl
+                write(23,rec=irec) ((real(0.5*(wa(i,j,k-1)+wa(i,j,k))),i=1,ipmax),j=1,jpmax)
+                irec = irec + 1
+            end do
+        end if
+        deallocate(wa)
 #endif
 
 
