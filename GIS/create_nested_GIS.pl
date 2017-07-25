@@ -3,15 +3,29 @@ use v5.20;
 use warnings;
 use strict;
 
+my %nd = (
+ nested_grid_start_x => 100,
+ nested_grid_start_y => 100,
+ nested_grid_x => 200,
+ nested_grid_y => 200,
+ orig_grid_x => 300,
+ orig_grid_y => 300,
+ dxgrid_nest => 2,
+ dygrid_nest => 2,
+ dxgrid_orig => 4,
+ dygrid_orig => 4,
+);
+
 my $VIS=0;
 
 if (not @ARGV) {
-    die '$0 GIS_file row_size'."\n";
+    die "$0 GIS_file\n";
 }
 my $gis_file = $ARGV[0];
 my $file_name = $gis_file;
 $file_name=~s/\.txt$//;
-my $row_size = $ARGV[1];
+
+my $row_size = $nd{orig_grid_x};
 
 open my $IN, '<', $gis_file or die $!;
 
@@ -40,29 +54,7 @@ my $n_rows = $row_ct+1;
 output_dat_file_and_plot($domain) if $VIS;
 # Now manipulate this
 
-my $nested_grid_start_x = 100;
-my $nested_grid_start_y = 100;
-my $nested_grid_x = 200;
-my $nested_grid_y = 200;
 
-my $dxgrid_nest = 2;
-my $dygrid_nest = 2;
-my $dxgrid_orig = 4;
-my $dygrid_orig = 4;
-
-my %nd = (
- nested_grid_start_x => 100,
- nested_grid_start_y => 100,
- nested_grid_x => 200,
- nested_grid_y => 200,
-
- dxgrid_nest => 2,
- dygrid_nest => 2,
- dxgrid_orig => 4,
- dygrid_orig => 4,
-
-
-);
 
 my $ratio_x = $nd{dxgrid_orig} / $nd{dxgrid_nest};
 my $ratio_y = $nd{dygrid_orig} / $nd{dygrid_nest};
