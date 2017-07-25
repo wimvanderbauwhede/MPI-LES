@@ -57,6 +57,8 @@ module params_common_sn
 
 #ifdef MPI
 #ifdef NESTED_LES
+
+
 ! Original grid size
     integer, parameter :: orig_grid_y = 300 !750 ! 3km
     integer, parameter :: orig_grid_x = 300 !3000 ! 12km
@@ -98,6 +100,9 @@ module params_common_sn
 
 ! Time steps
 !#ifdef TEST_NESTED_LES
+
+    integer, parameter :: n_nest0 = 1 ! was 2
+
     real, parameter :: dt_nest = 0.025 ! seconds
     real, parameter :: dt_orig = 0.05 ! seconds
 !#else

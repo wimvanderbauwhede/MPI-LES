@@ -53,7 +53,8 @@ subroutine bondfg(km,jm,f,im,g,h)
 #ifdef MPI
 ! --halo exchanges
 #ifdef NESTED_LES
-   if (syncTicks == 0  .and. n > 2) then
+!   if (syncTicks == 0  .and. n > 2) then
+   if (syncTicks == 0) then
 #endif
     call exchangeRealHalos(f, procPerRow, neighbours, 1, 0, 1, 0)
     call exchangeRealHalos(g, procPerRow, neighbours, 1, 0, 1, 0)

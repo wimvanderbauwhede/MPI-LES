@@ -29,7 +29,8 @@ subroutine boundp2(jm,im,p,km)
     end do
 #ifdef MPI
 #ifdef NESTED_LES
-   if (syncTicks == 0  .and. n > 2) then
+!   if (syncTicks == 0  .and. n > 2) then
+   if (syncTicks == 0) then
 #endif
 ! --halo exchanges
     call exchangeRealHalos(p, procPerRow, neighbours, 1, 2, 1, 2)
@@ -94,7 +95,8 @@ subroutine boundp1(km,jm,p,im)
 #ifdef MPI
 ! --halo exchanges
 #ifdef NESTED_LES
-   if (syncTicks == 0  .and. n > 2) then
+!   if (syncTicks == 0  .and. n > 2) then
+   if (syncTicks == 0) then
 #endif
     call exchangeRealHalos(p, procPerRow, neighbours, 1, 2, 1, 2)
 #ifdef NESTED_LES

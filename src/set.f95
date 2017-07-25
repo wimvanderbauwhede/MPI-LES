@@ -99,7 +99,6 @@ contains
 
 #else
 ! WV_TEST
-
         nmax = 20
 #ifdef NESTED_LES
         if (inNestedGrid()) then

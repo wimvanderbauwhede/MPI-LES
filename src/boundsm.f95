@@ -75,7 +75,8 @@ subroutine boundsm(km,jm,sm,im)
 #ifdef MPI
 ! --halo exchanges
 #ifdef NESTED_LES
-   if (syncTicks == 0  .and. n > 2) then
+!   if (syncTicks == 0  .and. n > 2) then
+   if (syncTicks == 0) then
 #endif
     call exchangeRealHalos(sm, procPerRow, neighbours, 2, 1, 2, 1)
 #ifdef NESTED_LES

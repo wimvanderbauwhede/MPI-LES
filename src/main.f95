@@ -200,6 +200,7 @@ program main
     call timdata()
     call init(km,jm,im,u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,&
               amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
+
 !    n0=200
 !#ifndef WV_DEBUG_MPI
     call ifdata( &
@@ -228,7 +229,7 @@ program main
 #ifndef MPI
     print *,'MAIN: running reference LES code for ', nmax-n0+1, ' time steps, domain = ',im,'x',jm,'x',km
 #else
-    if (rank==0) print *,'MAIN: running reference LES code for ', nmax-n0+1, ' time steps, domain = ',im,'x',jm,'x',km
+    if (rank==0) print *,'MAIN: running reference LES code for ', nmax-n0+1, ' time steps, subdomain = ',im,'x',jm,'x',km, 'total domain = ',ipmax,'x',jpmax,'x',kp
 #endif
 #endif
 #endif
@@ -248,7 +249,7 @@ inNest = inNestedGrid()
 !print *,'before orig/nest test', rank
         if (inNest) then
 !        if (.true. .or. inNest) then
-            if (mod(n,int(dt_orig/dt_nest))==0) then
+            if (mod(n,int(dt_orig/dt_nest))==1) then ! so n % 2 == 1, and n0=1, so 1,3,5, ... 2,4,6,...
 !            if (mod(n,2)==0) then
                 syncTicks = 0
 !                print *,n,'barrier nest', rank
@@ -256,6 +257,7 @@ inNest = inNestedGrid()
 !                print *,'AFTER barrier nest',rank
             else
 !                print *,n,'NO barrier nest', rank
+                ! n = 1,2,3,4,5,6,7,8,9,....
                 syncTicks = 1
             end if
 !            print *,  'NEST: n:',n,'rank:',rank,'ticks:',syncTicks
@@ -282,7 +284,7 @@ inNest = inNestedGrid()
 #else
 ! -------calculate turbulent flow--------c
 #ifdef TIMINGS
-        !!print *, n,rank, 'run_LES_reference: time step = ',n
+        print *, 'run_LES_reference: time step = ',n
 #endif
 #ifdef TIMINGS
         call system_clock(timestamp(0), clock_rate)
@@ -296,7 +298,7 @@ inNest = inNestedGrid()
 
         call bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs) !WV: via halos + gatheraaa/bbb. Sideflow etc should be OK as in outer domain ???
 #ifdef WV_DEBUG_MPI
-if (n>2) then
+if (n>n_nest0) then
 #endif
 #ifdef TIMINGS
         call system_clock(timestamp(2), clock_rate)
@@ -379,6 +381,7 @@ if (n>2) then
 #endif
 
      end do
+
 #ifdef USE_NETCDF_OUTPUT
     call close_netcdf_file()
 #endif

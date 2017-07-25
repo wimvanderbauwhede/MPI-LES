@@ -324,7 +324,8 @@ contains
 
 #ifdef MPI
 #ifdef NESTED_LES
-   if (syncTicks == 0  .and. n > 2) then
+!   if (syncTicks == 0  .and. n > 2) then
+   if (syncTicks == 0) then
 #endif
     call exchangeRealHalos(nou1, procPerRow, neighbours, 1, 2, 2, 2)
     call exchangeRealHalos(diu1, procPerRow, neighbours, 1, 2, 2, 2)

@@ -168,15 +168,17 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
       end do
 #endif
 #ifdef NESTED_LES
-    if (syncTicks == 0 .and. n > 2) then
+!    if (syncTicks == 0 .and. n > 2) then
+    if (syncTicks == 0) then
     ! WV this seems incorrect. n in orig has half as many steps as n in nest.
     ! So we should probably test if we are in nest and if so divide n by 2, and then apply avetime
-    nn = n
-    if (inNestedGrid()) then
-        nn = n/int(dt_orig/dt_nest)
-    end if
-    if(n.ge.n1.and.mod(nn,avetime).eq.0) then !default
-!      if(n.ge.n1.and.mod(n*int(dt_orig/dt_nest),avetime).eq.0) then !default
+    !WV: code below causes the system to hang
+!    nn = n
+!    if (inNestedGrid()) then
+!        nn = n/int(dt_orig/dt_nest)
+!    end if
+!    if(n.ge.n1.and.mod(nn,avetime).eq.0) then !default
+      if(n.ge.n1.and.mod(n*int(dt_orig/dt_nest),avetime).eq.0) then !default
 #else
       if(n.ge.n1.and.mod(n,avetime).eq.0) then !default
 #endif
@@ -493,7 +495,8 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
 
 ! WV: considering  do n = n0,nmax, and n1 = 1, n != n1-1
 #ifdef NESTED_LES
-    if (syncTicks == 0 .and. n > 2) then
+!    if (syncTicks == 0 .and. n > 2) then
+    if (syncTicks == 0) then
        if(  n == nmax ) then !default
 #else
        if((n.eq.n1-1).or.(n.eq.nmax))  then      

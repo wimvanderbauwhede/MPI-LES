@@ -79,14 +79,14 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
     end do
 
 #ifdef MPI
-#ifdef NESTED_LES
-    if (n>2) then
-#endif
+!#ifdef NESTED_LES
+!    if (n>2) then
+!#endif
     call getGlobalSumOf(rhsav)
     call getGlobalSumOf(area)
-#ifdef NESTED_LES
-    end if
-#endif
+!#ifdef NESTED_LES
+!    end if
+!#endif
 #endif
 
 #if GR_DEBUG
@@ -144,13 +144,13 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
 #ifndef NO_GLOBAL_SOR
 
 #ifdef MPI
-#ifdef NESTED_LES
-    if (n>2) then
-#endif
+!#ifdef NESTED_LES
+!    if (n>2) then
+!#endif
         call getGlobalSumOf(sor)
-#ifdef NESTED_LES
-    end if
-#endif
+!#ifdef NESTED_LES
+!    end if
+!#endif
 #endif
         if (sor < pjuge) then
             exit
@@ -174,14 +174,14 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
     end do
 
 #ifdef MPI
-#ifdef NESTED_LES
-    if (n>2) then
-#endif
+!#ifdef NESTED_LES
+!    if (n>2) then
+!#endif
     call getGlobalSumOf(pav)
     call getGlobalSumOf(pco)
-#ifdef NESTED_LES
-    end if
-#endif
+!#ifdef NESTED_LES
+!    end if
+!#endif
 #endif
 #if GR_DEBUG
     print*, 'GR: pav ', pav, ' pco ', pco

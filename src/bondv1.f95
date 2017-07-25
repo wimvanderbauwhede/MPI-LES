@@ -1,6 +1,9 @@
 module module_bondv1
 #ifdef MPI
     use communication_helper_real
+#ifdef NESTED_LES
+    use nesting_support
+#endif
 #endif
 
 contains
@@ -62,9 +65,9 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
 #if ICAL == 0
 !    if(ical == 0.and.n == 1) then
 #ifdef NESTED_LES
-    if(syncTicks == 0 .and. n == 2) then
+    if(syncTicks == 0 .and. n == n_nest0) then
 #else
-    if(n == 1) then
+    if(n == n1) then
 #endif
 
 #ifdef MPI
@@ -184,9 +187,6 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
         end do
     end do
 #else
-#ifdef NESTED_LES
-!    if (syncTicks == 0) call MPI_Barrier(communicator, ierror)
-#endif
     ! call assumes column (jp) index from 1, not -1 hence values are +2 from original code
 #ifdef NESTED_LES
     if (syncTicks == 0) then
@@ -209,7 +209,7 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
 #ifdef MPI
 
 #ifdef NESTED_LES
-   if (syncTicks == 0  .and. n > 2) then
+   if (syncTicks == 0  .and. n > n_nest0) then
 #endif
 
 !    print *, 'n:', n,'r:',rank,'sync:',syncTicks,'bondv1 BHX2'
