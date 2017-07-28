@@ -11,46 +11,58 @@ module module_anime
 #endif
 
 contains
-
+#ifdef MPI_NEW_WV
+#define MPI_NEW_WV2
+#endif
 ! Added by WV for use with MPI_NEW_WV2
 #ifdef MPI_NEW_WV2
-real function calc_avg_ua(ua,i,j,k) result(avg)
-    real, dimension(:,:,:), intent(In) :: ua
-    integer, intent(In) :: i,j,k
+!real function calc_avg_ua(ua,i,j,k) result(avg)
+real function calc_avg_ua(ua,i,i_s,idx) result(avg)
+    !real, dimension(:,:,:), intent(In) :: ua
+    real, dimension(:), intent(In) :: ua
+    integer, intent(In) :: i,i_s,idx !j,k
     real :: uam1
 
-    if (i==1) then
-        uam1=ua(i,j,k)
+    !if (i==1) then
+    if (i==0 .and. i_s==0) then
+!        uam1=ua(i,j,k)
+        uam1=ua(idx)
     else
-        uam1=ua(i-1,j,k)
+!        uam1=ua(i-1,j,k)
+        uam1=ua(idx-1)
     end if
-    avg =real(0.5*(uam1+ua(i,j,k)))
+    !avg =real(0.5*(uam1+ua(i,j,k)))
+    avg =real(0.5*(uam1+ua(idx)))
+!    if (idx > ip*jp*kp) avg = 0.0
 end function  calc_avg_ua
 
-real function calc_avg_va(va,i,j,k) result(avg)
-    real, dimension(:,:,:), intent(In) :: va
-    integer, intent(In) :: i,j,k
+real function calc_avg_va(va,j,j_s,idx) result(avg)
+    real, dimension(:), intent(In) :: va
+    integer, intent(In) :: j,j_s,idx
     real :: va_jm1
 
-    if (j==1) then
-        va_jm1=va(i,jpmax,k)
+    if (j==0 .and. j_s==0) then
+    ! idx = 1 + i + j*ip+ k*(ip*jp) + (j_s+i_s*ProcPerCol)*(ip*jp*kp)
+    ! jpmax : j=jp-1 and j_s = procPerCol-1
+    ! idx' = idx +(jp-1)*ip +(procPerCol-1)*(ip*jp*kp)
+        va_jm1=va(idx +(jp-1)*ip +(procPerCol-1)*(ip*jp*kp))
     else
-        va_jm1=va(i,j-1,k)
+        va_jm1=va(idx-ip)
     end if
-    avg =real(0.5*(va_jm1+va(i,j,k)))
+    avg =real(0.5*(va_jm1+va(idx)))
 end function  calc_avg_va
 
-real function calc_avg_wa(wa,i,j,k) result(avg)
-    real, dimension(:,:,:), intent(In) :: wa
-    integer, intent(In) :: i,j,k
+real function calc_avg_wa(wa,k,idx) result(avg)
+    real, dimension(:), intent(In) :: wa
+    integer, intent(In) :: idx,k
     real :: wa_km1
 
-    if (k==1) then
+    if (k==0) then
         wa_km1=0.0
     else
-        wa_km1=wa(i,j,k-1)
+        wa_km1=wa(idx-ip*jp)
     end if
-    avg =real(0.5*(wa_km1+wa(i,j,k)))
+    avg =real(0.5*(wa_km1+wa(idx)))
 end function  calc_avg_wa
 #endif
 
@@ -79,7 +91,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
     real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(In)  :: zbm
 !average_out
 #ifdef MPI_NEW_WV
-    integer :: irec, i,j,k
+    integer :: irec, i,j,k, i_s, j_s
     character(len=70) :: filename
 #endif
 #ifdef MPI_NEW_WV2
@@ -102,10 +114,17 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 !    real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1,1) , intent(in) :: zbm1
 !    character(len=70) :: filename
 
+#ifdef MPI_NEW_WV2
+    real(kind=4),allocatable :: ua(:)
+    real(kind=4),allocatable :: va(:)
+    real(kind=4),allocatable :: wa(:)
+    real(kind=4),allocatable :: pa(:)
+#else    
     real(kind=4),allocatable :: ua(:,:,:)
     real(kind=4),allocatable :: va(:,:,:)
     real(kind=4),allocatable :: wa(:,:,:)
     real(kind=4),allocatable :: pa(:,:,:)
+#endif
     real(kind=4),allocatable :: amask1a(:,:,:)
 
     real(kind=4) :: o2n
@@ -214,7 +233,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 
 #ifdef MPI_NEW_WV2
         if (isMaster()) then
-            allocate(ua(ipmax,jpmax,kp))
+            allocate(ua(ipmax*jpmax*kp))
         end if
 ! WV: the problem with MPI_Gather is that is collects 3-D subdomain chunks but they are not contiguous in memory
 ! So to make Gather work correctly, they would need to be reordered.
@@ -228,7 +247,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 !            do i in 1,ip
 !                ii = i_s* ip +i
 !                print(ii,jj)
-(((( real(0.5*(ua(i-1,j,k)+ua(i_s*ip+i,j_s*jp+j,k) ) ) ,i=1,ip),j=1,jp), i_s=0,procPerCol-1,j_s=0,procPerCol-1)
+! (((( real(0.5*(ua(i-1,j,k)+ua(i_s*ip+i,j_s*jp+j,k) ) ) ,i=1,ip),j=1,jp), i_s=0,procPerCol-1,j_s=0,procPerCol-1)
 
         call MPI_Gather(uani, ip*jp*kp, MPI_REAL, ua, ip*jp*kp, MPI_REAL, 0, communicator, ierror)
         call checkMPIError()
@@ -237,9 +256,11 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
            ua=ua/real(avetime)
 !           print *,ua(ipmax/2,jpmax/2,kp/2)
            irec = 1
-           do  k=1,km_sl
+           !do  k=1,km_sl
+           do  k=0,km_sl-1
 !                write(23,rec=irec) ((calc_avg_ua(ua,i,j,k),i=1,ipmax),j=1,jpmax)
-                write(23,rec=irec) (((( calc_avg_ua(ua,i_s*ip+i,j_s*jp+j,k) ,i=1,ip),j=1,jp), i_s=0,procPerCol-1,j_s=0,procPerCol-1)
+! i_s*ip*jp*kp+j_s*procPerRow*ip*jp*kp+i+j*ip+k*ip*jp
+                write(23,rec=irec) (((( calc_avg_ua(ua,i,i_s, 1 + i + j*ip + k*(ip*jp) + (j_s+i_s*ProcPerCol)*(ip*jp*kp) ) ,i=0,ip-1), i_s=0,procPerRow-1),j=0,jp-1),j_s=0,procPerCol-1)
                 irec = irec + 1
            end do
            deallocate(ua)
@@ -307,7 +328,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 ! ---- wa -----
 #ifdef MPI_NEW_WV2
         if (isMaster()) then
-            allocate(wa(ipmax,jpmax,kp))
+            allocate(wa(ipmax*jpmax*kp))
         end if
         call MPI_Gather(wani, ip*jp*kp, MPI_REAL, wa, ip*jp*kp, MPI_REAL, 0, communicator, ierror)
         call checkMPIError()
@@ -315,8 +336,9 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
        if (isMaster()) then
            wa=wa/real(avetime)
 !           irec = 1
-           do  k=1,km_sl
-                write(23,rec=irec) ((calc_avg_wa(wa,i,j,k),i=1,ipmax),j=1,jpmax)
+!print *,'wa'
+           do  k=0,km_sl-1
+                write(23,rec=irec) (((( calc_avg_wa(wa,k, 1 + i + j*ip + k*(ip*jp) + (j_s+i_s*ProcPerCol)*(ip*jp*kp) ) ,i=0,ip-1), i_s=0,procPerRow-1),j=0,jp-1),j_s=0,procPerCol-1)
                 irec = irec + 1
            end do
            deallocate(wa)
@@ -360,7 +382,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 
 ! ---- va ----
 #ifdef MPI_NEW_WV2
-        if (isMaster()) allocate(va(ipmax,jpmax,kp))
+        if (isMaster()) allocate(va(ipmax*jpmax*kp))
 
         call MPI_Gather(vani, ip*jp*kp, MPI_REAL, va, ip*jp*kp, MPI_REAL, 0, communicator, ierror)
         call checkMPIError()
@@ -368,8 +390,9 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
        if (isMaster()) then
            va=va/real(avetime)
 !           irec = 1
-           do  k=1,km_sl
-                write(23,rec=irec) ((calc_avg_va(va,i,j,k),i=1,ipmax),j=1,jpmax)
+!print *,va
+           do  k=0,km_sl-1
+                write(23,rec=irec) (((( calc_avg_va(va,j,j_s, 1 + i + j*ip + k*(ip*jp) + (j_s+i_s*ProcPerCol)*(ip*jp*kp) ) ,i=0,ip-1), i_s=0,procPerRow-1),j=0,jp-1),j_s=0,procPerCol-1)
                 irec = irec + 1
            end do
            deallocate(va)
@@ -417,15 +440,16 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 
 !--------pressure-----------
 #ifdef MPI_NEW_WV2
-       if (isMaster()) allocate(pa(ipmax,jpmax,kp))
+       if (isMaster()) allocate(pa(ipmax*jpmax*kp))
        call MPI_Gather(pani, ip*jp*kp, MPI_REAL, pa, ip*jp*kp, MPI_REAL, 0, communicator, ierror)
        call checkMPIError()
 
        if (isMaster()) then
            pa=pa/real(avetime)
 !           irec = 1
-           do  k=1,km_sl
-                write(23,rec=irec) ((pa(i,j,k),i=1,ipmax),j=1,jpmax)
+!            print *,pa
+           do  k=0,km_sl-1
+                write(23,rec=irec) (((( pa(1 + i + j*ip + k*(ip*jp) + (j_s+i_s*ProcPerCol)*(ip*jp*kp) ) ,i=0,ip-1), i_s=0,procPerRow-1),j=0,jp-1),j_s=0,procPerCol-1)
                 irec = irec + 1
            end do
            close(23)

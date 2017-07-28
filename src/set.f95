@@ -89,7 +89,7 @@ contains
 #ifndef WV_TEST
       nmax = 8000
 #else
-        nmax = 20
+        nmax = 5
 #endif
 
 #ifdef NESTED_LES
