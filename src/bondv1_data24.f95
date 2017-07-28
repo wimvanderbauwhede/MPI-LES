@@ -13,7 +13,7 @@ subroutine bondv1_data24(jm,u,z2,dzn,v,w,km,n,im,dt,dxs)
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: u
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: v
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(InOut) :: w
-    real(kind=4), dimension(kp+2) , intent(In) :: z2
+    real(kind=4), dimension(0:kp+2) , intent(In) :: z2
     real(kind=4) :: u_val
     integer :: i, j, k
     real(kind=4) :: aaa, bbb, uout

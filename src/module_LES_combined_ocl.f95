@@ -57,7 +57,7 @@ contains
         real(kind=4), dimension(-1:ip+1), intent(In)  :: dx1
         real(kind=4), dimension(0:jp+1), intent(In)  :: dy1
         real(kind=4), dimension(-1:kp+2), intent(In)  :: dzn
-        real(kind=4), dimension(kp+2)  :: z2
+        real(kind=4), dimension(0:kp+2)  :: z2
         real(kind=4), intent(In) :: dt
         integer, intent(In) :: im
         integer, intent(In) :: jm

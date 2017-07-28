@@ -75,7 +75,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(In) :: p
-    real(kind=4), dimension(kp+2) , intent(In) :: z2
+    real(kind=4), dimension(0:kp+2) , intent(In) :: z2 ! WV Unused!
     real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(In)  :: zbm
 !average_out
 #ifdef MPI_NEW_WV
@@ -197,12 +197,17 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 #else
     if(n.ge.n1.and.mod(n,avetime).eq.0) then !default
 #endif
-        print *, n,nn,rank,uani(ip/2,jp/2,kp/2)
+!        print *, n,nn,rank,uani(ip/2,jp/2,kp/2)
 !       if(mod(n,avetime).eq.0) then !default
 
            if (isMaster()) then
                write(filename, '("../out/data23",i6.6, ".dat")') n
+#ifdef SAVE_NESTED_GRID_ONLY
+               ! WV: for nested domain only this would be smaller, nested_grid_x * nested_grid_y
+               open(unit=23,file=filename,form='unformatted',access='direct',recl=4*nested_grid_x * nested_grid_y)
+#else
                open(unit=23,file=filename,form='unformatted',access='direct',recl=4*ipmax*jpmax)
+#endif
            end if
 
 ! ---- ua ----
@@ -211,6 +216,20 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
         if (isMaster()) then
             allocate(ua(ipmax,jpmax,kp))
         end if
+! WV: the problem with MPI_Gather is that is collects 3-D subdomain chunks but they are not contiguous in memory
+! So to make Gather work correctly, they would need to be reordered.
+! In fact what we receive is a 2-D array of 3-D arrays, and we should reconstruct the global 3-D array from that
+! so we do :
+
+!do j_s in 0,procPerCol-1
+!    do i_s in 0,procPerRow-1
+!        do j in 1,jp
+!            jj = j_s * jp + j
+!            do i in 1,ip
+!                ii = i_s* ip +i
+!                print(ii,jj)
+(((( real(0.5*(ua(i-1,j,k)+ua(i_s*ip+i,j_s*jp+j,k) ) ) ,i=1,ip),j=1,jp), i_s=0,procPerCol-1,j_s=0,procPerCol-1)
+
         call MPI_Gather(uani, ip*jp*kp, MPI_REAL, ua, ip*jp*kp, MPI_REAL, 0, communicator, ierror)
         call checkMPIError()
 
@@ -219,14 +238,21 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 !           print *,ua(ipmax/2,jpmax/2,kp/2)
            irec = 1
            do  k=1,km_sl
-                write(23,rec=irec) ((calc_avg_ua(ua,i,j,k),i=1,ipmax),j=1,jpmax)
+!                write(23,rec=irec) ((calc_avg_ua(ua,i,j,k),i=1,ipmax),j=1,jpmax)
+                write(23,rec=irec) (((( calc_avg_ua(ua,i_s*ip+i,j_s*jp+j,k) ,i=1,ip),j=1,jp), i_s=0,procPerCol-1,j_s=0,procPerCol-1)
                 irec = irec + 1
            end do
            deallocate(ua)
        end if
 #else
+#ifdef SAVE_NESTED_GRID_ONLY
+       allocate(ua(0:nested_grid_x+1,-1:nested_grid_y+1,0:kp+1))
+       call distributeu(ua, uani, ip, jp, kp, nested_grid_x, nested_grid_y, procPerRow)
+#else
        allocate(ua(0:ipmax+1,-1:jpmax+1,0:kp+1))
        call distributeu(ua, uani, ip, jp, kp, ipmax, jpmax, procPerRow)
+#endif
+
        if (isMaster()) then
             do k = 1,km
                 do j = 1,jm
@@ -235,7 +261,15 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
                     end do
                 end do
             end do
-
+#ifdef SAVE_NESTED_GRID_ONLY
+            do k=1,km
+                do j=1,nested_grid_y
+                 do i=1,nested_grid_x
+                    ua(i,j,k)=ua(i,j,k)/real(avetime)
+                 end do
+                end do
+            end do
+#else
             do k=1,km
                 do j=1,jpmax
                  do i=1,ipmax
@@ -243,17 +277,28 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
                  end do
                 end do
             end do
+#endif
             !       print *,ua(ipmax/2,jpmax/2,kp/2)
             !boundary
             do k = 1,km
+#ifdef SAVE_NESTED_GRID_ONLY
+                 do j = 1,nested_grid_y
+                    ua(0,j,k) = ua(1,j,k)
+                 end do
+#else
                  do j = 1,jpmax
                     ua(0,j,k) = ua(1,j,k)
                  end do
+#endif
             end do
 
             irec = 1
             do  k=1,km_sl
+#ifdef SAVE_NESTED_GRID_ONLY
+              write(23,rec=irec) ((real(0.5*(ua(i-1,j,k)+ua(i,j,k))),i=1,nested_grid_x),j=1,nested_grid_y)
+#else
               write(23,rec=irec) ((real(0.5*(ua(i-1,j,k)+ua(i,j,k))),i=1,ipmax),j=1,jpmax)
+#endif
               irec = irec + 1
             end do
        end if

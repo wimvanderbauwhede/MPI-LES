@@ -852,7 +852,9 @@ subroutine distributeu(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
     character(70) :: cha
     real(kind=4), dimension(ip, jp, kp) :: sendBuffer,recvBuffer
     if (.not.isMaster()) then
-
+#ifdef SAVE_NESTED_GRID_ONLY
+    if (inNestedGridByRank(i) then
+#endif
             do k=1, kp
                 do c=1, jp
                    do r=1, ip
@@ -872,10 +874,15 @@ subroutine distributeu(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
             call MPI_Send(sendBuffer, (ip*jp*kp), MPI_REAL, 0, zbmTag, &
                           communicator, ierror)
             call checkMPIError()
-
-
+#ifdef SAVE_NESTED_GRID_ONLY
+    end if ! inNestedGridByRank(i)
+#endif
     else
-  
+! In master
+#ifdef SAVE_NESTED_GRID_ONLY
+! What we should do here is limit this to the nested grid:
+     if (inNestedGridByRank(i)
+#endif
         do i = 1, mpi_size - 1
 
         call MPI_Recv(recvBuffer, (ip*jp*kp), MPI_REAL, i,zbmTag,communicator,&
@@ -887,9 +894,13 @@ subroutine distributeu(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
 #ifdef GR_DEBUG
         print*, 'GR: recvBuffer  sum: ', sum(recvBuffer)
 #endif
-
+#ifdef SAVE_NESTED_GRID_ONLY
+! This needs to change for the nested grid:
+            call calcSubgridCoords(i,startRow,startCol)
+#else
             startRow = topLeftRowValue(i, procPerRow, ip)
             startCol = topLeftColValue(i, procPerRow, jp)
+#endif
 #ifdef GR_DEBUG
         write(*,*) 'startRow=',startRow,'startCol=',startCol
 #endif
@@ -904,6 +915,9 @@ subroutine distributeu(ua, u,ip, jp, kp, ipmax, jpmax, procPerRow)
 
 
         end do
+#ifdef SAVE_NESTED_GRID_ONLY
+    end if ! inNestedGridByRank(i)
+#endif
        end if
     
             

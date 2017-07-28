@@ -28,7 +28,7 @@ contains
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: u
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: v
         real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(Out) :: w
-        real(kind=4), dimension(kp+2) , intent(In) :: z2
+        real(kind=4), dimension(0:kp+2) , intent(In) :: z2
         real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(InOut) :: zbm
 !
 ! WV: The original boundary was 0,km;0,jm;0,im. This does not init the boundary values,so I changed it to the dimensions of u,v,w,p

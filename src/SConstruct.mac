@@ -112,6 +112,12 @@ if with_ocl == '0':
 #    FFLAGS += ['-cpp','-Ofast', '-m64', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian' ]
      FFLAGS += ['-cpp', '-O', '-Wall','-Wno-unused','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium','-fbounds-check' ]
 
+#-- intel compiler ifort
+#     FFLAGS += [ '-O', '-convert', 'big_endian', '-shared-intel','-fpp', '-free','-Tf' ] # Order matters, -Tf must come last!
+#-- PGI compiler pgfort
+#     FFLAGS += ['-cpp','-Mipa=fast','-fast','-m64','-Mfree','-mcmodel=medium'])
+
+
 csources=[]
 CC= os.environ['CC']
 envC=Environment(CC=CC)
