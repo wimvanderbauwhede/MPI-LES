@@ -92,6 +92,8 @@ module params_common_sn
     integer, parameter :: jpmax = orig_grid_y + nested_grid_y*(1 - (dygrid_nest/dygrid_orig))
     integer, parameter :: ip = ipmax / PROC_PER_COL ! rows per process
     integer, parameter :: jp = ipmax / PROC_PER_ROW ! columns per process
+    integer, parameter :: procPerRowNest = nested_grid_x / ip
+    integer, parameter :: procPerColNest = nested_grid_y / jp
 ! Subgrid coordinates for nest
     integer, parameter :: i_s_nest_start =  nested_grid_start_x / ip ! 75 / (300 / 4) = 1
     integer, parameter :: i_s_nest_end =  i_s_nest_start + nested_grid_x / ip - 1 ! 1 + (150 / 75)  - 1 = 2
