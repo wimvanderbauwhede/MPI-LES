@@ -7,9 +7,14 @@ module module_press
     implicit none
 contains
 
+#ifdef WV_NEW
+subroutine press(u,v,w,usum,vsum,wsum,p,rhs,f,g,h,dx1,dy1,dzn,dxs,dys,dzs,dt,n,nmax,data20)
+#else
 subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,cn4s, &
                  n,nmax,data20,usum,vsum,wsum)
+#endif
     use common_sn ! create_new_include_statements() line 102
+#ifndef WV_NEW
     real(kind=4), dimension(ip,jp,kp) , intent(In) :: cn1
     real(kind=4), dimension(ip) , intent(In) :: cn2l
     real(kind=4), dimension(ip) , intent(In) :: cn2s
@@ -17,6 +22,12 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
     real(kind=4), dimension(jp) , intent(In) :: cn3s
     real(kind=4), dimension(kp) , intent(In) :: cn4l
     real(kind=4), dimension(kp) , intent(In) :: cn4s
+#else
+    real(kind=4), dimension(0:ip) , intent(In) :: dxs
+    real(kind=4), dimension(0:jp) , intent(In) :: dys
+    real(kind=4), dimension(-1:kp+2) , intent(In) :: dzs
+    real(kind=4) :: cn1,cn2l,cn2s,cn3l,cn3s,cn4l,cn4s,dz1,dz2
+#endif
     character(len=70), intent(In) :: data20
     real(kind=4), intent(In) :: dt
     real(kind=4), dimension(-1:ip+1) , intent(In) :: dx1
@@ -106,12 +117,39 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
         sor = 0.0
         do nrd = 0,1
             do k = 1,kp
+#ifdef WV_NEW
+                dz1 = dzs(k-1)
+                dz2 = dzs(k)
+                cn4s = 2./(dz1*(dz1+dz2))
+                cn4l = 2./(dz2*(dz1+dz2))
+#endif
                 do j = 1,jp
+#ifdef WV_NEW
+                    cn3s = 2./(dys(j-1)*(dys(j-1)+dys(j)))
+                    cn3l = 2./(dys(j)*(dys(j-1)+dys(j)))
+#endif
                     do i = 1+mod(k+j+nrd,2),ip,2
-                        reltmp = omega*(cn1(i,j,k) *(cn2l(i)*p(i+1,j,k) + &
-                                 cn2s(i)*p(i-1,j,k) +cn3l(j)*p(i,j+1,k) + &
-                                 cn3s(j)*p(i,j-1,k) +cn4l(k)*p(i,j,k+1) + &
-                                 cn4s(k)*p(i,j,k-1) -rhs(i,j,k))-p(i,j,k))
+#ifdef WV_NEW
+                        cn2s = 2./(dxs(i-1)*(dxs(i-1)+dxs(i)))
+                        cn2l = 2./(dxs(i)*(dxs(i-1)+dxs(i)))
+
+                        cn1 = 2./(dxs(i-1)*dxs(i))  + 2./(dys(j-1)*dys(j)) + 2./(dz1*dz2)
+                        cn1 = 1./cn1
+
+                        reltmp = omega*(cn1 *(cn2l*p(i+1,j,k) + &
+                                 cn2s*p(i-1,j,k) +cn3l*p(i,j+1,k) + &
+                                 cn3s*p(i,j-1,k) +cn4l*p(i,j,k+1) + &
+                                 cn4s*p(i,j,k-1) -rhs(i,j,k))-p(i,j,k))
+#else
+                        reltmp = omega*(cn1(i,j,k)      &
+                                *(cn2l(i)*p(i+1,j,k)    &
+                                 +cn2s(i)*p(i-1,j,k)    &
+                                 +cn3l(j)*p(i,j+1,k)    &
+                                 +cn3s(j)*p(i,j-1,k)    &
+                                 +cn4l(k)*p(i,j,k+1)    &
+                                 +cn4s(k)*p(i,j,k-1)    &
+                                 -rhs(i,j,k))-p(i,j,k))
+#endif
 !
                         p(i,j,k) = p(i,j,k) +reltmp
                         sor = sor+reltmp*reltmp

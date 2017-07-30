@@ -67,16 +67,19 @@ if with_mpi == '1':
 #    envF['F95']='mpif90'
     if OSX==0:    
         envF['LINK']=envF['F95']
-        envF.Append(LIBS=['netcdf']) # for version less than 4.2.0
+        if USE_NETCDF_OUTPUT != '':
+            envF.Append(LIBS=['netcdf']) # for version less than 4.2.0
     else:
         envF['F95']=os.environ['FC']
         envF['LINK']=os.environ['FC']
-        envF.Append(LIBS=['mpi_mpifh','netcdff']) # for version more than and equal to 4.2.0 
+        if USE_NETCDF_OUTPUT != '':
+            envF.Append(LIBS=['mpi_mpifh','netcdff']) # for version more than and equal to 4.2.0 
 else:
     if OSX==1:    
         envF['F95']=os.environ['FC']
         envF['LINK']=os.environ['FC']
-        envF.Append(LIBS=['netcdff']) # for version more than and equal to 4.2.0 
+        if USE_NETCDF_OUTPUT != '':
+            envF.Append(LIBS=['netcdff']) # for version more than and equal to 4.2.0 
 
 NESTED_LES=''
 if with_nesting=='1':
@@ -110,9 +113,7 @@ if with_ocl == '0':
 #    FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium' ]
 #     FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium', '-fno-range-check','-fbounds-check','-Wuninitialized','-ffpe-trap=invalid,zero,overflow' ]
 #    FFLAGS += ['-cpp','-Ofast', '-m64', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian' ]
-     FFLAGS += ['-cpp', '-O', '-Wall','-Wno-unused','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian','-fbounds-check' ]
-if with_mpi=='1':
-    FFLAGS+=[ '-mcmodel=medium']
+     FFLAGS += ['-cpp', '-O','-Wall','-Wno-unused','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian','-fbounds-check' ,'-mcmodel=medium']
 
 #-- intel compiler ifort
 #     FFLAGS += [ '-O', '-convert', 'big_endian', '-shared-intel','-fpp', '-free','-Tf' ] # Order matters, -Tf must come last!
@@ -157,8 +158,11 @@ else:
 
 if OSX == 1:
 # Assuming MacPorts
-    INCLPATH = ['/opt/local/include','/opt/local/include/openmpi-gcc49/','/opt/local/lib/openmpi-gcc49/']
-    LIBPATH = ['/opt/local/lib','/opt/local/lib/openmpi-gcc49/']
+    INCLPATH = ['/opt/local/include']
+    LIBPATH = ['/opt/local/lib']
+    if with_mpi == '1':
+        INCLPATH += ['/opt/local/include/openmpi-gcc49/','/opt/local/lib/openmpi-gcc49/']
+        LIBPATH += ['/opt/local/lib/openmpi-gcc49/']
 else:
 # test for devtoolset-2 ... so better use a var $DEVTOOLSETROOT?
     if os.path.exists('/opt/rh/devtoolset-2'):
@@ -178,6 +182,8 @@ else:
 #        LIBPATH = '/usr/local/lib'
 #INCLPATH += ['../OpenCL','../OpenCL/Wrappers']
 
+#if OSX==1:
+#    envF['LINKFLAGS']=['-Wl,-stack_size,0x40000000'] # Give OS X 1G stack
 envF.Append(F95FLAGS=FFLAGS)
 envF.Append(F95PATH=['.',INCLPATH])
 envF.Append(LIBPATH=['.',LIBPATH])

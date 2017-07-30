@@ -303,6 +303,17 @@ if (n>n_nest0) then
 #ifdef TIMINGS
         call system_clock(timestamp(2), clock_rate)
 #endif
+#ifdef WV_NEW_VELFG
+#ifdef NESTED_LES
+      call velfg(n,dx1,dfu1,dy1,dzn,vn,f, &
+      dfv1,g,dfw1,dzs,h,u,v,w, &
+      uspd,vspd)
+#else
+      call velfg(dx1,dfu1,dy1,dzn,vn,f, &
+      dfv1,g,dfw1,dzs,h,u,v,w, &
+      uspd,vspd)
+#endif
+#else
 #ifdef NESTED_LES
         call velfg(n,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn, &
                    vn,f,cov4,cov5,cov6,dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9, &
@@ -314,13 +325,18 @@ if (n>n_nest0) then
                    dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
                    nou4,nou6,nou7,nou8,uspd,vspd) !WV: calls vel2 which uses halos
 #endif
+#endif
 #ifdef TIMINGS
         call system_clock(timestamp(3), clock_rate)
 #endif
 
 #if IFBF == 1
+#ifdef WV_NEW
+        call feedbf(u,v,w,f,g,h,usum,vsum,wsum,dzn,z2,zbm,alpha,beta,dt,n) ! WV: no MPI
+#else
         call feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha, &
                     dt,beta,fx,fy,fz,f,g,h,n) ! WV: no MPI
+#endif
 #endif
 #ifdef TIMINGS
         call system_clock(timestamp(4), clock_rate)
@@ -334,8 +350,12 @@ if (n>n_nest0) then
 #ifdef TIMINGS
         call system_clock(timestamp(6), clock_rate)
 #endif
+#ifdef WV_NEW
+        call press(u,v,w,usum,vsum,wsum,p,rhs,f,g,h,dx1,dy1,dzn,dxs,dys,dzs,dt,n,nmax,data20)
+#else
         call press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s, &
                    cn3l,cn3s,cn4l,cn4s,n, nmax,data20,usum,vsum,wsum) !WV getGlobalSumOf and exchangeRealHalos (in boundp)
+#endif
 #ifdef TIMINGS
         call system_clock(timestamp(7), clock_rate)
         do i=1, 7

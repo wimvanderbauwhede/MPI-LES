@@ -3,21 +3,26 @@ module module_feedbfm
     use communication_helper_real
 #endif
 contains
-
+#ifdef WV_NEW
+subroutine feedbfm(zbm,z2,dzn)
+#else
 subroutine feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
+#endif
     use common_sn ! create_new_include_statements() line 102
     implicit none
+#ifndef WV_NEW
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: amask1
     real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1) , intent(Out) :: bmask1
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: cmask1
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: dmask1
+#endif
     real(kind=4), dimension(-1:kp+2) , intent(In) :: dzn
     real(kind=4), dimension(0:kp+2) , intent(In) :: z2
     real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(InOut) :: zbm
     integer :: i, j, k
     real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) :: dsm,dem
 
-
+#ifndef WV_NEW
 !
 !    print *, 'Urban model'
 ! -------Urban model----------
@@ -31,18 +36,13 @@ subroutine feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
             end do
         end do
     end do
-
-
-    do j=1,jpmax
-      do i=1,ipmax
+#endif
+! WV: better set the whole array to 0.
+!    do j=1,jpmax
+!      do i=1,ipmax
             zbm(i,j)=0.
-      end do
-    end do
-
-
-
-
-
+!      end do
+!    end do
 
 #ifdef VERBOSE
 #ifdef MPI
@@ -71,7 +71,7 @@ subroutine feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
       end if !for imaster
       call distributeZBM(zbm, ip, jp, ipmax, jpmax, procPerRow)
 #endif
-
+#ifndef WV_NEW
 ! print *, 'assign amask'
       do j = 1,jp
           do i = 1,ip
@@ -106,6 +106,8 @@ subroutine feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
     call exchangeRealHalos(bmask1, procPerRow, neighbours, 1, 1, 2, 1)
     call exchangeRealHalos(cmask1, procPerRow, neighbours, 2, 1, 1, 1)
     call exchangeRealHalos(dmask1, procPerRow, neighbours, 1, 1, 1, 1)
+#endif
+
 #endif
 !
 end subroutine feedbfm

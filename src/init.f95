@@ -67,7 +67,11 @@ contains
 !print *, 'call feedbfm'
 ! --check
 #if IFBF == 1
+#ifndef WV_NEW
       call feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
+#else
+        call feedbfm(zbm,z2,dzn)
+#endif
 !      if(ifbf == 1) call feedbfm(km,jp,ip,amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
 #endif
 !print *, 'Parameter settings for solving Poisson equation'

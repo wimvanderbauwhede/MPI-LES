@@ -3,8 +3,8 @@ DSET    ^20000101_%h2%n2
 TITLE   LES
 UNDEF   -9.99E33
 OPTIONS byteswapped  template
-XDEF    400 LINEAR 0.000 0.004
-YDEF    400 LINEAR 0.000 0.004
+XDEF    200 LINEAR 0.000 0.004
+YDEF    200 LINEAR 0.000 0.004
 ZDEF    80 LEVELS
      0.500      1.550      2.705      3.976      5.373      6.910      8.601     10.462     12.508     14.758
      17.234     19.958     22.954     26.249     29.874     33.772     37.772     41.772     45.772     49.772

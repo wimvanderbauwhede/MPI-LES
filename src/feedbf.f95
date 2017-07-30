@@ -1,20 +1,59 @@
 module module_feedbf
 
 contains
+#ifdef WV_NEW
 
+subroutine calc_abcd_mask(zbm, z2, dzn, i,j,k, abcd_mask1)
+    use params_common_sn
+    integer, intent(In) :: i,j,k
+    real(kind=4), dimension(-1:kp+2) , intent(In) :: dzn
+    real(kind=4), dimension(0:kp+2) , intent(In) :: z2
+    real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(In) :: zbm
+
+    real(kind=4), dimension(0:3), intent(Out) :: abcd_mask1
+
+    abcd_mask1(0) = 1.
+    abcd_mask1(1) = 0.
+    abcd_mask1(2) = 0.
+    abcd_mask1(3) = 0.
+    if(zbm(i,j) > z2(k)+0.5*dzn(k)) then
+        abcd_mask1(0) = 0.0
+        abcd_mask1(1) = 1.0
+        abcd_mask1(2) = 1.0
+        abcd_mask1(3) = 1.0
+    end if
+
+end subroutine calc_abcd_mask
+
+subroutine feedbf(u,v,w,f,g,h,usum,vsum,wsum,dzn,z2,zbm,alpha,beta,dt,n)
+#else
 subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
                   dt,beta,fx,fy,fz,f,g,h,n)
+#endif
+
     use common_sn ! create_new_include_statements() line 102
     real(kind=4), intent(In) :: alpha
     real(kind=4), intent(In) :: beta
+#ifndef WV_NEW
     real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1) , intent(In) :: bmask1
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: cmask1
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(In) :: dmask1
+#else
+    real(kind=4), dimension(-1:kp+2) , intent(In) :: dzn
+    real(kind=4), dimension(0:kp+2) , intent(In) :: z2
+    real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(InOut) :: zbm
+
+    real(kind=4), dimension(0:3) :: abcd_mask
+#endif
     real(kind=4), intent(In) :: dt
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: f
+#ifndef WV_NEW
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: fx
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: fy
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: fz
+#else
+    real(kind=4) :: fx,fy,fz
+#endif
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: g
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: h
     integer, intent(In) :: n
@@ -35,6 +74,7 @@ subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
 !      write(*,*) "u",u(i,5,2),i,rank,n
 !      end do
 !    end if 
+#ifndef WV_NEW
     do k = 1,kp
         do j = 1,jp
             do i = 1,ip
@@ -62,7 +102,31 @@ subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
             end do
         end do
     end do
+#else
+    do k = 1,kp
+        do j = 1,jp
+            do i = 1,ip
 
+                call calc_abcd_mask(zbm, z2, dzn, i,j,k, abcd_mask)
+                usum(i,j,k) = (usum(i,j,k)+u(i,j,k))*abcd_mask(1)
+                vsum(i,j,k) = (vsum(i,j,k)+v(i,j,k))*abcd_mask(2)
+                wsum(i,j,k) = (wsum(i,j,k)+w(i,j,k))*abcd_mask(3)
+                f1x = alpha*usum(i,j,k)*dt
+                f1y = alpha*vsum(i,j,k)*dt
+                f1z = alpha*wsum(i,j,k)*dt
+                f2x = beta*u(i,j,k)*abcd_mask(1)
+                f2y = beta*v(i,j,k)*abcd_mask(2)
+                f2z = beta*w(i,j,k)*abcd_mask(3)
+                fx = f1x+f2x
+                fy = f1y+f2y
+                fz = f1z+f2z
+                f(i,j,k) = f(i,j,k)+fx
+                g(i,j,k) = g(i,j,k)+fy
+                h(i,j,k) = h(i,j,k)+fz
+            end do
+        end do
+    end do
+#endif
 #ifdef WV_DEBUG
     print *, 'F95 FGHSUM after feedbf:',sum(f)+sum(g)+sum(h)
     print *, 'F95 FSUM after feedbf:',sum(f)
