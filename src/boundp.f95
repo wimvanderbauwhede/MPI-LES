@@ -1,30 +1,29 @@
 module module_boundp
 #ifdef MPI
     use communication_helper_real
+#else
+    use params_common_sn
 #endif
 implicit none
 
 contains
 #ifdef NESTED_LES
-subroutine boundp2(n,jm,im,p,km)
+subroutine boundp2(n,p)
     use common_sn ! create_new_include_statements() line 102
     integer, intent(In) :: n
 #else
-subroutine boundp2(jm,im,p,km)
+subroutine boundp2(p)
     use common_sn ! create_new_include_statements() line 102
 #endif
 
-    integer, intent(In) :: im
-    integer, intent(In) :: jm
-    integer, intent(In) :: km
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(InOut) :: p
     integer :: i, j
 !
 ! --computational boundary(neumann condition)
-    do j = 0,jm+1
-        do i = 0,im+1
+    do j = 0,jp+1
+        do i = 0,ip+1
             p(i,j,   0) = p(i,j,1)
-            p(i,j,km+1) = p(i,j,km)
+            p(i,j,kp+1) = p(i,j,kp)
         end do
     end do
 #ifdef MPI
@@ -41,16 +40,13 @@ subroutine boundp2(jm,im,p,km)
 end subroutine boundp2
 
 #ifdef NESTED_LES
-subroutine boundp1(n,km,jm,p,im)
+subroutine boundp1(n,p)
     integer, intent(In) :: n
 #else
-subroutine boundp1(km,jm,p,im)
+subroutine boundp1(p)
     use common_sn ! create_new_include_statements() line 102
 #endif
 
-    integer, intent(In) :: im
-    integer, intent(In) :: jm
-    integer, intent(In) :: km
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(InOut) :: p
 #if !defined(MPI) || (PROC_PER_ROW==1)
     integer :: i, j, k
@@ -62,8 +58,8 @@ subroutine boundp1(km,jm,p,im)
 #ifdef MPI
     if (isTopRow(procPerRow) .or. isBottomRow(procPerRow)) then
 #endif
-        do k = 0,km+1
-            do j = 0,jm+1
+        do k = 0,kp+1
+            do j = 0,jp+1
 #ifdef MPI
                 if (isTopRow(procPerRow)) then
 #endif
@@ -71,7 +67,7 @@ subroutine boundp1(km,jm,p,im)
 #ifdef MPI
                 else
 #endif
-                    p(im+1,j,k) = p(im,j,k)
+                    p(ip+1,j,k) = p(ip,j,k)
 #ifdef MPI
                 end if
 #endif
@@ -82,10 +78,10 @@ subroutine boundp1(km,jm,p,im)
 #endif
 ! --side flow exchanges
 #if !defined(MPI) || (PROC_PER_ROW==1)
-    do k = 0,km+1
-        do i = 0,im+1
-            p(i,   0,k) = p(i,jm,k) ! right to left
-            p(i,jm+1,k) = p(i, 1,k) ! left to right
+    do k = 0,kp+1
+        do i = 0,ip+1
+            p(i,   0,k) = p(i,jp,k) ! right to left
+            p(i,jp+1,k) = p(i, 1,k) ! left to right
         end do
     end do
 #else

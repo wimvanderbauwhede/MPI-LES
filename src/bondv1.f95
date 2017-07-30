@@ -8,13 +8,13 @@ module module_bondv1
 
 contains
 
-subroutine bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs)
+subroutine bondv1(u,z2,dzn,v,w,n,n0,dt,dxs)
     use common_sn ! create_new_include_statements() line 102
     implicit none
     real(kind=4), intent(In) :: dt
     real(kind=4), dimension(0:ip) , intent(In) :: dxs
     real(kind=4), dimension(-1:kp+2) , intent(In) :: dzn
-    integer, intent(In) :: im, jm, km, n, n0
+    integer, intent(In) :: n, n0
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: u
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: v
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(InOut) :: w
@@ -38,7 +38,7 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs)
 #endif
         do i = 0,1
             do k = 1,78 ! kp = 90 so OK
-                do j = 1,jm
+                do j = 1,jp
                     u_val = 5.*((z2(k)+0.5*dzn(k))/600.)**0.2
                     u(i,j,k) = u_val
                     !print *, u_val
@@ -50,8 +50,8 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs)
         end do
 
         do i = 0,1
-            do k = 79,km
-                do j = 1,jm
+            do k = 79,kp
+                do j = 1,jp
                     u(i,j,k) = u(i,j,77)
                     v(i,j,k) = 0.0
                     w(i,j,k) = 0.0
@@ -64,8 +64,13 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs)
 
 #if ICAL == 0
 !    if(ical == 0.and.n == 1) then
+
 #ifdef NESTED_LES
+#ifdef MPI
     if(syncTicks == 0 .and. n == n_nest0) then
+#else
+    if(n == n0) then
+#endif
 #else
     if(n == n0) then
 #endif
@@ -73,9 +78,9 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs)
 #ifdef MPI
         ! GR: Actually make this distributed rather than this awful mess
         do a=1, procPerCol
-            do k = 1,km
-                do j = 1,jm
-                    do i = 2, im
+            do k = 1,kp
+                do j = 1,jp
+                    do i = 2, ip
                         u(i,j,k) = u(1,j,k)
                         v(i,j,k) = v(1,j,k)
                         w(i,j,k) = w(1,j,k)
@@ -88,16 +93,18 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs)
             call exchangeRealHalos(w, procPerRow, neighbours, 2, 1, 3, 0)
         end do
 #endif
-        do k = 1,km
-            do j = 1,jm
-                do i = 2, im
+        do k = 1,kp
+            do j = 1,jp
+                do i = 2, ip
                     u(i,j,k) = u(1,j,k)
                     v(i,j,k) = v(1,j,k)
                     w(i,j,k) = w(1,j,k)
                 end do
             end do
         end do
+
     endif
+
 #endif
 
 #ifdef WV_DEBUG
@@ -110,9 +117,9 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs)
 
     aaa = 0.0
     gaaa = 0.0
-    do k = 1,km
-        do j = 1,jm
-            aaa = amax1(aaa,u(im,j,k))
+    do k = 1,kp
+        do j = 1,jp
+            aaa = amax1(aaa,u(ip,j,k))
         end do
     end do
 #ifdef MPI
@@ -124,9 +131,9 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs)
 #endif
     bbb = aaa
     gbbb = gaaa
-    do k = 1,km
-        do j = 1,jm
-            bbb = amin1(bbb,u(im,j,k))
+    do k = 1,kp
+        do j = 1,jp
+            bbb = amin1(bbb,u(ip,j,k))
         end do
     end do
 #ifdef MPI
@@ -143,51 +150,54 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs)
 #ifdef WV_DEBUG
     print *, 'F95: UOUT: ',uout
 #endif
+#ifdef MPI
     if (isBottomRow(procPerRow)) then
-
-      do k = 1,km
-          do j = 1,jm
-              u(im,j,k) = u(im,j,k)-dt*uout *(u(im,j,k)-u(im-1,j,k))/dxs(im)
+#endif
+      do k = 1,kp
+          do j = 1,jp
+              u(ip,j,k) = u(ip,j,k)-dt*uout *(u(ip,j,k)-u(ip-1,j,k))/dxs(ip)
           end do
       end do
    
-      do k = 1,km
-          do j = 1,jm
-              v(im+1,j,k) = v(im+1,j,k)-dt*uout *(v(im+1,j,k)-v(im,j,k))/dxs(im)
+      do k = 1,kp
+          do j = 1,jp
+              v(ip+1,j,k) = v(ip+1,j,k)-dt*uout *(v(ip+1,j,k)-v(ip,j,k))/dxs(ip)
           end do
       end do
    
-      do k = 1,km
-          do j = 1,jm
-              w(im+1,j,k) = w(im+1,j,k)-dt*uout *(w(im+1,j,k)-w(im,j,k))/dxs(im)
+      do k = 1,kp
+          do j = 1,jp
+              w(ip+1,j,k) = w(ip+1,j,k)-dt*uout *(w(ip+1,j,k)-w(ip,j,k))/dxs(ip)
           end do
       end do
- 
+#ifdef MPI
     end if
+#endif
 #if !defined(MPI) || (PROC_PER_ROW==1)
 ! --side flow condition; periodic
-    do k = 0,km+1
-        do i = 0,im+1
-            u(i,   0,k) = u(i,jm  ,k)
-            u(i,jm+1,k) = u(i,   1,k)
+    do k = 0,kp+1
+        do i = 0,ip+1
+            u(i,   0,k) = u(i,jp  ,k)
+            u(i,jp+1,k) = u(i,   1,k)
         end do
     end do
 
-    do k = 0,km+1
-        do i = 0,im+1
-            v(i,   0,k) = v(i,jm  ,k)
-            v(i,jm+1,k) = v(i,   1,k)
+    do k = 0,kp+1
+        do i = 0,ip+1
+            v(i,   0,k) = v(i,jp  ,k)
+            v(i,jp+1,k) = v(i,   1,k)
         end do
     end do
 
-    do k = 0,km
-        do i = 0,im+1
-            w(i,   0,k) = w(i,jm  ,k)
-            w(i,jm+1,k) = w(i,   1,k)
+    do k = 0,kp
+        do i = 0,ip+1
+            w(i,   0,k) = w(i,jp  ,k)
+            w(i,jp+1,k) = w(i,   1,k)
         end do
     end do
 #else
     ! call assumes column (jp) index from 1, not -1 hence values are +2 from original code
+#ifdef MPI
 #ifdef NESTED_LES
     if (syncTicks == 0) then
 #endif
@@ -202,7 +212,7 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs)
 #ifdef NESTED_LES
     end if
 #endif
-
+#endif
 #endif
 
 ! =================================
@@ -224,24 +234,24 @@ subroutine bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs)
 #endif
 
 ! -------top and underground condition
-    do j = 0,jm+1
-        do i = 0,im+1
+    do j = 0,jp+1
+        do i = 0,ip+1
             u(i,j,   0) = -u(i,j, 1)
-            u(i,j,km+1) = u(i,j,km)
+            u(i,j,kp+1) = u(i,j,kp)
         end do
     end do
 
-    do j = 0,jm+1
-        do i = 0,im+1
+    do j = 0,jp+1
+        do i = 0,ip+1
             v(i,j,   0) = -v(i,j, 1)
-            v(i,j,km+1) = v(i,j,km)
+            v(i,j,kp+1) = v(i,j,kp)
         end do
     end do
 
-    do j = -1,jm+1 ! 2 !WV: I think this is wrong: j = jm+2 is not allocated!
-        do i = 0,im+1
+    do j = -1,jp+1 ! 2 !WV: I think this is wrong: j = jp+2 is not allocated!
+        do i = 0,ip+1
             w(i,j, 0) = 0.0
-            w(i,j,km) = 0.0
+            w(i,j,kp) = 0.0
         end do
     end do
 

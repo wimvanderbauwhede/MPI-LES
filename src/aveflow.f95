@@ -2,7 +2,7 @@ module module_aveflow
 
 contains
 
-subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm, &
+subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm, &
       uwfx,avesu,avesv,avesw,avesuu,avesvv,avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14,amask1)
     use common_sn ! create_new_include_statements() line 102
 #ifdef MPI
@@ -49,9 +49,6 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
     character(len=70), intent(In) :: data13
     character(len=70), intent(In) :: data14
     !
-    integer, intent(In) :: im
-    integer, intent(In) :: jm
-    integer, intent(In) :: km
     integer, intent(In) :: n
     integer, intent(In) :: n1
     integer, intent(In) :: nmax
@@ -95,9 +92,9 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
 
 ! WV: This is the first timestep. As there is no MPI comms, this is OK
     if(n == n1) then
-        do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+        do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     avev(i,j,k) = 0.0
                     avep(i,j,k) = 0.0
                     avel(i,j,k) = 0.0
@@ -111,16 +108,16 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
             end do
         end do
 
-        do k = 0,km
-            do j = 1,jm
-                do i = 1,im
+        do k = 0,kp
+            do j = 1,jp
+                do i = 1,ip
                     aveu(i,j,k) = 0.0
                 end do
             end do
         end do
-        do k = 0,km
-            do j = 1,jm
-                do i = 1,im+1
+        do k = 0,kp
+            do j = 1,jp
+                do i = 1,ip+1
                     avew(i,j,k) = 0.0
                 end do
             end do
@@ -128,9 +125,9 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
     end if
 ! WV: Ditto
     if(n >= n1) then
-        do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+        do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     avev(i,j,k) = avev(i,j,k)+v(i,j,k)
                     avep(i,j,k) = avep(i,j,k)+p(i,j,k)
                     aveuu(i,j,k) = aveuu(i,j,k)+u(i,j,k)**2
@@ -144,16 +141,16 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
             end do
         end do
 
-        do k = 0,km
-            do j = 1,jm
-                do i = 1,im
+        do k = 0,kp
+            do j = 1,jp
+                do i = 1,ip
                     aveu(i,j,k) = aveu(i,j,k)+u(i,j,k)
                 end do
             end do
         end do
-        do k = 0,km
-            do j = 1,jm
-                do i = 1,im+1
+        do k = 0,kp
+            do j = 1,jp
+                do i = 1,ip+1
                     avew(i,j,k) = avew(i,j,k)+w(i,j,k)
                 end do
             end do
@@ -163,9 +160,9 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
   if(n == nmax) then
   !WV: I reason that for this n, syncTicks should always be 0
   print *, rank,syncTicks
-      do k = 1,km
-          do j = 1,jm
-              do i = 1,im
+      do k = 1,kp
+          do j = 1,jp
+              do i = 1,ip
 !                  aveu(i,j,k) = aveu(i,j,k)/real(nmax-n1+1)
                   avev(i,j,k) = avev(i,j,k)/real(nmax-n1+1)
 !                  avew(i,j,k) = avew(i,j,k)/real(nmax-n1+1)
@@ -180,24 +177,24 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
             end do
         end do
 
-        do k = 0,km
-            do j = 1,jm
-                do i = 1,im
+        do k = 0,kp
+            do j = 1,jp
+                do i = 1,ip
                     aveu(i,j,k) = aveu(i,j,k)/real(nmax-n1+1)
                 end do
             end do
         end do
-        do k = 0,km
-            do j = 1,jm
-                do i = 1,im+1
+        do k = 0,kp
+            do j = 1,jp
+                do i = 1,ip+1
                     avew(i,j,k) = avew(i,j,k)/real(nmax-n1+1)
                 end do
             end do
         end do
 
-        do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+        do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     uwfx(i,j,k) = uwfx(i,j,k)/real(nmax-n1+1) - &
                                   0.5*(aveu(i,j,k-1)+aveu(i,j,k)) * &
                                   0.5*(avew(i,j, k-1)+avew(i+1,j,k-1))
@@ -205,9 +202,9 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
             end do
         end do
 
-        do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+        do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     aveuu(i,j,k) = sqrt(abs(aveuu(i,j,k)-aveu(i,j,k)**2))
                     avevv(i,j,k) = sqrt(abs(avevv(i,j,k)-avev(i,j,k)**2))
                     aveww(i,j,k) = sqrt(abs(aveww(i,j,k)-avew(i,j,k)**2))
@@ -224,56 +221,56 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
         allocate(aveua(0:ipmax,0:jpmax,0:kp))
         call distributeaveu(aveua, aveu, ip, jp, kp, ipmax, jpmax, procPerRow)
         if (isMaster()) then
-               do k = 1,km
-                  do j = 1,jm
-                     do i = 1,im
+               do k = 1,kp
+                  do j = 1,jp
+                     do i = 1,ip
                          aveua(i,j,k) = aveu(i,j,k)
                      end do
                   end do
                end do
-               write(10) (((aveua(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+               write(10) (((aveua(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,kp)
          end if
          deallocate(aveua)
    
          allocate(avewa(ipmax+1,jpmax,0:kp+2))
          call distributeavew(avewa, avew, ip, jp, kp, ipmax, jpmax, procPerRow)
             if (isMaster()) then
-               do k = 1,km
-                  do j = 1,jm
-                     do i = 1,im
+               do k = 1,kp
+                  do j = 1,jp
+                     do i = 1,ip
                          avewa(i,j,k) = avew(i,j,k)
                      end do
                   end do
                end do
-               write(10) (((avewa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+               write(10) (((avewa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,kp)
             end if
          deallocate(avewa)
    
          allocate(aveva(0:ipmax,0:jpmax,0:kp))
          call distributeaveu(aveva, avev, ip, jp, kp, ipmax, jpmax, procPerRow)
             if (isMaster()) then
-               do k = 1,km
-                  do j = 1,jm
-                     do i = 1,im
+               do k = 1,kp
+                  do j = 1,jp
+                     do i = 1,ip
                          aveva(i,j,k) = avev(i,j,k)
                      end do
                   end do
                end do
-               write(10) (((aveva(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+               write(10) (((aveva(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,kp)
             end if
          deallocate(aveva)
    
          allocate(avepa(0:ipmax,0:jpmax,0:kp))
          call distributeaveuu(avepa, avep, ip, jp, kp, ipmax, jpmax, procPerRow)
             if (isMaster()) then
-               do k = 1,km
-                  do j = 1,jm
-                     do i = 1,im
+               do k = 1,kp
+                  do j = 1,jp
+                     do i = 1,ip
                          avepa(i,j,k) = avep(i,j,k)
                      end do
                   end do
                end do
-               write(10) (((avepa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+               write(10) (((avepa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,kp)
                close(10)
             end if
          deallocate(avepa)
@@ -286,14 +283,14 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
          allocate(aveuua(0:ipmax,0:jpmax,0:kp))
          call distributeaveuu(aveuua, aveuu, ip, jp, kp, ipmax, jpmax, procPerRow)
          if (isMaster()) then
-            do k = 1,km
-               do j = 1,jm
-                  do i = 1,im
+            do k = 1,kp
+               do j = 1,jp
+                  do i = 1,ip
                       aveuua(i,j,k) = aveuu(i,j,k)
                   end do
                end do
             end do
-            write(11) (((aveuua(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+            write(11) (((aveuua(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,kp)
          end if
          deallocate(aveuua)
        
@@ -301,50 +298,50 @@ subroutine aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,aves
          allocate(avewwa(0:ipmax,0:jpmax,0:kp))
          call distributeaveuu(avewwa, aveww, ip, jp, kp, ipmax, jpmax, procPerRow)
          if (isMaster()) then
-            do k = 1,km
-               do j = 1,jm
-                  do i = 1,im
+            do k = 1,kp
+               do j = 1,jp
+                  do i = 1,ip
                       avewwa(i,j,k) = aveww(i,j,k)
                   end do
                end do
             end do
-            write(11) (((avewwa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+            write(11) (((avewwa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,kp)
          end if
          deallocate(avewwa)
        
          allocate(avevva(0:ipmax,0:jpmax,0:kp))
          call distributeaveuu(avevva, avevv, ip, jp, kp, ipmax, jpmax, procPerRow)
          if (isMaster()) then
-            do k = 1,km
-               do j = 1,jm
-                  do i = 1,im
+            do k = 1,kp
+               do j = 1,jp
+                  do i = 1,ip
                       avevva(i,j,k) = avevv(i,j,k)
                   end do
                end do
             end do
-            write(11) (((avevva(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+            write(11) (((avevva(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,kp)
          end if
          deallocate(avevva)
        
         allocate(uwfxa(0:ipmax,0:jpmax,0:kp))
         call distributeaveuu(uwfxa, uwfx, ip, jp, kp, ipmax, jpmax, procPerRow)
         if (isMaster()) then
-            do k = 1,km
-               do j = 1,jm
-                  do i = 1,im
+            do k = 1,kp
+               do j = 1,jp
+                  do i = 1,ip
                       uwfxa(i,j,k) = uwfx(i,j,k)
                   end do
                end do
             end do
-            write(11) (((uwfxa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,km)
+            write(11) (((uwfxa(i,j,k),i=ibuffer+1,ipmax-ibuffer),j=jbuffer+1,jpmax-jbuffer),k=1,kp)
             close(11)
  
         end if
         deallocate(uwfxa)
 
-        do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+        do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     aveu(i,j,k) = 0.0
                     avev(i,j,k) = 0.0
                     avew(i,j,k) = 0.0

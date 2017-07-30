@@ -1,12 +1,13 @@
 module module_set
+#ifdef MPI
 #ifdef NESTED_LES
       use nesting_support
 #endif
-
+#endif
 contains
 
       subroutine set(data10,data11,data20,data21,data22,data23,data24,data25,data26,data27,data30, &
-      data31,im,jm,km,ifbf,ianime,ical,nif,n0,n1,nmax,dt,ro,vn,alpha,beta,data12,data13,data14,data15)
+      data31,ical,nif,n0,n1,nmax,dt,ro,vn,alpha,beta,data12,data13,data14,data15)
       use common_sn ! create_new_include_statements() line 102
         real(kind=4), intent(Out) :: alpha
         real(kind=4), intent(Out) :: beta
@@ -27,12 +28,9 @@ contains
         character(len=70), intent(InOut) :: data30
         character(len=70), intent(InOut) :: data31
         real(kind=4), intent(Out) :: dt
-        integer, intent(Out) :: ianime
+!        integer, intent(Out) :: ianime
         integer, intent(Out) :: ical
-        integer, intent(Out) :: ifbf
-        integer, intent(Out) :: im
-        integer, intent(Out) :: jm
-        integer, intent(Out) :: km
+!        integer, intent(Out) :: ifbf
         integer, intent(Out) :: n0
         integer, intent(Out) :: nif
         integer, intent(Out) :: n1
@@ -61,22 +59,22 @@ contains
 !      data50:tim series of wind data
 !      data51:tim series od concentration data
 ! --flow region
-      im = ip
-      jm = jp
-      km = kp
-#if IFBF == 1
-! --if
-      ifbf = 1
-#else
-! --if
-      ifbf = 0
-#endif
+!      im = ip
+!      jm = jp
+!      km = kp
+!#if IFBF == 1
+!! --if
+!      ifbf = 1
+!#else
+!! --if
+!      ifbf = 0
+!#endif
 
-#if IANIME == 1
-      ianime = 1
-#else
-      ianime = 0
-#endif
+!#if IANIME == 1
+!      ianime = 1
+!#else
+!      ianime = 0
+!#endif
 ! -- call indata
 !      ical = 0; initial start
 !           = 1; continuous computation
@@ -87,11 +85,12 @@ contains
 ! --setnmax
 
 #ifndef WV_TEST
-      nmax = 8000
+        nmax = 8000
 #else
         nmax = 5
 #endif
 
+#ifdef MPI
 #ifdef NESTED_LES
         if (inNestedGrid()) then
             nmax = nmax*(dt_orig/dt_nest) ! 40
@@ -99,12 +98,13 @@ contains
 !            nmax = nmax !+1 ! 20
         end if
 #endif
-
+#endif
 ! --time step
 ! WV: NESTING: we need to set dt based on the subgrid coordinates in params_common_sn
 #ifndef NESTED_LES
-        dt = 0.05 ! seconds
+        dt = dt_orig ! seconds
 #else
+#ifdef MPI
         if (inNestedGrid()) then
 !            print *, 'Process ',rank, ' is in nested grid'
             dt = dt_nest
@@ -112,6 +112,9 @@ contains
 !            print *, 'Process ',rank, ' is in orig grid'
             dt = dt_orig
         end if
+#else
+        dt = dt_nest
+#endif
 #endif
 
 

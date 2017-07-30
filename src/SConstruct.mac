@@ -98,7 +98,7 @@ if mpi_new_wv =='1':
     MPI_NEW_WV='-DMPI_NEW_WV'
 
 WV_TEST = '-DWV_TEST'
-WV_DEBUG_MPI = '-DWV_DEBUG_MPI'
+WV_DEBUG_MPI = '' #'-DWV_DEBUG_MPI'
 NO_FILE_IO='-DNO_FILE_IO'
 ICAL = '-DICAL=0'
 IFBF='-DIFBF=1'
@@ -110,7 +110,9 @@ if with_ocl == '0':
 #    FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium' ]
 #     FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium', '-fno-range-check','-fbounds-check','-Wuninitialized','-ffpe-trap=invalid,zero,overflow' ]
 #    FFLAGS += ['-cpp','-Ofast', '-m64', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian' ]
-     FFLAGS += ['-cpp', '-O', '-Wall','-Wno-unused','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium','-fbounds-check' ]
+     FFLAGS += ['-cpp', '-O', '-Wall','-Wno-unused','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian','-fbounds-check' ]
+if with_mpi=='1':
+    FFLAGS+=[ '-mcmodel=medium']
 
 #-- intel compiler ifort
 #     FFLAGS += [ '-O', '-convert', 'big_endian', '-shared-intel','-fpp', '-free','-Tf' ] # Order matters, -Tf must come last!
@@ -130,7 +132,7 @@ if with_mpi == '1':
     fsources += ['./communication_common.f95', './communication_helper.f95',  './communication_helper_mpi.f95', './communication_helper_real.f95']
     #'./communication_helper_integer.f95',
     
-if with_nesting == '1':
+if with_nesting == '1' and with_mpi == '1':
 	fsources += ['./nesting_support.f95']
 	
 if USE_NETCDF_OUTPUT != '':

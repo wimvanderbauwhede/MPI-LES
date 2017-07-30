@@ -3,7 +3,7 @@ module module_les
       use module_boundsm ! add_module_decls() line 156
 contains
 
-      subroutine les(km,delx1,dx1,dy1,dzn,jm,im,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g, &
+      subroutine les(delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g, &
       h,u,v,uspd,vspd,dxs,dys,n)
       use common_sn ! create_new_include_statements() line 102
         real(kind=4), dimension(kp) , intent(Out) :: delx1
@@ -22,9 +22,6 @@ contains
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: f
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: g
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: h
-        integer, intent(In) :: im
-        integer, intent(In) :: jm
-        integer, intent(In) :: km
         integer, intent(In) :: n
         real(kind=4), dimension(-1:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: sm
 !wall function
@@ -37,16 +34,16 @@ contains
 !
 !
 ! --length scale
-        do k = 1,km
+        do k = 1,kp
 !  WV: was          delx1(k)=(dx1(i)*dy1(j)*dzn(k))**(1./3.)
 ! WV: turns out that dy1(0) is not defined!!!
           delx1(k) = (dx1(0)*dy1(0)*dzn(k))**(1./3.)
         end do
 !WV: so the next loop produces the undefined values ...
 ! ----
-      do k = 1,km
-      do j = 1,jm
-      do i = 1,im
+      do k = 1,kp
+      do j = 1,jp
+      do i = 1,ip
 ! --calculation of sgs eddy viscosity coeficient
       dudxx1 =  diu1(i,j,k)
       dudyx1 =  (diu2(i-1,j,k)+diu2(i-1,j+1,k) +diu2(i  ,j,k)+diu2(i  ,j+1,k) ) *.25
@@ -79,9 +76,9 @@ contains
 
 !
 #ifdef NESTED_LES
-      call boundsm(n,km,jm,sm,im)
+      call boundsm(n,kp,jp,sm,ip)
 #else
-      call boundsm(km,jm,sm,im)
+      call boundsm(km,jp,sm,ip)
 #endif
 #ifdef WV_DEBUG
     print *, 'F95 FGHSUM after boundsm:',sum(f)+sum(g)+sum(h)
@@ -90,9 +87,9 @@ contains
     print *, 'F95 HSUM after boundsm:',sum(h)
 #endif
 ! --calculation of viscosity terms in momentum eq.(x-comp.)
-      do k = 2,km
-      do j = 1,jm
-      do i = 1,im
+      do k = 2,kp
+      do j = 1,jp
+      do i = 1,ip
 ! --eddyviscosity on face
       evsx2 = sm(i+1,j,k)
       evsx1 = sm(i,j,k)
@@ -125,8 +122,8 @@ contains
 
 !wall function
 
-      do j=1,jm
-      do i=1,im
+      do j=1,jp
+      do i=1,ip
       evsx2=sm(i+1,j,1)
       evsx1=sm(i,j,1)
       evsy2=(dy1(j+1)*((dx1(i+1)*sm(i,j,1)+dx1(i)*sm(i+1,j,1))/(dx1(i)+dx1(i+1)))&
@@ -150,9 +147,9 @@ contains
 
 
 ! --calculation of viscosity terms in momentum eq.(y-comp.)
-      do k = 2,km
-      do j = 1,jm
-      do i = 1,im
+      do k = 2,kp
+      do j = 1,jp
+      do i = 1,ip
 ! --eddyviscosity on face
       evsy2 = sm(i,j+1,k)
       evsy1 = sm(i,j,k)
@@ -185,8 +182,8 @@ contains
 
 !wall function
 
-      do j=1,jm
-      do i=1,im
+      do j=1,jp
+      do i=1,ip
 !c--eddyviscosity on face
       evsy2=sm(i,j+1,1)
       evsy1=sm(i,j,1)
@@ -213,9 +210,9 @@ contains
 
 
 ! --calculation of viscosity terms in momentum eq.(z-comp.)
-      do k = 1,km
-      do j = 1,jm
-      do i = 1,im
+      do k = 1,kp
+      do j = 1,jp
+      do i = 1,ip
 ! --eddyviscosity on face
       evsz2 = sm(i,j,k+1)
       evsz1 = sm(i,j,k)

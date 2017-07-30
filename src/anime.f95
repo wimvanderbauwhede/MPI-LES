@@ -11,6 +11,9 @@ module module_anime
 #endif
 
 contains
+
+#ifdef MPI
+
 #ifdef MPI_NEW_WV
 #define MPI_NEW_WV2
 #endif
@@ -66,30 +69,39 @@ real function calc_avg_wa(wa,k,idx) result(avg)
 end function  calc_avg_wa
 #endif
 
-subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,amask1,zbm)
+#endif
+
+subroutine anime(n,n0,n1,&
+#ifdef OLD_CODE
+    nmax,dxl,dx1,dyl,dy1,z2,amask1,zbm,&
+#endif
+    u,w,v,p)
 
     use common_sn ! create_new_include_statements() line 102
-    real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(InOut) :: amask1
-    character(len=70), intent(In) :: data22
-    character(len=70), intent(In) :: data23
+
+    integer, intent(In) :: n
+    integer, intent(In) :: n0
+    integer, intent(In) :: n1
+#ifdef OLD_CODE
+
+    integer, intent(In) :: nmax
+
     real(kind=4), dimension(-1:ip+1) , intent(In) :: dx1
     real(kind=4), dimension(0:ip) , intent(In) :: dxl
     real(kind=4), dimension(0:jp+1) , intent(In) :: dy1
     real(kind=4), dimension(0:jp) , intent(In) :: dyl
-    integer, intent(In) :: im
-    integer, intent(In) :: jm
-    integer, intent(In) :: km
-    integer, intent(In) :: n
-    integer, intent(In) :: n0
-    integer, intent(In) :: n1
-    integer, intent(In) :: nmax
+    real(kind=4), dimension(0:kp+2) , intent(In) :: z2 ! WV Unused!
+    real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(InOut) :: amask1
+    real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(In)  :: zbm
+#endif
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(In) :: p
-    real(kind=4), dimension(0:kp+2) , intent(In) :: z2 ! WV Unused!
-    real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(In)  :: zbm
+
+
 !average_out
+#ifdef MPI
 #ifdef MPI_NEW_WV
     integer :: irec, i,j,k, i_s, j_s
     character(len=70) :: filename
@@ -131,10 +143,11 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 #ifdef NESTED_LES
     integer :: nn
 #endif
+#ifdef OLD_CODE
 !    if(n == n0.or.n == nmax.or.mod(n,1000) == 0.) then
-!        do k = 1,km
-!            do j = 1,jm
-!                do i = 1,im
+!        do k = 1,kp
+!            do j = 1,jp
+!                do i = 1,ip
 !                    a1(i,j,k) = real(dxl(i-1)+dx1(i))
 !                    a2(i,j,k) = real(dyl(j-1)+dy1(j))
 !                    a3(i,j,k) = real(z2(k))
@@ -142,19 +155,20 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 !            end do
 !        end do
 !        open(unit=22,file=data22,form='unformatted',status='unknown')
-!        write(22) im,jm,km
-!        write(22) (((real(a1(i,j,k)),i=1,im),j=1,jm),k=1,km), &
-!                  (((real(a3(i,j,k)),i=1,im),j=1,jm),k=1,km), &
-!                  (((real(a2(i,j,k)),i=1,im),j=1,jm),k=1,km)
+!        write(22) im,jp,kp
+!        write(22) (((real(a1(i,j,k)),i=1,ip),j=1,jp),k=1,kp), &
+!                  (((real(a3(i,j,k)),i=1,ip),j=1,jp),k=1,kp), &
+!                  (((real(a2(i,j,k)),i=1,ip),j=1,jp),k=1,kp)
 !        close(unit=22)
 !   end if
+#endif
 #ifdef MPI
 
 !reset
 !      if(n.eq.n1) then  
-!      do k=0,km
-!      do j=0,jm
-!      do i=0,im
+!      do k=0,kp
+!      do j=0,jp
+!      do i=0,ip
 !      uani(i,j,k)=0.
 !      vani(i,j,k)=0.
 !      wani(i,j,k)=0.
@@ -175,9 +189,9 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 !#endif
 !average_out
 #ifndef MPI_NEW_WV2
-      do k=0,km
-      do j=0,jm
-      do i=0,im
+      do k=0,kp
+      do j=0,jp
+      do i=0,ip
       uani(i,j,k)=uani(i,j,k)+u(i,j,k)/o2n
       vani(i,j,k)=vani(i,j,k)+v(i,j,k)/o2n
       wani(i,j,k)=wani(i,j,k)+w(i,j,k)/o2n
@@ -186,9 +200,9 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
       end do
       end do
 #else
-      do k=1,km
-          do j=1,jm
-              do i=1,im
+      do k=1,kp
+          do j=1,jp
+              do i=1,ip
                   uani(i,j,k)=uani(i,j,k)+u(i,j,k)/o2n
                   vani(i,j,k)=vani(i,j,k)+v(i,j,k)/o2n
                   wani(i,j,k)=wani(i,j,k)+w(i,j,k)/o2n
@@ -214,7 +228,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 !    end if
     if(n>=n1 .and. mod(nn,avetime) == 0) then !default
 #else
-    if(n.ge.n1.and.mod(n,avetime).eq.0) then !default
+    if(n=>n1.and.mod(n,avetime)==0) then !default
 #endif
 !        print *, n,nn,rank,uani(ip/2,jp/2,kp/2)
 !       if(mod(n,avetime).eq.0) then !default
@@ -275,15 +289,15 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 #endif
 
        if (isMaster()) then
-            do k = 1,km
-                do j = 1,jm
-                    do i = 1,im
+            do k = 1,kp
+                do j = 1,jp
+                    do i = 1,ip
                      ua(i,j,k) = uani(i,j,k)
                     end do
                 end do
             end do
 #ifdef SAVE_NESTED_GRID_ONLY
-            do k=1,km
+            do k=1,kp
                 do j=1,nested_grid_y
                  do i=1,nested_grid_x
                     ua(i,j,k)=ua(i,j,k)/real(avetime)
@@ -291,7 +305,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
                 end do
             end do
 #else
-            do k=1,km
+            do k=1,kp
                 do j=1,jpmax
                  do i=1,ipmax
                     ua(i,j,k)=ua(i,j,k)/real(avetime)
@@ -301,7 +315,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
 #endif
             !       print *,ua(ipmax/2,jpmax/2,kp/2)
             !boundary
-            do k = 1,km
+            do k = 1,kp
 #ifdef SAVE_NESTED_GRID_ONLY
                  do j = 1,nested_grid_y
                     ua(0,j,k) = ua(1,j,k)
@@ -347,15 +361,15 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
         allocate(wa(0:ipmax+1,-1:jpmax+1,-1:kp+1))
         call distributew(wa, wani, ip, jp, kp, ipmax, jpmax, procPerRow)
         if (isMaster()) then
-            do k = 1,km
-                do j = 1,jm
-                    do i = 1,im
+            do k = 1,kp
+                do j = 1,jp
+                    do i = 1,ip
                      wa(i,j,k) = wani(i,j,k)
                     end do
                 end do
             end do
 
-            do k=1,km
+            do k=1,kp
                 do j=1,jpmax
                  do i=1,ipmax
                     wa(i,j,k)=wa(i,j,k)/real(avetime)
@@ -370,7 +384,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
                 end do
             end do
 
-        !       do  k=1,km
+        !       do  k=1,kp
             do  k=1,km_sl
                 write(23,rec=irec) ((real(0.5*(wa(i,j,k-1)+wa(i,j,k))),i=1,ipmax),j=1,jpmax)
                 irec = irec + 1
@@ -402,15 +416,15 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
        allocate(va(0:ipmax+1,-1:jpmax+1,0:kp+1))
         call distributev(va, vani, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+          do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                  va(i,j,k) = vani(i,j,k)
                 end do
             end do
           end do
 
-       do k=1,km
+       do k=1,kp
         do j=1,jpmax
          do i=1,ipmax
             va(i,j,k)=va(i,j,k)/real(avetime)
@@ -419,7 +433,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
        end do
 
 !boundary
-            do k = 1,km
+            do k = 1,kp
                 do i = 1,ipmax
                   va(i,0,k) = va(i,jpmax,k)
                 end do
@@ -459,15 +473,15 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
        allocate(pa(0:ipmax+2,0:jpmax+2,0:kp+1))
        call distributep(pa, pani, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-         do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+         do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                  pa(i,j,k) = pani(i,j,k)
                 end do
             end do
           end do
 
-       do k=1,km
+       do k=1,kp
         do j=1,jpmax
          do i=1,ipmax
             pa(i,j,k)=pa(i,j,k)/real(avetime)
@@ -476,7 +490,7 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
        end do
 
 
-!       do  k=1,km
+!       do  k=1,kp
        do  k=1,km_sl
        write(23,rec=irec) ((pa(i,j,k),i=1,ipmax),j=1,jpmax)
        irec = irec + 1
@@ -493,9 +507,9 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
       wani=0.
       pani=0.
 #else
-      do k=0,km
-      do j=0,jm
-      do i=0,im
+      do k=0,kp
+      do j=0,jp
+      do i=0,ip
       uani(i,j,k)=0.
       vani(i,j,k)=0.
       wani(i,j,k)=0.
@@ -509,19 +523,119 @@ subroutine anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,
     end if
 #endif
 #endif
+#else
+! NO MPI
+!We simply write the uani,... to the file
+    integer :: irec, i,j,k, i_s, j_s
+    character(len=70) :: filename
+    real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: uani
+    real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: vani
+    real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) :: wani
+    real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) :: pani
 
+      do k=1,kp
+          do j=1,jp
+              do i=1,ip
+                  uani(i,j,k)=uani(i,j,k)+u(i,j,k)
+                  vani(i,j,k)=vani(i,j,k)+v(i,j,k)
+                  wani(i,j,k)=wani(i,j,k)+w(i,j,k)
+                  pani(i,j,k)=pani(i,j,k)+p(i,j,k)
+              end do
+          end do
+      end do
+
+    if(n>=n1.and.mod(n,avetime)==0) then !default
+               write(filename, '("../out/data23",i6.6, ".dat")') n
+#ifdef SAVE_NESTED_GRID_ONLY
+               ! WV: for nested domain only this would be smaller, nested_grid_x * nested_grid_y
+               open(unit=23,file=filename,form='unformatted',access='direct',recl=4*nested_grid_x * nested_grid_y)
+#else
+               open(unit=23,file=filename,form='unformatted',access='direct',recl=4*ipmax*jpmax)
+#endif
+! ---- ua ----
+            uani=uani/real(avetime)
+            !boundary
+            do k = 1,kp
+#ifdef SAVE_NESTED_GRID_ONLY
+                 do j = 1,nested_grid_y
+                    uani(0,j,k) = uani(1,j,k)
+                 end do
+#else
+                 do j = 1,jpmax
+                    uani(0,j,k) = uani(1,j,k)
+                 end do
+#endif
+            end do
+
+            irec = 1
+            do  k=1,km_sl
+#ifdef SAVE_NESTED_GRID_ONLY
+              write(23,rec=irec) ((real(0.5*(uani(i-1,j,k)+uani(i,j,k))),i=1,nested_grid_x),j=1,nested_grid_y)
+#else
+              write(23,rec=irec) ((real(0.5*(uani(i-1,j,k)+uani(i,j,k))),i=1,ipmax),j=1,jpmax)
+#endif
+              irec = irec + 1
+            end do
+! ---- wani -----
+        wani=wani/real(avetime)
+        !boundary
+            do j = 1,jpmax
+                do i = 1,ipmax
+                    wani(i,j,0) = 0.0
+                end do
+            end do
+
+        !       do  k=1,kp
+            do  k=1,km_sl
+                write(23,rec=irec) ((real(0.5*(wani(i,j,k-1)+wani(i,j,k))),i=1,ipmax),j=1,jpmax)
+                irec = irec + 1
+            end do
+
+! ---- va ----
+        vani=vani/real(avetime)
+        !boundary
+            do k = 1,kp
+                do i = 1,ipmax
+                  vani(i,0,k) = vani(i,jpmax,k)
+                end do
+            end do
+
+       do  k=1,km_sl
+          write(23,rec=irec) ((real(0.5*(vani(i,j-1,k)+vani(i,j,k))),i=1,ipmax),j=1,jpmax)
+           irec = irec + 1
+       end do
+!------ if you output p, have to comment out this close
+!       close(23)
+!----------------------
+
+!--------pressure-----------
+           pani=pani/real(avetime)
+
+!       do  k=1,kp
+       do  k=1,km_sl
+           write(23,rec=irec) ((pani(i,j,k),i=1,ipmax),j=1,jpmax)
+           irec = irec + 1
+       end do
+       close(23)
+
+    ! clear the arrays
+       uani=0.
+       vani=0.
+       wani=0.
+       pani=0.
+
+    end if
+
+#endif
 end subroutine anime
 
 
 ! WV: TODO
 !data30,31
-subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,hold)
+subroutine ifdata_out(n,n0,n1,nmax,time,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,hold)
 
 
     use common_sn ! create_new_include_statements() line 102
-    integer, intent(In) :: im
-    integer, intent(In) :: jm
-    integer, intent(In) :: km
     integer, intent(In) :: n
     integer, intent(In) :: n0
     integer, intent(In) :: nmax
@@ -558,7 +672,7 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
 !    real(kind=4), dimension(0:ipmax+1,0:jpmax+1,0:kp+1)   :: amask1a
 !    real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1,1) , intent(in) :: zbm1
 !    character(len=70) :: filename
-
+#ifdef MPI
     real(kind=4),allocatable :: ua(:,:,:)
     real(kind=4),allocatable :: va(:,:,:)
     real(kind=4),allocatable :: wa(:,:,:)
@@ -572,6 +686,8 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
     real(kind=4),allocatable :: folda(:,:,:)
     real(kind=4),allocatable :: golda(:,:,:)
     real(kind=4),allocatable :: holda(:,:,:)
+
+
 #ifdef MPI_NEW_WV
     integer :: irec, i,j,k
     character(len=70) :: filename
@@ -596,14 +712,14 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
        allocate(ua(0:ipmax+1,-1:jpmax+1,0:kp+1))
         call distributeu(ua, u, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+          do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     ua(i,j,k) = u(i,j,k)
                 end do
             end do
           end do
-        write(30) (((ua(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        write(30) (((ua(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         deallocate(ua)
 
@@ -611,14 +727,14 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
        allocate(va(0:ipmax+1,-1:jpmax+1,0:kp+1))
         call distributev(va, v, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im 
+          do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     va(i,j,k) = v(i,j,k)
                 end do
             end do
           end do
-        write(30) (((va(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        write(30) (((va(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         deallocate(va)
 
@@ -626,14 +742,14 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
        allocate(wa(0:ipmax+1,-1:jpmax+1,-1:kp+1))
         call distributew(wa, w, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im 
+          do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     wa(i,j,k) = w(i,j,k)
                 end do
             end do
           end do
-        write(30) (((wa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        write(30) (((wa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         deallocate(wa)
 
@@ -641,14 +757,14 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
        allocate(pa(0:ipmax+2,0:jpmax+2,0:kp+1))
         call distributep(pa, p, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im 
+          do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     pa(i,j,k) = p(i,j,k)
                 end do
             end do
           end do
-        write(30) (((pa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        write(30) (((pa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         deallocate(pa)
 
@@ -656,14 +772,14 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
        allocate(usuma(0:ipmax,0:jpmax,0:kp))
         call distributeusum(usuma, usum, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-              do k = 1,km
-                do j = 1,jm
-                    do i = 1,im
+              do k = 1,kp
+                do j = 1,jp
+                    do i = 1,ip
                         usuma(i,j,k) = usum(i,j,k)
                     end do
                 end do
               end do
-              write(30) (((usuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+              write(30) (((usuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         deallocate(usuma)
 
@@ -671,28 +787,28 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
       allocate(vsuma(0:ipmax,0:jpmax,0:kp))
         call distributeusum(vsuma, vsum, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-              do k = 1,km
-                do j = 1,jm
-                    do i = 1,im
+              do k = 1,kp
+                do j = 1,jp
+                    do i = 1,ip
                         vsuma(i,j,k) = vsum(i,j,k)
                     end do
                 end do
               end do
-              write(30) (((vsuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+              write(30) (((vsuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         deallocate(vsuma)
 
        allocate(wsuma(0:ipmax,0:jpmax,0:kp))
        call distributeusum(wsuma, wsum, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-              do k = 1,km
-                do j = 1,jm
-                    do i = 1,im
+              do k = 1,kp
+                do j = 1,jp
+                    do i = 1,ip
                         wsuma(i,j,k) = wsum(i,j,k)
                     end do
                 end do
               end do
-            write(30) (((wsuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+            write(30) (((wsuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
             close(30)
         end if
         deallocate(wsuma)
@@ -706,14 +822,14 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
      allocate(fa(0:ipmax,0:jpmax,0:kp))
         call distributef(fa, f, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+          do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     fa(i,j,k) = f(i,j,k)
                 end do
             end do
           end do
-        write(31) (((fa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        write(31) (((fa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         deallocate(fa)
 
@@ -721,14 +837,14 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
      allocate(ga(0:ipmax,0:jpmax,0:kp))
         call distributef(ga, g, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+          do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     ga(i,j,k) = g(i,j,k)
                 end do
             end do
           end do
-        write(31) (((ga(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        write(31) (((ga(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         deallocate(ga)
 
@@ -736,14 +852,14 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
      allocate(ha(0:ipmax,0:jpmax,0:kp))
         call distributef(ha, h, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+          do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     ha(i,j,k) = h(i,j,k)
                 end do
             end do
           end do
-        write(31) (((ha(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        write(31) (((ha(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         deallocate(ha)
 
@@ -751,14 +867,14 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
      allocate(folda(ipmax,jpmax,kp))
         call distributefold(folda, fold, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+          do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     folda(i,j,k) = fold(i,j,k)
                 end do
             end do
           end do
-        write(31) (((folda(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        write(31) (((folda(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         deallocate(folda)
 
@@ -766,14 +882,14 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
      allocate(golda(ipmax,jpmax,kp))
         call distributefold(golda, gold, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+          do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     golda(i,j,k) = gold(i,j,k)
                 end do
             end do
           end do
-        write(31) (((golda(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        write(31) (((golda(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         deallocate(golda)
 
@@ -781,14 +897,14 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
      allocate(holda(ipmax,jpmax,kp))
         call distributefold(holda, fold, ip, jp, kp, ipmax, jpmax, procPerRow)
        if (isMaster()) then
-          do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+          do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     holda(i,j,k) = hold(i,j,k)
                 end do
             end do
           end do
-        write(31) (((holda(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        write(31) (((holda(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         close(31)
 
         end if
@@ -798,9 +914,38 @@ subroutine ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fo
 #ifdef NESTED_LES
     end if
 #endif
+#else
+! NO MPI
+    integer :: irec, i,j,k
+    character(len=70) :: filename
+
+    if((n == n1-1).or.(n == nmax))  then
+        write(filename, '("../data/data30",i6.6, ".dat")') n
+        open(unit=30,file=filename,form='unformatted',status='replace')
+        write(30) n,time
+        write(30) (((u(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        write(30) (((v(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        write(30) (((w(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        write(30) (((p(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        write(30) (((usum(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        write(30) (((vsum(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        write(30) (((wsum(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        close(30)
+
+        write(filename, '("../data/data31",i6.6, ".dat")') n
+        open(unit=31,file=filename,form='unformatted',status='replace')
+        write(31) (((f(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        write(31) (((g(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        write(31) (((h(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        write(31) (((fold(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        write(31) (((gold(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        write(31) (((hold(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        close(31)
+
+    end if
+
+
+#endif
 end subroutine ifdata_out
-
-
-
 
 end module module_anime

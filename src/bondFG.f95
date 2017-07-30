@@ -6,27 +6,26 @@ module module_bondFG
 contains
 
 #ifdef NESTED_LES
-subroutine bondfg(n,km,jm,f,im,g,h)
+subroutine bondfg(n,f,g,h)
     use common_sn ! create_new_include_statements() line 102
     implicit none
     integer, intent(In) :: n
 #else
-subroutine bondfg(km,jm,f,im,g,h)
+subroutine bondfg(f,g,h)
     use common_sn ! create_new_include_statements() line 102
     implicit none
 #endif
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: f
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: g
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: h
-    integer, intent(In) :: im, jm, km
     integer :: i, j, k
 !
 ! --inflow condition
 #ifdef MPI
     if (isTopRow(procPerRow)) then
 #endif
-        do k = 1,km
-            do j = 1,jm
+        do k = 1,kp
+            do j = 1,jp
                 f( 0,j,k) = f(1  ,j,k)
             end do
         end do
@@ -35,19 +34,19 @@ subroutine bondfg(km,jm,f,im,g,h)
 #endif
 ! --sideflow condition
 #if !defined(MPI) || (PROC_PER_ROW==1)
-    do k = 1,km
-        do i = 1,im
-            g(i, 0,k) = g(i,jm  ,k) ! GR: Why only right->left? What about left->right?
+    do k = 1,kp
+        do i = 1,ip
+            g(i, 0,k) = g(i,jp  ,k) ! GR: Why only right->left? What about left->right?
         end do
     end do
 #else
     call sideflowRightLeft(g, procPerRow, jp+1, 1, 1, 0, 1, 0)
 #endif
 ! --ground and top condition
-    do j = 1,jm
-        do i = 1,im
+    do j = 1,jp
+        do i = 1,ip
             h(i,j, 0) = 0.0
-            h(i,j,km) = 0.0
+            h(i,j,kp) = 0.0
         end do
     end do
 #ifdef MPI

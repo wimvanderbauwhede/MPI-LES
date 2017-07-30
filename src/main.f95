@@ -17,9 +17,9 @@ program main
 #if IANIME == 1
     use module_anime
 #endif
-#ifdef _OPENCL_LES_WV
-    use module_LES_combined_ocl
-#else
+!#ifdef _OPENCL_LES_WV
+!    use module_LES_combined_ocl
+!#else
     use module_velnw
     use module_bondv1
     use module_velFG
@@ -29,12 +29,12 @@ program main
     use module_les
     use module_press
     use module_adam
-#endif
+!#endif
     use common_sn
     real(kind=4) :: alpha
-    integer :: ianime
+!    integer :: ianime
     integer :: ical
-    integer :: ifbf
+!    integer :: ifbf
     integer :: im
     integer :: jm
     integer :: km
@@ -194,20 +194,20 @@ program main
     call init_netcdf_file()
 #endif
     call set(data10,data11,data20,data21,data22,data23,data24,data25,data26,&
-             data27,data30,data31,im,jm,km,ifbf,ianime,ical,nif,n0,n1,nmax,dt,ro,&
+             data27,data30,data31,ical,nif,n0,n1,nmax,dt,ro,&
              vn,alpha,beta,data12,data13,data14,data15)
     call grid(dx1,dxl,dy1,dyl,z2,dzn,dzs,dxs,dys)
     call timdata()
-    call init(km,jm,im,u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,&
+    call init(u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,&
               amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
 
 !    n0=200
 !#ifndef WV_DEBUG_MPI
     call ifdata( &
 !#if ICAL == 1
-                data30,data31, fold,gold,hold,fghold, time, &
+                fold,gold,hold,fghold, time, &
 !#endif
-                n,u,im,jm,km,v,w,p,usum,vsum,wsum,delx1,dx1,dy1,dzn,diu1,diu2,&
+                n,u,v,w,p,usum,vsum,wsum,delx1,dx1,dy1,dzn,diu1,diu2,&
                 diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g,h,z2,dt,dxs,cov1, &
                 cov2,cov3,dfu1,vn,cov4,cov5,cov6,dfv1,cov7,cov8,cov9,dfw1,dzs,&
                 nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,bmask1,cmask1,&
@@ -215,35 +215,37 @@ program main
 !#endif
 !     n=n0
 
-#ifdef _OPENCL_LES_WV
-    call initialise_LES_kernel(p,u,v,w,usum,vsum,wsum,f,g,h,fold,gold,hold, &
-                               diu1, diu2, diu3, diu4, diu5, diu6, diu7, diu8, &
-                               diu9, amask1, bmask1, cmask1, dmask1,cn1, cn2l, &
-                               cn2s, cn3l, cn3s, cn4l, cn4s,rhs, sm, dxs, dys, &
-                               dzs, dx1, dy1, dzn, z2,dt, im, jm, km)
-#endif
+!#ifdef _OPENCL_LES_WV
+!    call initialise_LES_kernel(p,u,v,w,usum,vsum,wsum,f,g,h,fold,gold,hold, &
+!                               diu1, diu2, diu3, diu4, diu5, diu6, diu7, diu8, &
+!                               diu9, amask1, bmask1, cmask1, dmask1,cn1, cn2l, &
+!                               cn2s, cn3l, cn3s, cn4l, cn4s,rhs, sm, dxs, dys, &
+!                               dzs, dx1, dy1, dzn, z2,dt, im, jm, km)
+!#endif
 #ifdef VERBOSE
-#ifdef _OPENCL_LES_WV
-    print *,'MAIN: calling OpenCL run_LES_kernel for ', nmax-n0+1, ' time steps, domain = ',im,'x',jm,'x',km
-#else
+!#ifdef _OPENCL_LES_WV
+!    print *,'MAIN: calling OpenCL run_LES_kernel for ', nmax-n0+1, ' time steps, domain = ',ip,'x',jp,'x',kp
+!#else
 #ifndef MPI
-    print *,'MAIN: running reference LES code for ', nmax-n0+1, ' time steps, domain = ',im,'x',jm,'x',km
+    print *,'MAIN: running reference LES code for ', nmax-n0+1, ' time steps, domain = ',ip,'x',jp,'x',kp
 #else
-    if (rank==0) print *,'MAIN: running reference LES code for ', nmax-n0+1, ' time steps, subdomain = ',im,'x',jm,'x',km, 'total domain = ',ipmax,'x',jpmax,'x',kp
+    if (rank==0) print *,'MAIN: running reference LES code for ', nmax-n0+1, ' time steps, subdomain = ',ip,'x',jp,'x',kp, 'total domain = ',ipmax,'x',jpmax,'x',kp
 #endif
-#endif
+!#endif
 #endif
 ! --main loop
 #ifdef TIMINGS
 !    nmax=201
     call system_clock(timestamp(8), clock_rate)
 #endif
+#ifdef MPI
 #ifdef NESTED_LES
 inNest = inNestedGrid()
 #endif
+#endif
     do n = n0,nmax
         time = float(n-n0)*dt
-
+#ifdef MPI
 #ifdef NESTED_LES
 !        if (rank==0) print *, n,time
 !print *,'before orig/nest test', rank
@@ -271,6 +273,7 @@ inNest = inNestedGrid()
 !        if (syncTicks == 0) call MPI_Barrier(communicator,ierror)
 !                print *,'AFTER barrier',rank
 #endif
+#endif
 !print *, 'n:',n, 't:',syncTicks, 'r:',rank,u(im/2,jm/2,km/2),v(im/2,jm/2,km/2),p(im/2,jm/2,km/2)
 
 !        if (isMaster()) then
@@ -279,39 +282,34 @@ inNest = inNestedGrid()
 !        end do
 !        end if
 ! -------calculate turbulent flow--------c
-#ifdef _OPENCL_LES_WV
-        call run_LES_kernel(n, nmax)
-#else
+!#ifdef _OPENCL_LES_WV
+!        call run_LES_kernel(n, nmax)
+!#else
 ! -------calculate turbulent flow--------c
 #ifdef TIMINGS
         print *, 'run_LES_reference: time step = ',n
-#endif
-#ifdef TIMINGS
         call system_clock(timestamp(0), clock_rate)
 #endif
-!print *, n,rank, 'velnw'
-        call velnw(km,jm,im,p,ro,dxs,u,dt,f,dys,v,g,dzs,w,h) !WV: no MPI
+        call velnw(p,ro,dxs,u,dt,f,dys,v,g,dzs,w,h) !WV: no MPI
 #ifdef TIMINGS
         call system_clock(timestamp(1), clock_rate)
 #endif
-!print *, n,rank, 'bondv1'
-
-        call bondv1(jm,u,z2,dzn,v,w,km,n,n0,im,dt,dxs) !WV: via halos + gatheraaa/bbb. Sideflow etc should be OK as in outer domain ???
-#ifdef WV_DEBUG_MPI
+        call bondv1(u,z2,dzn,v,w,n,n0,dt,dxs) !WV: via halos + gatheraaa/bbb. Sideflow etc should be OK as in outer domain ???
+#ifdef MPI
+#ifdef NESTED_LES
 if (n>n_nest0) then
+#endif
 #endif
 #ifdef TIMINGS
         call system_clock(timestamp(2), clock_rate)
 #endif
-!print *, n,rank, 'velfg'
-
 #ifdef NESTED_LES
-        call velfg(n,km,jm,im,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn, &
+        call velfg(n,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn, &
                    vn,f,cov4,cov5,cov6,dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9, &
                    dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
                    nou4,nou6,nou7,nou8,uspd,vspd) !WV: calls vel2 which uses halos
 #else
-        call velfg(km,jm,im,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn, &
+        call velfg(dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn, &
                    vn,f,cov4,cov5,cov6,dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9, &
                    dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
                    nou4,nou6,nou7,nou8,uspd,vspd) !WV: calls vel2 which uses halos
@@ -321,29 +319,22 @@ if (n>n_nest0) then
 #endif
 
 #if IFBF == 1
-!!print *, n,rank, 'feedbf'
-        call feedbf(km,jm,im,usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha, &
+        call feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha, &
                     dt,beta,fx,fy,fz,f,g,h,n) ! WV: no MPI
 #endif
 #ifdef TIMINGS
         call system_clock(timestamp(4), clock_rate)
 #endif
-
-!!print *, n,rank, 'les'
-        call les(km,delx1,dx1,dy1,dzn,jm,im,diu1,diu2,diu3,diu4,diu5,diu6, &
+        call les(delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6, &
                  diu7,diu8,diu9,sm,f,g,h,u,v,uspd,vspd,dxs,dys,n) ! WV: calls boundsm which uses halos
 #ifdef TIMINGS
         call system_clock(timestamp(5), clock_rate)
 #endif
-
-!!print *, n,rank, 'adam'
-        call adam(n,nmax,data21,fold,im,jm,km,gold,hold,fghold,f,g,h) ! WV: no MPI
+        call adam(n,nmax,data21,fold,gold,hold,fghold,f,g,h) ! WV: no MPI
 #ifdef TIMINGS
         call system_clock(timestamp(6), clock_rate)
 #endif
-
-!print *, n,rank, 'press'
-        call press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s, &
+        call press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s, &
                    cn3l,cn3s,cn4l,cn4s,n, nmax,data20,usum,vsum,wsum) !WV getGlobalSumOf and exchangeRealHalos (in boundp)
 #ifdef TIMINGS
         call system_clock(timestamp(7), clock_rate)
@@ -352,7 +343,8 @@ if (n>n_nest0) then
                   (timestamp(i)-timestamp(i-1))/ real(clock_rate)
         end do
 #endif
-#endif
+
+!#endif
 ! -------data output ---------------------c
 ! WV: This is clearly broken, as the dimensions for u/v/w are 150x150x90
 #ifdef TIMSERIS_FIXED
@@ -362,24 +354,28 @@ if (n>n_nest0) then
 #if IANIME == 1
     !print *, n,rank, 'NO ANIME!'
       if (i_anime .eq. 1) then
-        call anime(n,n0,n1,nmax,km,jm,im,dxl,dx1,dyl,dy1,z2,data22,data23,u,w,v,p,&
-                   amask1,zbm) !WV: I put the sync condition in this code
+        call anime(n,n0,n1,&
+#ifdef OLD_CODE
+                    nmax,dxl,dx1,dyl,dy1,z2,amask1,zbm,&
+#endif
+                    u,w,v,p) !WV: I put the sync condition in this code
       end if
       ! WV: sorry, not supported at the moment
       if (i_ifdata_out .eq. 1) then
-        call ifdata_out(n,n0,n1,nmax,time,km,jm,im,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,hold) !WV: TODO: put the sync condition in this code
+        call ifdata_out(n,n0,n1,nmax,time,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,hold) !WV: TODO: put the sync condition in this code
       end if
       if (i_aveflow .eq. 1) then
-        call aveflow(n,n1,km,jm,im,aveu,avev,avew,avep,avel,aveuu,avevv,aveww, &
+        call aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww, &
                      avesm,avesmsm,uwfx,avesu,avesv,avesw,avesuu,avesvv, &
                      avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14,amask1)  !WV: TODO: put the sync condition in this code
       end if
 #endif
 
-#ifdef WV_DEBUG_MPI
-    end if ! n>2
+#ifdef MPI
+#ifdef NESTED_LES
+    end if ! n>n_nest0
 #endif
-
+#endif
      end do
 
 #ifdef USE_NETCDF_OUTPUT

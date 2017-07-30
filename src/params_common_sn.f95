@@ -27,6 +27,7 @@ module params_common_sn
 #else
     integer, parameter :: ip = 25, jp = 25, kp = 80
 #endif
+    integer, parameter :: ipmax = ip, jpmax = jp
 #endif
 
 ! WV: unused:   integer, parameter :: bipmax = 300, bjpmax = 300, bx = 0, by = 0
@@ -38,9 +39,11 @@ module params_common_sn
     character(300) :: datafile = '../GIS/Kyoto_1km2_4m_with_buffer_nest_2_4_2_4_100_100_200_200.txt'
 #endif
 
+#ifndef NESTED_LES
 !-- grid
     real, parameter :: dxgrid = 4. ! meters
     real, parameter :: dygrid = 4.
+#endif
 
 !-- les
     real, parameter :: cs0 = 0.14 !smagorinsky constant
@@ -55,10 +58,8 @@ module params_common_sn
 !-- for output-if
     integer, parameter :: i_ifdata_out=0
 
-#ifdef MPI
+
 #ifdef NESTED_LES
-
-
 ! Original grid size
     integer, parameter :: orig_grid_y = 300 !750 ! 3km
     integer, parameter :: orig_grid_x = 300 !3000 ! 12km
@@ -86,7 +87,7 @@ module params_common_sn
 !#endif
     real, parameter :: dxgrid_orig = 4.0
     real, parameter :: dygrid_orig = 4.0
-
+#ifdef MPI
 ! Subgrid size
     integer, parameter :: ipmax =orig_grid_x + nested_grid_x*(1 - (dxgrid_nest/dxgrid_orig))
     integer, parameter :: jpmax = orig_grid_y + nested_grid_y*(1 - (dygrid_nest/dygrid_orig))
@@ -99,20 +100,13 @@ module params_common_sn
     integer, parameter :: i_s_nest_end =  i_s_nest_start + nested_grid_x / ip - 1 ! 1 + (150 / 75)  - 1 = 2
     integer, parameter :: j_s_nest_start =  nested_grid_start_y / ip
     integer, parameter :: j_s_nest_end =  j_s_nest_start + nested_grid_y / ip - 1
-
+#endif
 ! Time steps
-!#ifdef TEST_NESTED_LES
-
     integer, parameter :: n_nest0 = 1 ! was 2
-
     real, parameter :: dt_nest = 0.025 ! seconds
+#endif
     real, parameter :: dt_orig = 0.05 ! seconds
-!#else
-!    real, parameter :: dt_nest = 0.05 ! seconds
-!    real, parameter :: dt_orig = 0.05 ! seconds
-!#endif
 
-#endif
-#endif
+
 end module params_common_sn
 

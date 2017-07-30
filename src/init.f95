@@ -3,7 +3,7 @@ module module_init
       use module_feedbfm ! add_module_decls() line 156
 contains
 
-      subroutine init(km,jm,im,u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,amask1, &
+      subroutine init(u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,amask1, &
       bmask1,cmask1,dmask1,zbm,z2,dzn)
       use common_sn ! create_new_include_statements() line 102
         real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: amask1
@@ -21,9 +21,6 @@ contains
         real(kind=4), dimension(0:jp) , intent(In) :: dys
         real(kind=4), dimension(-1:kp+2) , intent(In) :: dzn
         real(kind=4), dimension(-1:kp+2) , intent(In) :: dzs
-        integer, intent(In) :: im
-        integer, intent(In) :: jm
-        integer, intent(In) :: km
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(Out) :: p
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: u
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: v
@@ -31,10 +28,10 @@ contains
         real(kind=4), dimension(0:kp+2) , intent(In) :: z2
         real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(InOut) :: zbm
 !
-! WV: The original boundary was 0,km;0,jm;0,im. This does not init the boundary values,so I changed it to the dimensions of u,v,w,p
-!      do k = 0,km
-!      do j = 0,jm
-!      do i = 0,im
+! WV: The original boundary was 0,kp;0,jp;0,ip. This does not init the boundary values,so I changed it to the dimensions of u,v,w,p
+!      do k = 0,kp
+!      do j = 0,jp
+!      do i = 0,ip
 !        u(i,j,k) = 0.0
 !        v(i,j,k) = 0.0
 !        w(i,j,k) = 0.0
@@ -70,8 +67,8 @@ contains
 !print *, 'call feedbfm'
 ! --check
 #if IFBF == 1
-      call feedbfm(km,jm,im,amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
-!      if(ifbf == 1) call feedbfm(km,jm,im,amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
+      call feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
+!      if(ifbf == 1) call feedbfm(km,jp,ip,amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
 #endif
 !print *, 'Parameter settings for solving Poisson equation'
 ! =====================================================
@@ -79,22 +76,22 @@ contains
 !      Parameter settings for solving Poisson equation
 !
 ! =====================================================
-      do i = 1,im
+      do i = 1,ip
       cn2s(i) = 2./(dxs(i-1)*(dxs(i-1)+dxs(i)))
       cn2l(i) = 2./(dxs(i)*(dxs(i-1)+dxs(i)))
       end do
-      do j = 1,jm
+      do j = 1,jp
       cn3s(j) = 2./(dys(j-1)*(dys(j-1)+dys(j)))
       cn3l(j) = 2./(dys(j)*(dys(j-1)+dys(j)))
       end do
 !
-      do k = 1,km
+      do k = 1,kp
           dz1 = dzs(k-1)
           dz2 = dzs(k)
           cn4s(k) = 2./(dz1*(dz1+dz2))
           cn4l(k) = 2./(dz2*(dz1+dz2))
-      do j = 1,jm
-      do i = 1,im
+      do j = 1,jp
+      do i = 1,ip
           cn1(i,j,k) = &
       ! ((dxs(i)+dxs(i-1)) /(dxs(i-1)+dxs(i)))*
       2./(dxs(i-1)*dxs(i))  + &

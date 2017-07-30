@@ -2,7 +2,7 @@ module module_adam
 
 contains
 
-subroutine adam(n,nmax,data21,fold,im,jm,km,gold,hold,fghold,f,g,h)
+subroutine adam(n,nmax,data21,fold,gold,hold,fghold,f,g,h)
     use common_sn ! create_new_include_statements() line 102
     character(len=70), intent(In) :: data21
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: f
@@ -12,24 +12,21 @@ subroutine adam(n,nmax,data21,fold,im,jm,km,gold,hold,fghold,f,g,h)
     real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: gold
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: h
     real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: hold
-    integer, intent(In) :: im
-    integer, intent(In) :: jm
-    integer, intent(In) :: km
     integer, intent(In) :: n
     integer, intent(In) :: nmax
 #if !defined(NO_IO) && !defined(MPI)
     if (mod(n,1000) == 0.or.n == nmax) then
         open(unit=21,file=data21,form='unformatted',status='unknown')
-        write(21) (((fold(i,j,k),i=1,im),j=1,jm),k=1,km)
-        write(21) (((gold(i,j,k),i=1,im),j=1,jm),k=1,km)
-        write(21) (((hold(i,j,k),i=1,im),j=1,jm),k=1,km)
-        write(21) (((fghold(i,j,k),i=1,im),j=1,jm),k=1,km)
+        write(21) (((fold(i,j,k),i=1,ip),j=1,jp),k=1,kp)
+        write(21) (((gold(i,j,k),i=1,ip),j=1,jp),k=1,kp)
+        write(21) (((hold(i,j,k),i=1,ip),j=1,jp),k=1,kp)
+        write(21) (((fghold(i,j,k),i=1,ip),j=1,jp),k=1,kp)
         close(unit=21)
     end if
 #endif
-    do k = 1,km
-        do j = 1,jm
-            do i = 1,im
+    do k = 1,kp
+        do j = 1,jp
+            do i = 1,ip
                 fd = f(i,j,k)
                 gd = g(i,j,k)
                 hd = h(i,j,k)

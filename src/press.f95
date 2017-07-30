@@ -6,7 +6,7 @@ module module_press
     use module_boundp ! add_module_decls() line 156
 contains
 
-subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,cn4s, &
+subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,cn4s, &
                  n,nmax,data20,usum,vsum,wsum)
     use common_sn ! create_new_include_statements() line 102
     real(kind=4), dimension(ip,jp,kp) , intent(In) :: cn1
@@ -24,9 +24,6 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: f
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: g
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: h
-    integer, intent(In) :: im
-    integer, intent(In) :: jm
-    integer, intent(In) :: km
     integer, intent(In) :: n
     integer, intent(In) :: nmax
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(InOut) :: p
@@ -45,15 +42,15 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
     real, parameter  :: omega = 1.
 
 #ifdef NESTED_LES
-    call bondfg(n,km,jm,f,im,g,h)
+    call bondfg(n,f,g,h)
 #else
-    call bondfg(km,jm,f,im,g,h)
+    call bondfg(f,g,h)
 #endif
 
 
-    do k = 1,km
-        do j = 1,jm
-            do i = 1,im
+    do k = 1,kp
+        do j = 1,jp
+            do i = 1,ip
                 rhs(i,j,k) = (-u(i-1,j,k)+u(i,j,k))/dx1(i) +(-v(i,j-1,k)+ &
                              v(i,j,k))/dy1(j) +(-w(i,j,k-1)+w(i,j,k))/dzn(k)
 ! --stretch
@@ -69,9 +66,9 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
 
     rhsav = 0.0
     area = 0.0
-    do k = 1,km
-        do j = 1,jm
-            do i = 1,im
+    do k = 1,kp
+        do j = 1,jp
+            do i = 1,ip
                 rhsav = rhsav+dx1(i)*dy1(j)*dzn(k)*rhs(i,j,k)
                 area = area +dx1(i)*dy1(j)*dzn(k)
             end do
@@ -93,23 +90,21 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
     print*, 'GR: rhsav ', rhsav, ' area ', area
 #endif
     rhsav = rhsav/area
-    do k = 1,km
-        do j = 1,jm
-            do i = 1,im
+    do k = 1,kp
+        do j = 1,jp
+            do i = 1,ip
                 rhs(i,j,k) = rhs(i,j,k)-rhsav
             end do
         end do
     end do
 
-!#ifndef WV_DEBUG_MPI
-
 ! --SOR
     do l = 1,nmaxp
         sor = 0.0
         do nrd = 0,1
-            do k = 1,km
-                do j = 1,jm
-                    do i = 1+mod(k+j+nrd,2),im,2
+            do k = 1,kp
+                do j = 1,jp
+                    do i = 1+mod(k+j+nrd,2),ip,2
                         reltmp = omega*(cn1(i,j,k) *(cn2l(i)*p(i+1,j,k) + &
                                  cn2s(i)*p(i-1,j,k) +cn3l(j)*p(i,j+1,k) + &
                                  cn3s(j)*p(i,j-1,k) +cn4l(k)*p(i,j,k+1) + &
@@ -121,15 +116,15 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
                 end do
             end do
 #ifdef NESTED_LES
-            call boundp1(n,km,jm,p,im)
+            call boundp1(n,p)
 #else
-            call boundp1(km,jm,p,im)
+            call boundp1(p)
 #endif
         end do
 #ifdef NESTED_LES
-        call boundp2(n,jm,im,p,km)
+        call boundp2(n,p)
 #else
-        call boundp2(jm,im,p,km)
+        call boundp2(p)
 #endif
 #ifndef NO_IO
 #ifdef VERBOSE
@@ -160,13 +155,11 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
 
     end do
 !print *,rank,'SOR iterations:',l
-! WV_DEBUG_MPI
-!#endif
     pav = 0.0
     pco = 0.0
-    do k = 1,km
-        do j = 1,jm
-            do i = 1,im
+    do k = 1,kp
+        do j = 1,jp
+            do i = 1,ip
                 pav = pav+p(i,j,k)*dx1(i)*dy1(j)*dzn(k)
                 pco = pco+dx1(i)*dy1(j)*dzn(k)
             end do
@@ -188,9 +181,9 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
 #endif
 
     pav = pav/pco
-    do k = 1,km
-        do j = 1,jm
-            do i = 1,im
+    do k = 1,kp
+        do j = 1,jp
+            do i = 1,ip
                 p(i,j,k) = p(i,j,k)-pav
             end do
         end do
@@ -200,17 +193,17 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
     print *, "F95: P_SUM_ADJ=",sum(p)
 #endif
 #ifdef NESTED_LES
-    call boundp1(n,km,jm,p,im)
+    call boundp1(n,p)
 #else
-    call boundp1(km,jm,p,im)
+    call boundp1(p)
 #endif
 #ifdef WV_DEBUG
     print *, "F95: P_SUM_1=",sum(p)
 #endif
 #ifdef NESTED_LES
-    call boundp2(n,jm,im,p,km)
+    call boundp2(n,p)
 #else
-    call boundp2(jm,im,p,km)
+    call boundp2(p)
 #endif
 #ifdef WV_DEBUG
     print *, "F95: P_SUM_BOUND=",sum(p)
@@ -226,19 +219,19 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
     end if
 ! --check
     if (mod(n-1,20) == 0) then
-        do k = 1,km,10
-            write(6,*) 'Inflow=',k,'u=',u(0,jm/2,k),v(0,jm/2,k) ,w(0,jm/2,k)
+        do k = 1,kp,10
+            write(6,*) 'Inflow=',k,'u=',u(0,jp/2,k),v(0,jp/2,k) ,w(0,jp/2,k)
         end do
-        do k = 1,km,10
-            write(6,*) 'Urbanflow=',k,'u=',u(im/2,jm/2,k),v(im/2,jm/2,k) ,w(im/2,jm/2,k)
+        do k = 1,kp,10
+            write(6,*) 'Urbanflow=',k,'u=',u(im/2,jp/2,k),v(im/2,jp/2,k) ,w(im/2,jp/2,k)
         end do
 !
         cflu = 0.
         cflv = 0.
         cflw = 0.
-        do k = 1,km
-            do j = 1,jm
-                do i = 1,im
+        do k = 1,kp
+            do j = 1,jp
+                do i = 1,ip
                     cflu = amax1(cflu,abs(u(i,j,k)*dt/dx1(i)))
                     cflv = amax1(cflv,abs(v(i,j,k)*dt/dy1(j)))
                     cflw = amax1(cflw,abs(w(i,j,k)*dt/dzn(k)))
@@ -267,19 +260,17 @@ subroutine press(km,jm,im,rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn
 #ifndef NO_IO
 #ifndef MPI
         open(unit=20,file=data20,form='unformatted',status='unknown')
-        write(20) (((u(i,j,k),i=1,im),j=1,jm),k=1,km)
-        write(20) (((v(i,j,k),i=1,im),j=1,jm),k=1,km)
-        write(20) (((w(i,j,k),i=1,im),j=1,jm),k=1,km)
-        write(20) (((p(i,j,k),i=1,im),j=1,jm),k=1,km)
-        write(20) (((usum(i,j,k),i=1,im),j=1,jm),k=1,km)
-        write(20) (((vsum(i,j,k),i=1,im),j=1,jm),k=1,km)
-        write(20) (((wsum(i,j,k),i=1,im),j=1,jm),k=1,km)
+        write(20) (((u(i,j,k),i=1,ip),j=1,jp),k=1,kp)
+        write(20) (((v(i,j,k),i=1,ip),j=1,jp),k=1,kp)
+        write(20) (((w(i,j,k),i=1,ip),j=1,jp),k=1,kp)
+        write(20) (((p(i,j,k),i=1,ip),j=1,jp),k=1,kp)
+        write(20) (((usum(i,j,k),i=1,ip),j=1,jp),k=1,kp)
+        write(20) (((vsum(i,j,k),i=1,ip),j=1,jp),k=1,kp)
+        write(20) (((wsum(i,j,k),i=1,ip),j=1,jp),k=1,kp)
         close(unit=20)
 #endif
 #endif
     end if
-! WV_DEBUG_MPI
-!#endif
 end subroutine press
 
 end module module_press

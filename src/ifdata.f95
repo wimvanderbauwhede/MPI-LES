@@ -54,91 +54,52 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou9
 
 
-          do k = 0,kp+1
-          do j = 0,jp+2
-          do i = -1,ip+2
-              cov1(i,j,k) = 0.0
-              cov5(i,j,k) = 0.0
-              diu1(i,j,k) = 0.0
-              diu5(i,j,k) = 0.0
-              nou1(i,j,k) = 0.0
-              nou5(i,j,k) = 0.0
-          end do
-          end do
-          end do
-          do k = 0,kp+1
-          do j = 0,jp+2
-          do i = 0,ip+2
-              cov2(i,j,k) = 0.0
-              cov3(i,j,k) = 0.0
-              cov4(i,j,k) = 0.0
-              cov6(i,j,k) = 0.0
-              cov7(i,j,k) = 0.0
-              cov8(i,j,k) = 0.0
-              cov9(i,j,k) = 0.0
-              diu2(i,j,k) = 0.0
-              diu3(i,j,k) = 0.0
-              diu4(i,j,k) = 0.0
-              diu6(i,j,k) = 0.0
-              diu7(i,j,k) = 0.0
-              diu8(i,j,k) = 0.0
-              diu9(i,j,k) = 0.0
-              nou2(i,j,k) = 0.0
-              nou3(i,j,k) = 0.0
-              nou4(i,j,k) = 0.0
-              nou6(i,j,k) = 0.0
-              nou7(i,j,k) = 0.0
-              nou8(i,j,k) = 0.0
-              nou9(i,j,k) = 0.0
-          end do
-          end do
-          end do
-          do k = 1,kp
-          do j = 1,jp
-          do i = 0,ip
-              dfu1(i,j,k) = 0.0
-          end do
-          end do
-          end do
-          do k = 1,kp
-          do j = 0,jp
-          do i = 1,ip
-              dfv1(i,j,k) = 0.0
-          end do
-          end do
-          end do
-          do k = 1,kp
-          do j = 1,jp
-          do i = 1,ip
-              dfw1(i,j,k) = 0.0
-          end do
-          end do
-          end do
-
-!          do k = 0,kp
-!          do j = 0,jp
-!          do i = 0,ip
-!              f(i,j,k) = 0.0
-!              g(i,j,k) = 0.0
-!              h(i,j,k) = 0.0
-!          end do
-!          end do
-!          end do
+              cov1 = 0.0
+              cov5 = 0.0
+              diu1 = 0.0
+              diu5 = 0.0
+              nou1 = 0.0
+              nou5 = 0.0
+              cov2 = 0.0
+              cov3 = 0.0
+              cov4 = 0.0
+              cov6 = 0.0
+              cov7 = 0.0
+              cov8 = 0.0
+              cov9 = 0.0
+              diu2 = 0.0
+              diu3 = 0.0
+              diu4 = 0.0
+              diu6 = 0.0
+              diu7 = 0.0
+              diu8 = 0.0
+              diu9 = 0.0
+              nou2 = 0.0
+              nou3 = 0.0
+              nou4 = 0.0
+              nou6 = 0.0
+              nou7 = 0.0
+              nou8 = 0.0
+              nou9 = 0.0
+              dfu1 = 0.0
+              dfv1 = 0.0
+              dfw1 = 0.0
+!              f = 0.0
+!              g = 0.0
+!              h = 0.0
 
       end subroutine
 
       subroutine ifdata( &
 !#if ICAL == 1
-      data30,data31, fold,gold,hold,fghold, time, &
+      fold,gold,hold,fghold, time, &
 !#endif
-      n,u,im,jm,km,v,w,p,usum,vsum,wsum, &
+      n,u,v,w,p,usum,vsum,wsum, &
       delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g,h,z2,dt, &
       dxs,cov1,cov2,cov3,dfu1,vn,cov4,cov5,cov6,dfv1,cov7,cov8,cov9,dfw1,dzs,nou1,nou5,nou9,nou2, &
       nou3,nou4,nou6,nou7,nou8,bmask1,cmask1,dmask1,alpha,beta,fx,fy,fz,amask1,zbm,ical,nif)
       use common_sn ! create_new_include_statements() line 102
 !#if ICAL == 1
-        character(len=70), intent(In) :: data30
-        character(len=70), intent(In) :: data31
         real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: fghold
         real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: fold
         real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: gold
@@ -187,9 +148,6 @@ contains
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: fz
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: g
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: h
-        integer, intent(InOut) :: im
-        integer, intent(InOut) :: jm
-        integer, intent(InOut) :: km
         integer, intent(InOut) :: n
         integer, intent(in) :: nif   
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou1
@@ -236,10 +194,12 @@ contains
         integer :: n1,n2
 #endif
 
-    if ((im/=ip) .or. (jm/=jp) .or. (km/=kp)) then
-            print *, "im,km,km is different from ip,jp,kp, aborting!"
-            call exit(-1)
-    end if
+!    if ((im/=ip) .or. (jp/=jp) .or. (kp/=kp)) then
+!            print *, "ip,kp,kp is different from ip,jp,kp, aborting!"
+!            call exit(-1)
+!    end if
+
+
 !
 !
 !
@@ -249,17 +209,17 @@ contains
 !
 !#if ICAL == 1
        if(ical == 1) then
-
+#ifdef MPI
         if (isMaster()) then
             write(filename, '("../data/data30",i6.6, ".dat")') nif
             open(unit=30,file=filename,form='unformatted',status='unknown')
             read(30) n,time
         end if
- 
+
 #ifdef MPI_NEW_WV2
         if (isMaster()) then
             allocate(ua(ipmax,jpmax,kp))
-            read(30) (((ua(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+            read(30) (((ua(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         allocate(ur(ip,jp,kp))
         call MPI_Scatter(ur, ip*jp*kp, MPI_REAL, ua, ipmax*jpmax*kp, MPI_REAL, 0, communicator, ierror)
@@ -270,13 +230,13 @@ contains
         allocate(ua(0:ipmax+1,-1:jpmax+1,0:kp+1))
          
         if (isMaster()) then
-        read(30) (((ua(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        read(30) (((ua(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
 
         call distributeifu(ua, ip, jp, kp, ipmax, jpmax, procPerRow)
-        do k=1,km
-        do j=1,jm
-        do i=1,im
+        do k=1,kp
+        do j=1,jp
+        do i=1,ip
          u(i,j,k)=ua(i,j,k)
         end do
         end do
@@ -287,7 +247,7 @@ contains
 #ifdef MPI_NEW_WV2
         if (isMaster()) then
             allocate(va(ipmax,jpmax,kp))
-            read(30) (((va(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+            read(30) (((va(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         allocate(vr(ip,jp,kp))
         call MPI_Scatter(vr, ip*jp*(kp+2), MPI_REAL, va, ipmax*jpmax*kp, MPI_REAL, 0, communicator, ierror)
@@ -297,13 +257,13 @@ contains
 #else
         allocate(va(0:ipmax+1,-1:jpmax+1,0:kp+1))               
         if (isMaster()) then
-        read(30) (((va(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        read(30) (((va(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
 
         call distributeifu(va, ip, jp, kp, ipmax, jpmax, procPerRow)
-        do k=1,km
-        do j=1,jm
-        do i=1,im
+        do k=1,kp
+        do j=1,jp
+        do i=1,ip
          v(i,j,k)=va(i,j,k)
         end do
         end do
@@ -314,7 +274,7 @@ contains
 #ifdef MPI_NEW_WV2
         if (isMaster()) then
             allocate(wa(ipmax,jpmax,kp))
-            read(30) (((wa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+            read(30) (((wa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         allocate(wr(ip,jp,kp))
         call MPI_Scatter(wr, ip*jp*(kp+2), MPI_REAL, wa, ipmax*jpmax*kp, MPI_REAL, 0, communicator, ierror)
@@ -325,13 +285,13 @@ contains
 
         allocate(wa(0:ipmax+1,-1:jpmax+1,-1:kp+1))
         if (isMaster()) then
-        read(30) (((wa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        read(30) (((wa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
 
         call distributeifw(wa, ip, jp, kp, ipmax, jpmax, procPerRow)
-        do k=1,km
-        do j=1,jm
-        do i=1,im
+        do k=1,kp
+        do j=1,jp
+        do i=1,ip
          w(i,j,k)=wa(i,j,k)
         end do
         end do
@@ -342,7 +302,7 @@ contains
 #ifdef MPI_NEW_WV2
         if (isMaster()) then
             allocate(pa(ipmax,jpmax,kp))
-            read(30) (((pa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+            read(30) (((pa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
         allocate(pr(ip,jp,kp))
         call MPI_Scatter(pr, ip*jp*(kp+2), MPI_REAL, pa, ipmax*jpmax*kp, MPI_REAL, 0, communicator, ierror)
@@ -352,13 +312,13 @@ contains
 #else
         allocate(pa(0:ipmax+2,0:jpmax+2,0:kp+1))
         if (isMaster()) then
-        read(30) (((pa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        read(30) (((pa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
 
         call distributeifp(pa, ip, jp, kp, ipmax, jpmax, procPerRow)
-        do k=1,km
-        do j=1,jm
-        do i=1,im
+        do k=1,kp
+        do j=1,jp
+        do i=1,ip
          p(i,j,k)=pa(i,j,k)
         end do
         end do
@@ -368,13 +328,13 @@ contains
 
         allocate(usuma(0:ipmax,0:jpmax,0:kp))
         if (isMaster()) then
-        read(30) (((usuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        read(30) (((usuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
 
         call distributeifusum(usuma, ip, jp, kp, ipmax, jpmax, procPerRow)
-        do k=1,km
-        do j=1,jm
-        do i=1,im
+        do k=1,kp
+        do j=1,jp
+        do i=1,ip
          usum(i,j,k)=usuma(i,j,k)
         end do
         end do
@@ -384,13 +344,13 @@ contains
 
         allocate(vsuma(0:ipmax,0:jpmax,0:kp))
         if (isMaster()) then
-        read(30) (((vsuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        read(30) (((vsuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
 
         call distributeifusum(vsuma, ip, jp, kp, ipmax, jpmax, procPerRow)
-        do k=1,km
-        do j=1,jm
-        do i=1,im
+        do k=1,kp
+        do j=1,jp
+        do i=1,ip
          vsum(i,j,k)=vsuma(i,j,k)
         end do
         end do
@@ -400,13 +360,13 @@ contains
 
         allocate(wsuma(0:ipmax,0:jpmax,0:kp))
         if (isMaster()) then
-        read(30) (((wsuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        read(30) (((wsuma(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
 
         call distributeifusum(wsuma, ip, jp, kp, ipmax, jpmax, procPerRow)
-        do k=1,km
-        do j=1,jm
-        do i=1,im
+        do k=1,kp
+        do j=1,jp
+        do i=1,ip
          wsum(i,j,k)=wsuma(i,j,k)
         end do
         end do
@@ -427,13 +387,13 @@ contains
         allocate(fa(0:ipmax,0:jpmax,0:kp))
 
         if (isMaster()) then
-        read(31) (((fa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        read(31) (((fa(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
 
         call distributeiff(fa, ip, jp, kp, ipmax, jpmax, procPerRow)
-        do k=1,km
-        do j=1,jm
-        do i=1,im
+        do k=1,kp
+        do j=1,jp
+        do i=1,ip
          f(i,j,k)=fa(i,j,k)
         end do
         end do
@@ -442,13 +402,13 @@ contains
 
         allocate(ga(0:ipmax,0:jpmax,0:kp))
         if (isMaster()) then
-        read(31) (((ga(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        read(31) (((ga(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
 
         call distributeiff(ga, ip, jp, kp, ipmax, jpmax, procPerRow)
-        do k=1,km
-        do j=1,jm
-        do i=1,im
+        do k=1,kp
+        do j=1,jp
+        do i=1,ip
          g(i,j,k)=ga(i,j,k)
         end do
         end do
@@ -458,13 +418,13 @@ contains
 
         allocate(ha(0:ipmax,0:jpmax,0:kp))
         if (isMaster()) then
-        read(31) (((ha(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        read(31) (((ha(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
 
         call distributeiff(ha, ip, jp, kp, ipmax, jpmax, procPerRow)
-        do k=1,km
-        do j=1,jm
-        do i=1,im
+        do k=1,kp
+        do j=1,jp
+        do i=1,ip
          h(i,j,k)=ha(i,j,k)
         end do
         end do
@@ -475,13 +435,13 @@ contains
         allocate(folda(ipmax,jpmax,kp))
 
         if (isMaster()) then
-        read(31) (((folda(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        read(31) (((folda(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
 
         call distributeiffold(folda, ip, jp, kp, ipmax, jpmax, procPerRow)
-        do k=1,km
-        do j=1,jm
-        do i=1,im
+        do k=1,kp
+        do j=1,jp
+        do i=1,ip
          fold(i,j,k)=folda(i,j,k)
         end do
         end do
@@ -492,13 +452,13 @@ contains
         allocate(golda(ipmax,jpmax,kp))
 
         if (isMaster()) then
-        read(31) (((golda(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        read(31) (((golda(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
 
         call distributeiffold(golda, ip, jp, kp, ipmax, jpmax, procPerRow)
-        do k=1,km
-        do j=1,jm
-        do i=1,im
+        do k=1,kp
+        do j=1,jp
+        do i=1,ip
          gold(i,j,k)=golda(i,j,k)
         end do
         end do
@@ -509,13 +469,13 @@ contains
         allocate(holda(ipmax,jpmax,kp))
 
         if (isMaster()) then
-        read(31) (((holda(i,j,k),i=1,ipmax),j=1,jpmax),k=1,km)
+        read(31) (((holda(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         end if
 
         call distributeiffold(holda, ip, jp, kp, ipmax, jpmax, procPerRow)
-        do k=1,km
-        do j=1,jm
-        do i=1,im
+        do k=1,kp
+        do j=1,jp
+        do i=1,ip
          hold(i,j,k)=holda(i,j,k)
         end do
         end do
@@ -530,12 +490,46 @@ contains
 
 
 #ifdef NESTED_LES
-            call boundp2(n,jm,im,p,km)
+            call boundp2(n,p)
 #else
-            call boundp2(jm,im,p,km)
+            call boundp2(p)
 #endif
 
+#else
+! NO MPI
 
+!30
+        write(filename, '("../data/data30",i6.6, ".dat")') nif
+        open(unit=30,file=filename,form='unformatted',status='unknown')
+        read(30) n,time
+
+        read(30) (((u(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        read(30) (((v(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        read(30) (((w(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        read(30) (((p(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        read(30) (((usum(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        read(30) (((vsum(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        read(30) (((wsum(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        close(30)
+
+!31
+        write(filename, '("../data/data31",i6.6, ".dat")') nif
+        open(unit=31,file=filename,form='unformatted',status='unknown')
+        read(31) (((f(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        read(31) (((g(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        read(31) (((h(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        read(31) (((fold(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        read(31) (((gold(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        read(31) (((hold(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+        close(31)
+
+#ifdef NESTED_LES
+            call boundp2(n,p)
+#else
+            call boundp2(p)
+#endif
+
+#endif
 ! WV: I added this routine to explicitly set all arrays to zero
 
         call zero_arrays( &
@@ -550,24 +544,24 @@ contains
      end if
 
 #ifdef NESTED_LES
-            call boundp1(n,km,jm,p,im)
-            call boundp2(n,jm,im,p,km)
+            call boundp1(n,p)
+            call boundp2(n,p)
 #else
-            call boundp1(km,jm,p,im)
-            call boundp2(jm,im,p,km)
+            call boundp1(p)
+            call boundp2(p)
 #endif
 
-!        call velfg(km,jm,im,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6,dfv1, &
+!        call velfg(kp,jp,ip,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6,dfv1, &
 !      diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
 !      nou4,nou6,nou7,nou8)
 #if IFBF == 1
 !        if(ifbf == 1) then
-!        call feedbf(km,jm,im,usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,dt,beta,fx,fy,fz,f,g, &
+!        call feedbf(kp,jp,ip,usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,dt,beta,fx,fy,fz,f,g, &
 !      h)
-!        call feedbfm(km,jm,im,amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
+!        call feedbfm(kp,jp,ip,amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
 !        endif
 #endif
-!        call les(km,delx1,dx1,dy1,dzn,jm,im,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g,h)
+!        call les(kp,delx1,dx1,dy1,dzn,jp,ip,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g,h)
 
 ! --adam
 ! WV iadam is not defined!
@@ -576,7 +570,7 @@ contains
 !            n1=1
 !            n2=2
 !            data21dummy=""
-!          call adam(n1,n2,data21dummy,fold,im,jm,km,gold,hold,fghold,f,g,h)
+!          call adam(n1,n2,data21dummy,fold,ip,jp,kp,gold,hold,fghold,f,g,h)
 ! WV        end if
 #endif
 !

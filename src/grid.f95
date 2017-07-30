@@ -103,9 +103,21 @@ contains
             end do
 #endif
 #else
-      do i = -1,ip+1
-       dx1(i) = dxgrid
-      end do
+#ifndef NESTED_LES
+        do i = -1,ip+1
+            dx1(i) = dxgrid
+        end do
+#else
+        do i=-1,ip+1
+            if (i>=nested_grid_start_x .and. i< nested_grid_end_x) then
+                ! In the nested grid
+                        dx1(i) = dxgrid_nest
+                        else
+                ! In the orig grid
+                        dx1(i) = dxgrid_orig
+            end if
+        end do
+#endif
 #endif
 
 #ifdef MPI
@@ -213,9 +225,21 @@ contains
 
 #endif
 #else
+#ifndef NESTED_LES
       do j = 0,jp+1
         dy1(j) = dygrid
       end do
+#else
+        do j=-1,jp+1
+            if (j>=nested_grid_start_y .and. j< nested_grid_end_y) then
+                ! In the nested grid
+                        dy1(j) = dygrid_nest
+                        else
+                ! In the orig grid
+                        dy1(j) = dygrid_orig
+            end if
+        end do
+#endif
 #endif
 
 #ifdef MPI
@@ -294,12 +318,15 @@ contains
         z2(k)=z2(k-1)+dzn(k)  !Height
       end do
 
+#ifdef MPI
     if (isMaster()) then
+#endif
       do k=1,kp
        ! write(*,*) 'z2grid=',z2(k)
       end do
+#ifdef MPI
     end if
-
+#endif
 
 ! --gaiten deno haba
       dzn(kp+1) = dzn(kp)
