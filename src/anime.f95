@@ -6,10 +6,9 @@ module module_anime
 #endif
 #ifdef MPI_NEW_WV
     use params_common_sn
+#endif
+#endif
     implicit none
-#endif
-#endif
-
 contains
 
 #ifdef MPI
@@ -155,7 +154,7 @@ subroutine anime(n,n0,n1,&
 !            end do
 !        end do
 !        open(unit=22,file=data22,form='unformatted',status='unknown')
-!        write(22) im,jp,kp
+!        write(22) ip,jp,kp
 !        write(22) (((real(a1(i,j,k)),i=1,ip),j=1,jp),k=1,kp), &
 !                  (((real(a3(i,j,k)),i=1,ip),j=1,jp),k=1,kp), &
 !                  (((real(a2(i,j,k)),i=1,ip),j=1,jp),k=1,kp)
@@ -561,7 +560,7 @@ subroutine anime(n,n0,n1,&
                     uani(0,j,k) = uani(1,j,k)
                  end do
 #else
-                 do j = 1,jpmax
+                 do j = 1,jp
                     uani(0,j,k) = uani(1,j,k)
                  end do
 #endif

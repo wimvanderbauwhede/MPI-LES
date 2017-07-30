@@ -4,6 +4,7 @@ module module_press
 #endif
     use module_bondFG ! add_module_decls() line 156
     use module_boundp ! add_module_decls() line 156
+    implicit none
 contains
 
 subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,cn4s, &
@@ -35,6 +36,8 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(In) :: wsum
     integer :: nn
+    integer :: i,j,k,l,nrd
+    real(kind=4) :: rhsav, pav, area, pco, sor, reltmp
     !
     ! --only used mac method
     real, parameter  :: pjuge = 0.0001
@@ -223,7 +226,7 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
             write(6,*) 'Inflow=',k,'u=',u(0,jp/2,k),v(0,jp/2,k) ,w(0,jp/2,k)
         end do
         do k = 1,kp,10
-            write(6,*) 'Urbanflow=',k,'u=',u(im/2,jp/2,k),v(im/2,jp/2,k) ,w(im/2,jp/2,k)
+            write(6,*) 'Urbanflow=',k,'u=',u(ip/2,jp/2,k),v(ip/2,jp/2,k) ,w(ip/2,jp/2,k)
         end do
 !
         cflu = 0.
