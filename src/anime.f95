@@ -533,9 +533,9 @@ subroutine anime(n,n0,n1,&
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) :: wani
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) :: pani
 
-      do k=1,kp
-          do j=1,jp
-              do i=1,ip
+      do k=0,kp
+          do j=0,jp
+              do i=0,ip
                   uani(i,j,k)=uani(i,j,k)+u(i,j,k)
                   vani(i,j,k)=vani(i,j,k)+v(i,j,k)
                   wani(i,j,k)=wani(i,j,k)+w(i,j,k)
@@ -550,7 +550,7 @@ subroutine anime(n,n0,n1,&
                ! WV: for nested domain only this would be smaller, nested_grid_x * nested_grid_y
                open(unit=23,file=filename,form='unformatted',access='direct',recl=4*nested_grid_x * nested_grid_y)
 #else
-               open(unit=23,file=filename,form='unformatted',access='direct',recl=4*ipmax*jpmax)
+               open(unit=23,file=filename,form='unformatted',access='direct',recl=4*ip*jp)
 #endif
 ! ---- ua ----
             uani=uani/real(avetime)
@@ -572,22 +572,22 @@ subroutine anime(n,n0,n1,&
 #ifdef SAVE_NESTED_GRID_ONLY
               write(23,rec=irec) ((real(0.5*(uani(i-1,j,k)+uani(i,j,k))),i=1,nested_grid_x),j=1,nested_grid_y)
 #else
-              write(23,rec=irec) ((real(0.5*(uani(i-1,j,k)+uani(i,j,k))),i=1,ipmax),j=1,jpmax)
+              write(23,rec=irec) ((real(0.5*(uani(i-1,j,k)+uani(i,j,k))),i=1,ip),j=1,jp)
 #endif
               irec = irec + 1
             end do
 ! ---- wani -----
         wani=wani/real(avetime)
         !boundary
-            do j = 1,jpmax
-                do i = 1,ipmax
+            do j = 1,jp
+                do i = 1,ip
                     wani(i,j,0) = 0.0
                 end do
             end do
 
         !       do  k=1,kp
             do  k=1,km_sl
-                write(23,rec=irec) ((real(0.5*(wani(i,j,k-1)+wani(i,j,k))),i=1,ipmax),j=1,jpmax)
+                write(23,rec=irec) ((real(0.5*(wani(i,j,k-1)+wani(i,j,k))),i=1,ip),j=1,jp)
                 irec = irec + 1
             end do
 
@@ -595,13 +595,13 @@ subroutine anime(n,n0,n1,&
         vani=vani/real(avetime)
         !boundary
             do k = 1,kp
-                do i = 1,ipmax
-                  vani(i,0,k) = vani(i,jpmax,k)
+                do i = 1,ip
+                  vani(i,0,k) = vani(i,jp,k)
                 end do
             end do
 
        do  k=1,km_sl
-          write(23,rec=irec) ((real(0.5*(vani(i,j-1,k)+vani(i,j,k))),i=1,ipmax),j=1,jpmax)
+          write(23,rec=irec) ((real(0.5*(vani(i,j-1,k)+vani(i,j,k))),i=1,ip),j=1,jp)
            irec = irec + 1
        end do
 !------ if you output p, have to comment out this close
@@ -613,7 +613,7 @@ subroutine anime(n,n0,n1,&
 
 !       do  k=1,kp
        do  k=1,km_sl
-           write(23,rec=irec) ((pani(i,j,k),i=1,ipmax),j=1,jpmax)
+           write(23,rec=irec) ((pani(i,j,k),i=1,ip),j=1,jp)
            irec = irec + 1
        end do
        close(23)

@@ -1,6 +1,7 @@
 module module_les
 
       use module_boundsm ! add_module_decls() line 156
+      implicit none
 contains
 
       subroutine les(delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g, &
@@ -31,7 +32,14 @@ contains
         real(kind=4), dimension(0:ip+1,0:jp+1) , intent(in) :: vspd
         real(kind=4), dimension(0:ip) , intent(in) :: dxs
         real(kind=4), dimension(0:jp) , intent(in) :: dys
-!
+        integer :: i,j,k
+        real(kind=4) :: csx1
+        real(kind=4) :: dudxx1 , dudyx1 , dudzx1 , dvdxx1 , dvdyx1 , dvdzx1 , dwdxx1 , dwdyx1 , dwdzx1
+        real(kind=4) :: visux2, visux1, visuy2, visuy1, visuz2, visuz1
+        real(kind=4) :: visvx2, visvx1, visvy2, visvy1, visvz2, visvz1
+        real(kind=4) :: viswx2, viswx1, viswy2, viswy1, viswz2, viswz1
+        real(kind=4) :: evsx2, evsx1, evsy2, evsy1, evsz2, evsz1
+        real(kind=4) :: vfu,vfv,vfw
 !
 ! --length scale
         do k = 1,kp
@@ -76,9 +84,9 @@ contains
 
 !
 #ifdef NESTED_LES
-      call boundsm(n,kp,jp,sm,ip)
+      call boundsm(n,sm)
 #else
-      call boundsm(km,jp,sm,ip)
+      call boundsm(sm)
 #endif
 #ifdef WV_DEBUG
     print *, 'F95 FGHSUM after boundsm:',sum(f)+sum(g)+sum(h)

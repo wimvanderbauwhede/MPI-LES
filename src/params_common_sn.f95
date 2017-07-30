@@ -4,6 +4,7 @@ module params_common_sn
 ! use params_mpi
 ! which would contain
 
+integer, parameter :: kp=80
 #ifdef MPI
 !    use communication_helper
     integer, parameter :: procPerRow = PROC_PER_ROW, procPerCol = PROC_PER_COL, dimensions = 2
@@ -19,15 +20,16 @@ module params_common_sn
     integer, parameter :: ip = ipmax/PROC_PER_COL ! rows per process
     integer, parameter :: jp = jpmax/PROC_PER_ROW ! columns per process
 #endif
-    integer, parameter :: kp=80
+
 #else
-! No MPI
+! NO MPI
 #ifndef TEST_SMALL_DOMAIN
-    integer, parameter :: ip = 300, jp = 300, kp = 80 ! so @4m, max is 1200m x 1200m
+    integer, parameter :: ip = 300, jp = 300 ! so @4m, max is 1200m x 1200m
 #else
-    integer, parameter :: ip = 25, jp = 25, kp = 80
+    integer, parameter :: ip = 25, jp = 25
 #endif
-    integer, parameter :: ipmax = ip, jpmax = jp
+    integer, parameter :: ipmax = ip
+    integer, parameter :: jpmax = jp
 #endif
 
 ! WV: unused:   integer, parameter :: bipmax = 300, bjpmax = 300, bx = 0, by = 0

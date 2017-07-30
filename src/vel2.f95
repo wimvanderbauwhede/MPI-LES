@@ -2,6 +2,7 @@ module module_vel2
 #ifdef MPI
     use communication_helper_real
 #endif
+    implicit none
 contains
 
 #ifdef NESTED_LES
@@ -53,8 +54,8 @@ contains
 !wall function
         real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: uspd
         real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: vspd
-!
-      integer, parameter  :: u0 = 0
+        integer :: i,j,k
+        integer, parameter  :: u0 = 0
 
         
       do j=1,jp

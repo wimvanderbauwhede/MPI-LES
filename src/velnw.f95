@@ -1,5 +1,5 @@
 module module_velnw
-
+    implicit none
 contains
 
       subroutine velnw(p,ro,dxs,u,dt,f,dys,v,g,dzs,w,h)
@@ -16,7 +16,8 @@ contains
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: u
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: v
         real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(InOut) :: w
-!
+        integer :: i,j,k
+        real(kind=4) :: pz
 ! setting pz to 0 does not make the error go away
 ! commenting out the redundant lines also not
 ! Which means it's the values of f,g,h that are changing. g seems fine.

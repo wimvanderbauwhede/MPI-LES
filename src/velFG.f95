@@ -2,7 +2,9 @@ module module_velFG
 #ifdef MPI
     use communication_helper_mpi
 #endif
-      use module_vel2 ! add_module_decls() line 156
+    use module_vel2 ! add_module_decls() line 156
+    implicit none
+
 contains
 
 #ifdef NESTED_LES
@@ -65,6 +67,8 @@ contains
         real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: uspd
         real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: vspd
  
+        integer :: i,j,k
+        real(kind=4) :: covc,covx1,covy1,covz1
 !
 !
 #ifdef NESTED_LES
