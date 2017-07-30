@@ -525,8 +525,8 @@ subroutine anime(n,n0,n1,&
 #else
 ! NO MPI
 !We simply write the uani,... to the file
-    integer :: irec, i,j,k, i_s, j_s
-    character(len=70) :: filename
+    integer ::  i,j,k
+!    character(len=70) :: filename
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: uani
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: vani
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) :: wani
@@ -915,8 +915,8 @@ subroutine ifdata_out(n,n0,n1,nmax,time,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,h
 #endif
 #else
 ! NO MPI
-    integer :: irec, i,j,k
-    character(len=70) :: filename
+    integer ::  i,j,k
+!    character(len=70) :: filename
 
     if((n == n1-1).or.(n == nmax))  then
         write(filename, '("../data/data30",i6.6, ".dat")') n

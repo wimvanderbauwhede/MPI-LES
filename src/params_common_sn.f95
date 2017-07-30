@@ -23,6 +23,7 @@ integer, parameter :: kp=80
 
 #else
 ! NO MPI
+#ifndef NESTED_LES
 #ifndef TEST_SMALL_DOMAIN
     integer, parameter :: ip = 300, jp = 300 ! so @4m, max is 1200m x 1200m
 #else
@@ -31,7 +32,7 @@ integer, parameter :: kp=80
     integer, parameter :: ipmax = ip
     integer, parameter :: jpmax = jp
 #endif
-
+#endif
 ! WV: unused:   integer, parameter :: bipmax = 300, bjpmax = 300, bx = 0, by = 0
 ! WV: not nice
 
@@ -89,10 +90,11 @@ integer, parameter :: kp=80
 !#endif
     real, parameter :: dxgrid_orig = 4.0
     real, parameter :: dygrid_orig = 4.0
-#ifdef MPI
+
 ! Subgrid size
     integer, parameter :: ipmax =orig_grid_x + nested_grid_x*(1 - (dxgrid_nest/dxgrid_orig))
     integer, parameter :: jpmax = orig_grid_y + nested_grid_y*(1 - (dygrid_nest/dygrid_orig))
+#ifdef MPI
     integer, parameter :: ip = ipmax / PROC_PER_COL ! rows per process
     integer, parameter :: jp = ipmax / PROC_PER_ROW ! columns per process
     integer, parameter :: procPerRowNest = nested_grid_x / ip
@@ -102,6 +104,9 @@ integer, parameter :: kp=80
     integer, parameter :: i_s_nest_end =  i_s_nest_start + nested_grid_x / ip - 1 ! 1 + (150 / 75)  - 1 = 2
     integer, parameter :: j_s_nest_start =  nested_grid_start_y / ip
     integer, parameter :: j_s_nest_end =  j_s_nest_start + nested_grid_y / ip - 1
+#else
+    integer, parameter :: ip = ipmax
+    integer, parameter :: jp = ipmax
 #endif
 ! Time steps
     integer, parameter :: n_nest0 = 1 ! was 2

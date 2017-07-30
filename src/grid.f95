@@ -227,10 +227,10 @@ contains
 #else
 #ifndef NESTED_LES
       do j = 0,jp+1
-        dy1(j) = dygrid
+            dy1(j) = dygrid
       end do
 #else
-        do j=-1,jp+1
+        do j=0,jp+1
             if (j>=nested_grid_start_y .and. j< nested_grid_end_y) then
                 ! In the nested grid
                         dy1(j) = dygrid_nest

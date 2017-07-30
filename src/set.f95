@@ -90,13 +90,16 @@ contains
         nmax = 5
 #endif
 
-#ifdef MPI
+
 #ifdef NESTED_LES
+#ifdef MPI
         if (inNestedGrid()) then
             nmax = nmax*(dt_orig/dt_nest) ! 40
 !        else
 !            nmax = nmax !+1 ! 20
         end if
+#else
+    nmax = nmax*(dt_orig/dt_nest) ! 40
 #endif
 #endif
 ! --time step
