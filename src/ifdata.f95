@@ -12,13 +12,19 @@ module module_ifdata
       use module_adam
 #endif
 contains
+
+#ifdef WV_NEW
+      subroutine zero_arrays(dfu1, dfv1, dfw1)
+#else
       subroutine zero_arrays(cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9, &
               dfu1, dfv1, dfw1, &
               diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,  &
 !              f,g,h, &
               nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9 &
               )
+#endif
       use common_sn
+#ifndef WV_NEW
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov2
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov3
@@ -28,9 +34,11 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov7
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov9
+#endif
         real(kind=4), dimension(0:ip,jp,kp) , intent(Out) :: dfu1
         real(kind=4), dimension(ip,0:jp,kp) , intent(Out) :: dfv1
         real(kind=4), dimension(ip,jp,kp) , intent(Out) :: dfw1
+#ifndef WV_NEW
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu2
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu3
@@ -81,6 +89,7 @@ contains
               nou7 = 0.0
               nou8 = 0.0
               nou9 = 0.0
+#endif
               dfu1 = 0.0
               dfv1 = 0.0
               dfw1 = 0.0
@@ -89,7 +98,16 @@ contains
 !              h = 0.0
 
       end subroutine
-
+#ifdef WV_NEW
+      subroutine ifdata( &
+!#if ICAL == 1
+      fold,gold,hold,fghold, time, &
+!#endif
+      n,u,v,w,p,usum,vsum,wsum, &
+      delx1,dx1,dy1,dzn,sm,f,g,h,z2,dt, &
+      dxs,dfu1,vn,dfv1,dfw1,dzs, &
+      fx,fy,fz,zbm,ical,nif)
+#else
       subroutine ifdata( &
 !#if ICAL == 1
       fold,gold,hold,fghold, time, &
@@ -98,6 +116,7 @@ contains
       delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g,h,z2,dt, &
       dxs,cov1,cov2,cov3,dfu1,vn,cov4,cov5,cov6,dfv1,cov7,cov8,cov9,dfw1,dzs,nou1,nou5,nou9,nou2, &
       nou3,nou4,nou6,nou7,nou8,bmask1,cmask1,dmask1,alpha,beta,fx,fy,fz,amask1,zbm,ical,nif)
+#endif
       use common_sn ! create_new_include_statements() line 102
 !#if ICAL == 1
         real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: fghold
@@ -108,6 +127,7 @@ contains
         integer, intent(In) :: ical
 
 !#endif
+#ifndef WV_NEW
         real(kind=4), intent(In) :: alpha
         real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: amask1
         real(kind=4), intent(In) :: beta
@@ -122,10 +142,12 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov7
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov9
+#endif
         real(kind=4), dimension(kp) , intent(Out) :: delx1
         real(kind=4), dimension(0:ip,jp,kp) , intent(Out) :: dfu1
         real(kind=4), dimension(ip,0:jp,kp) , intent(Out) :: dfv1
         real(kind=4), dimension(ip,jp,kp) , intent(Out) :: dfw1
+#ifndef WV_NEW
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu2
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu3
@@ -136,6 +158,7 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu9
         real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(InOut) :: dmask1
+#endif
         real(kind=4), intent(In) :: dt
         real(kind=4), dimension(-1:ip+1) , intent(In) :: dx1
         real(kind=4), dimension(0:ip) , intent(In) :: dxs
@@ -150,6 +173,7 @@ contains
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: h
         integer, intent(InOut) :: n
         integer, intent(in) :: nif   
+#ifndef WV_NEW
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou2
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou3
@@ -159,6 +183,7 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou7
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou9
+#endif
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(InOut) :: p
         real(kind=4), dimension(-1:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: sm
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: u
@@ -531,15 +556,16 @@ contains
 
 #endif
 ! WV: I added this routine to explicitly set all arrays to zero
-
+#ifdef WV_NEW
+        call zero_arrays(dfu1, dfv1, dfw1)
+#else
         call zero_arrays( &
               cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9, &
               dfu1, dfv1, dfw1, &
               diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,  &
 !              f,g,h, &
               nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9 &
-         )
-
+#endif
 
      end if
 

@@ -40,11 +40,16 @@ else:
     VERBOSE = '-DVERBOSE'
     if verbose == '0':
         VERBOSE = ''
-    other = getOpt('D','Other macro','')
+    other = '' #getOpt('D','Other macro','')
     TIMINGS=''
     if other !='':
         TIMINGS = '-D'+other
-
+    defs=getOpt('D','Defines',None)
+    defflags=[]
+    if defs!=None:
+        deflist=defs.split(',')
+        defflags=map (lambda s: '-D'+s, deflist)  
+    OTHER_MACROS = defflags
 # MPI specific build config
 WITH_MPI=''
 PROC_PER_ROW=''
@@ -107,13 +112,13 @@ ICAL = '-DICAL=0'
 IFBF='-DIFBF=1'
 IANIME='-DIANIME=1'
 IADAM='-DIADAM=0'
-FFLAGS  = [USE_NETCDF_OUTPUT, WITH_MPI, NESTED_LES,NO_GLOBAL_SOR, GR_DEBUG, WV_DEBUG,MPI_NEW_WV,WV_TEST,WV_DEBUG_MPI, PROC_PER_ROW, PROC_PER_COL, WITH_OCL, NO_FILE_IO, ICAL, IFBF,IANIME, IADAM,VERBOSE,TIMINGS]
+FFLAGS  = [USE_NETCDF_OUTPUT, WITH_MPI, NESTED_LES,NO_GLOBAL_SOR, GR_DEBUG, WV_DEBUG,MPI_NEW_WV,WV_TEST,WV_DEBUG_MPI, PROC_PER_ROW, PROC_PER_COL, WITH_OCL, NO_FILE_IO, ICAL, IFBF,IANIME, IADAM,VERBOSE,TIMINGS,OTHER_MACROS]
 
 if with_ocl == '0':
 #    FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium' ]
 #     FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium', '-fno-range-check','-fbounds-check','-Wuninitialized','-ffpe-trap=invalid,zero,overflow' ]
 #    FFLAGS += ['-cpp','-Ofast', '-m64', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian' ]
-     FFLAGS += ['-cpp', '-O','-Wall','-Wno-unused','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian','-fbounds-check' ,'-mcmodel=medium']
+     FFLAGS += ['-cpp', '-O','-Wall','-Wno-unused','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian','-fbounds-check' ,'-mcmodel=medium','-mlarge-data-threshold=0']
 
 #-- intel compiler ifort
 #     FFLAGS += [ '-O', '-convert', 'big_endian', '-shared-intel','-fpp', '-free','-Tf' ] # Order matters, -Tf must come last!

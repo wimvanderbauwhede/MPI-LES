@@ -3,7 +3,7 @@ module module_aveflow
 contains
 
 subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm, &
-      uwfx,avesu,avesv,avesw,avesuu,avesvv,avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14,amask1)
+      uwfx,avesu,avesv,avesw,avesuu,avesvv,avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14) !,amask1)
     use common_sn ! create_new_include_statements() line 102
 #ifdef MPI
     use communication_helper_real
@@ -53,7 +53,7 @@ subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm
     integer, intent(In) :: n1
     integer, intent(In) :: nmax
 
-    real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  , intent(In)  :: amask1
+!    real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  , intent(In)  :: amask1
     real(kind=4), dimension(0:ipmax+1,0:jpmax+1,0:kp+1)   :: amask1a
 
 !output

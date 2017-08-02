@@ -2,13 +2,19 @@ module module_init
 
       use module_feedbfm ! add_module_decls() line 156
 contains
-
+#ifdef WV_NEW
+      subroutine init(u,v,w,p,dxs,dys,dzs,zbm,z2,dzn)
+#else
       subroutine init(u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,amask1, &
       bmask1,cmask1,dmask1,zbm,z2,dzn)
+#endif
       use common_sn ! create_new_include_statements() line 102
+#ifndef WV_NEW
         real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: amask1
         real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1) , intent(Out) :: bmask1
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: cmask1
+        real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: dmask1
+
         real(kind=4), dimension(ip,jp,kp) , intent(Out) :: cn1
         real(kind=4), dimension(ip) , intent(Out) :: cn2l
         real(kind=4), dimension(ip) , intent(Out) :: cn2s
@@ -16,7 +22,7 @@ contains
         real(kind=4), dimension(jp) , intent(Out) :: cn3s
         real(kind=4), dimension(kp) , intent(Out) :: cn4l
         real(kind=4), dimension(kp) , intent(Out) :: cn4s
-        real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: dmask1
+#endif
         real(kind=4), dimension(0:ip) , intent(In) :: dxs
         real(kind=4), dimension(0:jp) , intent(In) :: dys
         real(kind=4), dimension(-1:kp+2) , intent(In) :: dzn
@@ -80,6 +86,7 @@ contains
 !      Parameter settings for solving Poisson equation
 !
 ! =====================================================
+#ifndef WV_NEW
       do i = 1,ip
       cn2s(i) = 2./(dxs(i-1)*(dxs(i-1)+dxs(i)))
       cn2l(i) = 2./(dxs(i)*(dxs(i-1)+dxs(i)))
@@ -106,6 +113,7 @@ contains
       end do
       end do
       end do
+#endif
       return
       end subroutine init
 

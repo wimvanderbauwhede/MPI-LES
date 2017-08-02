@@ -39,8 +39,8 @@ integer, parameter :: kp=80
 #ifndef NESTED_LES
     character(300) :: datafile = '../GIS/Kyoto_1km2_4m_with_buffer.txt'
 #else
-    character(300) :: datafile = '../GIS/Kyoto_1km2_4m_with_buffer_nest_2_4_2_4_100_100_200_200_reduced_2_2_400_400.txt'
-!    character(300) :: datafile = '../GIS/Kyoto_1km2_4m_with_buffer_nest_2_4_2_4_100_100_200_200.txt'
+!    character(300) :: datafile = '../GIS/Kyoto_1km2_4m_with_buffer_nest_2_4_2_4_100_100_200_200_reduced_2_2_400_400.txt'
+    character(300) :: datafile = '../GIS/Kyoto_1km2_4m_with_buffer_nest_2_4_2_4_100_100_200_200.txt'
 #endif
 
 #ifndef NESTED_LES
@@ -65,15 +65,15 @@ integer, parameter :: kp=80
 
 #ifdef NESTED_LES
 ! Original grid size
-    integer, parameter :: orig_grid_y = 150 !750 ! 3km
-    integer, parameter :: orig_grid_x = 150 !3000 ! 12km
+    integer, parameter :: orig_grid_y = 300 !150 !750 ! 3km
+    integer, parameter :: orig_grid_x = 300 !150 !3000 ! 12km
 
 ! Nested grid location and size
-    integer, parameter :: nested_grid_start_x = 50 !250
-    integer, parameter :: nested_grid_start_y = 50 !275
+    integer, parameter :: nested_grid_start_x = 100 !50 !250
+    integer, parameter :: nested_grid_start_y = 100 !50 !275
 !#ifdef TEST_NESTED_LES
-    integer, parameter :: nested_grid_x = 100 !2000 ! 4km
-    integer, parameter :: nested_grid_y = 100 !500 ! 1km
+    integer, parameter :: nested_grid_x = 200 !100 !2000 ! 4km
+    integer, parameter :: nested_grid_y = 200 !100 !500 ! 1km
 !#else
 !    integer, parameter :: nested_grid_x = 100 !2000 ! 4km
 !    integer, parameter :: nested_grid_y = 100 !500 ! 1km
@@ -83,14 +83,14 @@ integer, parameter :: kp=80
     integer, parameter :: nested_grid_end_y  = nested_grid_y + nested_grid_start_y
 ! Nest grid resolution
 !#ifdef TEST_NESTED_LES
-    real, parameter :: dxgrid_nest = 4.0
-    real, parameter :: dygrid_nest = 4.0
+    real, parameter :: dxgrid_nest = 2.0 !4.0
+    real, parameter :: dygrid_nest = 2.0 !4.0
 !#else
 !    real, parameter :: dxgrid_nest = 4.0 !2.0
 !    real, parameter :: dygrid_nest = 4.0 !2.0
 !#endif
-    real, parameter :: dxgrid_orig = 8.0
-    real, parameter :: dygrid_orig = 8.0
+    real, parameter :: dxgrid_orig = 4.0 !8.0
+    real, parameter :: dygrid_orig = 4.0 !8.0
 
 ! Subgrid size
     integer, parameter :: ipmax =orig_grid_x + nested_grid_x*(1 - (dxgrid_nest/dxgrid_orig))
@@ -111,9 +111,9 @@ integer, parameter :: kp=80
 #endif
 ! Time steps
     integer, parameter :: n_nest0 = 1 ! was 2
-    real, parameter :: dt_nest = 0.05 ! seconds
+    real, parameter :: dt_nest = 0.025 !0.05 ! seconds
 #endif
-    real, parameter :: dt_orig = 0.10 ! seconds
+    real, parameter :: dt_orig = 0.05 !0.10 ! seconds
 
 
 end module params_common_sn

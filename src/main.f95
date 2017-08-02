@@ -67,7 +67,7 @@ program main
 #ifdef TIMINGS
     integer :: clock_rate
 #endif
-    real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  :: amask1
+
     real(kind=4), dimension(ip,jp,kp)  :: avel
     real(kind=4), dimension(ip,jp,kp)  :: avep
     real(kind=4), dimension(ip,jp,kp)  :: avesm
@@ -84,8 +84,12 @@ program main
     real(kind=4), dimension(ip,jp,kp)  :: avevv
     real(kind=4), dimension(ip+1,jp,0:kp+2)  :: avew
     real(kind=4), dimension(ip,jp,kp)  :: aveww
+#ifndef WV_NEW
+    real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  :: amask1
     real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1)  :: bmask1
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: cmask1
+    real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  :: dmask1
+#endif
     real(kind=4), dimension(ip,jp,kp)  :: cn1
     real(kind=4), dimension(ip)  :: cn2l
     real(kind=4), dimension(ip)  :: cn2s
@@ -93,6 +97,7 @@ program main
     real(kind=4), dimension(jp)  :: cn3s
     real(kind=4), dimension(kp)  :: cn4l
     real(kind=4), dimension(kp)  :: cn4s
+#ifndef WV_NEW
     real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2)  :: cov1
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: cov2
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: cov3
@@ -102,10 +107,12 @@ program main
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: cov7
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: cov8
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: cov9
+#endif
     real(kind=4), dimension(kp)  :: delx1
     real(kind=4), dimension(0:ip,jp,kp)  :: dfu1
     real(kind=4), dimension(ip,0:jp,kp)  :: dfv1
     real(kind=4), dimension(ip,jp,kp)  :: dfw1
+#ifndef WV_NEW
     real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2)  :: diu1
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: diu2
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: diu3
@@ -115,7 +122,7 @@ program main
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: diu7
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: diu8
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: diu9
-    real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  :: dmask1
+#endif
     real(kind=4), dimension(-1:ip+1)  :: dx1
     real(kind=4), dimension(0:ip)  :: dxl
     real(kind=4), dimension(0:ip)  :: dxs
@@ -139,6 +146,7 @@ program main
 #ifndef _OPENCL_LES_WV
     real(kind=4), dimension(ip,jp,kp)  :: fghold
 #endif
+#ifndef WV_NEW
     real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2)  :: nou1
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: nou2
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: nou3
@@ -148,6 +156,7 @@ program main
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: nou7
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: nou8
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: nou9
+#endif
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1)  :: p
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  :: rhs
     real(kind=4), dimension(-1:ip+1,-1:jp+1,0:kp+1)  :: sm
@@ -198,10 +207,27 @@ program main
              vn,alpha,beta,data12,data13,data14,data15)
     call grid(dx1,dxl,dy1,dyl,z2,dzn,dzs,dxs,dys)
     call timdata()
+#ifdef WV_NEW
+    call init(u,v,w,p,dxs,dys,dzs,zbm,z2,dzn)
+#else
     call init(u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,&
               amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
-
+#endif
 !    n0=200
+
+#ifdef WV_NEW
+!#ifndef WV_DEBUG_MPI
+    call ifdata( &
+!#if ICAL == 1
+                fold,gold,hold,fghold, time, &
+!#endif
+                n,u,v,w,p,usum,vsum,wsum,delx1,dx1,dy1,dzn,&
+                sm,f,g,h,z2,dt,dxs, &
+                dfu1,vn,dfv1,dfw1,dzs,&
+                fx,fy,fz,zbm,ical,nif)
+!#endif
+
+#else
 !#ifndef WV_DEBUG_MPI
     call ifdata( &
 !#if ICAL == 1
@@ -213,6 +239,7 @@ program main
                 nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,bmask1,cmask1,&
                 dmask1,alpha,beta,fx,fy,fz,amask1,zbm,ical,nif)
 !#endif
+#endif
 !     n=n0
 
 !#ifdef _OPENCL_LES_WV
@@ -303,7 +330,8 @@ if (n>n_nest0) then
 #ifdef TIMINGS
         call system_clock(timestamp(2), clock_rate)
 #endif
-#ifdef WV_NEW_VELFG
+#ifdef WV_NEW
+!_VELFG
 #ifdef NESTED_LES
       call velfg(n,dx1,dfu1,dy1,dzn,vn,f, &
       dfv1,g,dfw1,dzs,h,u,v,w, &
@@ -341,8 +369,14 @@ if (n>n_nest0) then
 #ifdef TIMINGS
         call system_clock(timestamp(4), clock_rate)
 #endif
+#ifdef WV_NEW
+        call les(u,v,w,f,g,h,uspd,vspd,sm,delx1,dx1,dy1,dzn,dzs,dxs,dys,n)
+#else
         call les(delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6, &
                  diu7,diu8,diu9,sm,f,g,h,u,v,uspd,vspd,dxs,dys,n) ! WV: calls boundsm which uses halos
+#endif
+
+
 #ifdef TIMINGS
         call system_clock(timestamp(5), clock_rate)
 #endif
@@ -387,7 +421,7 @@ if (n>n_nest0) then
       if (i_aveflow .eq. 1) then
         call aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww, &
                      avesm,avesmsm,uwfx,avesu,avesv,avesw,avesuu,avesvv, &
-                     avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14,amask1)  !WV: TODO: put the sync condition in this code
+                     avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14)! ,amask1)  !WV: TODO: put the sync condition in this code
       end if
 #endif
 
