@@ -298,14 +298,14 @@ contains
       end do
       end do
 ! WV: This seems not necessary, perhaps because it is called in press.
-!#ifdef WV_NEW
-!!_VELFG
-!#ifdef NESTED_LES
-!    call bondfg(n,f,g,h)
-!#else
-!    call bondfg(f,g,h)
-!#endif
-!#endif
+#ifdef WV_NEW
+!_VELFG
+#ifdef NESTED_LES
+    call bondfg(n,f,g,h)
+#else
+    call bondfg(f,g,h)
+#endif
+#endif
 !
 ! =======================================
 #ifdef WV_DEBUG

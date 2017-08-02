@@ -166,8 +166,11 @@ if OSX == 1:
     INCLPATH = ['/opt/local/include']
     LIBPATH = ['/opt/local/lib']
     if with_mpi == '1':
-        INCLPATH += ['/opt/local/include/openmpi-gcc49/','/opt/local/lib/openmpi-gcc49/']
-        LIBPATH += ['/opt/local/lib/openmpi-gcc49/']
+#        INCLPATH += ['/opt/local/include/openmpi-gcc49/','/opt/local/lib/openmpi-gcc49/']
+#        LIBPATH += ['/opt/local/lib/openmpi-gcc49/']
+        INCLPATH += ['/opt/local/include/mpich-gcc7/','/opt/local/lib/mpich-gcc7/']
+        LIBPATH += ['/opt/local/lib/mpich-gcc7/']
+        
 else:
 # test for devtoolset-2 ... so better use a var $DEVTOOLSETROOT?
     if os.path.exists('/opt/rh/devtoolset-2'):

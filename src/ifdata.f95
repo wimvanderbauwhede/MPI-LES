@@ -98,6 +98,7 @@ contains
 !              h = 0.0
 
       end subroutine
+
 #ifdef WV_NEW
       subroutine ifdata( &
 !#if ICAL == 1
@@ -117,6 +118,7 @@ contains
       dxs,cov1,cov2,cov3,dfu1,vn,cov4,cov5,cov6,dfv1,cov7,cov8,cov9,dfw1,dzs,nou1,nou5,nou9,nou2, &
       nou3,nou4,nou6,nou7,nou8,bmask1,cmask1,dmask1,alpha,beta,fx,fy,fz,amask1,zbm,ical,nif)
 #endif
+
       use common_sn ! create_new_include_statements() line 102
 !#if ICAL == 1
         real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: fghold
@@ -565,6 +567,7 @@ contains
               diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,  &
 !              f,g,h, &
               nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9 &
+              )
 #endif
 
      end if

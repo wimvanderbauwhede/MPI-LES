@@ -40,7 +40,8 @@ subroutine feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
 ! WV: better set the whole array to 0.
 !    do j=1,jpmax
 !      do i=1,ipmax
-            zbm(i,j)=0.
+!            zbm(i,j)=0.
+            zbm=0.
 !      end do
 !    end do
 
