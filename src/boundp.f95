@@ -13,7 +13,6 @@ subroutine boundp2(p)
 #else
     use common_sn ! create_new_include_statements() line 102
 #endif
-
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(InOut) :: p
     integer :: i, j
 !
@@ -34,6 +33,7 @@ subroutine boundp2(p)
    end if
 #endif
 #endif
+
 end subroutine boundp2
 
 subroutine boundp1(p)

@@ -8,7 +8,7 @@ contains
       subroutine les(delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g, &
       h,u,v,uspd,vspd,dxs,dys,n)
 #else
-        subroutine les(u,v,w,f,g,h,uspd,vspd,sm,dx1,dy1,dzn,dzs,dxs,dys,n)
+        subroutine les(u,v,w,f,g,h,uspd,vspd,sm,dx1,dy1,dzn,dzs,dxs,dys)
 #endif
 #ifdef WV_NEW
     use params_common_sn
@@ -27,6 +27,7 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(In) :: diu7
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(In) :: diu8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(In) :: diu9
+        integer, intent(In) :: n
 #else
         real(kind=4), dimension(kp) :: delx1
         real(kind=4) :: diu1_i_j_k, diu2_i_j_k,diu3_i_j_k,diu4_i_j_k,diu5_i_j_k,diu6_i_j_k,diu7_i_j_k,diu8_i_j_k,diu9_i_j_k
@@ -46,7 +47,6 @@ contains
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: f
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: g
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: h
-        integer, intent(In) :: n
         real(kind=4), dimension(-1:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: sm
 !wall function
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
@@ -154,11 +154,32 @@ contains
 #endif
 
 !
-#ifdef NESTED_LES
-      call boundsm(n,sm)
-#else
+#if !defined( INLINE_BOUND_CALCS ) || defined( MPI )
       call boundsm(sm)
+#else
+! =================================
+        do k = 0,kp+1
+            do j = -1,jp+1
+                    sm(   0,j,k) = sm(1 ,j,k) ! GR: Why not sm(-1,,) = sm(0,,)?
+                    sm(ip+1,j,k) = sm(ip,j,k)
+            end do
+        end do
+! --side flow condition
+        do k = 0,kp+1
+            do i = 0,ip+1
+                    sm(i,jp+1,k) = sm(i,jp  ,k)
+                    sm(i,0,k) = sm(i,1   ,k) ! GR: Why not sm(,-1,) = sm(,0,)?
+            end do
+        end do
+! --underground condition
+    do j = -1,jp+1
+        do i = 0,ip+1
+            sm(i,j,   0) = -sm(i,j, 1)
+            sm(i,j,kp+1) = sm(i,j,kp)
+        end do
+    end do
 #endif
+
 #ifdef WV_DEBUG
     print *, 'F95 FGHSUM after boundsm:',sum(f)+sum(g)+sum(h)
     print *, 'F95 FSUM after boundsm:',sum(f)

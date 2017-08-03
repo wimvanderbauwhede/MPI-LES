@@ -28,7 +28,7 @@ subroutine calc_abcd_mask(zbm, z2, dzn, i,j,k, abcd_mask1)
 
 end subroutine calc_abcd_mask
 
-subroutine feedbf(u,v,w,f,g,h,usum,vsum,wsum,dzn,z2,zbm,alpha,beta,dt,n)
+subroutine feedbf(u,v,w,f,g,h,usum,vsum,wsum,dzn,z2,zbm,alpha,beta,dt)
 #else
 subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
                   dt,beta,fx,fy,fz,f,g,h,n)
@@ -58,12 +58,13 @@ subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: fx
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: fy
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: fz
+    integer, intent(In) :: n
 #else
     real(kind=4) :: fx,fy,fz
 #endif
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: g
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: h
-    integer, intent(In) :: n
+
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: usum
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v

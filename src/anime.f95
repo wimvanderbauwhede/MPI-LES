@@ -923,7 +923,7 @@ subroutine ifdata_out(n,n0,n1,nmax,time,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,h
 #endif
 #else
 ! NO MPI
-    integer ::  i,j,k
+!    integer ::  i,j,k
 !    character(len=70) :: filename
 
     if((n == n1-1).or.(n == nmax))  then

@@ -284,8 +284,29 @@ contains
       end do
 ! WV: This seems not necessary, perhaps because it is called in press.
 #ifdef WV_NEW
-!_VELFG
+#if !defined( INLINE_BOUND_CALCS ) || defined( MPI )
     call bondfg(f,g,h)
+#else
+    ! --inflow condition
+        do k = 1,kp
+            do j = 1,jp
+                f( 0,j,k) = f(1  ,j,k)
+            end do
+        end do
+! --sideflow condition
+    do k = 1,kp
+        do i = 1,ip
+            g(i, 0,k) = g(i,jp  ,k) ! GR: Why only right->left? What about left->right?
+        end do
+    end do
+! --ground and top condition
+    do j = 1,jp
+        do i = 1,ip
+            h(i,j, 0) = 0.0
+            h(i,j,kp) = 0.0
+        end do
+    end do
+#endif
 #endif
 !
 ! =======================================

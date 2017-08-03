@@ -162,7 +162,11 @@ program main
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: nou8
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: nou9
 #endif
+#ifndef TWINNED_BUFFER
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1)  :: p
+#else
+    real(kind=4), dimension(0:1,0:ip+2,0:jp+2,0:kp+1)  :: p
+#endif
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  :: rhs
     real(kind=4), dimension(-1:ip+1,-1:jp+1,0:kp+1)  :: sm
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: u
@@ -276,66 +280,39 @@ inNest = inNestedGrid()
 #endif
     do n = n0,nmax
         time = float(n-n0)*dt
-#ifdef MPI
-#ifdef NESTED_LES
-!        if (rank==0) print *, n,time
-!print *,'before orig/nest test', rank
+#if defined( MPI ) && defined( NESTED_LES)
+
         if (inNest) then
-!        if (.true. .or. inNest) then
             if (mod(n,int(dt_orig/dt_nest))==1) then ! so n % 2 == 1, and n0=1, so 1,3,5, ... 2,4,6,...
-!            if (mod(n,2)==0) then
                 syncTicks = 0
-!                print *,n,'barrier nest', rank
-!                call MPI_Barrier(communicator,ierror)
-!                print *,'AFTER barrier nest',rank
             else
-!                print *,n,'NO barrier nest', rank
-                ! n = 1,2,3,4,5,6,7,8,9,....
                 syncTicks = 1
             end if
-!            print *,  'NEST: n:',n,'rank:',rank,'ticks:',syncTicks
         else
             syncTicks = 0
-!            print *,  'orig: n:',n,'rank:',rank,'ticks:',syncTicks
-!            print *,'barrier orig',rank
-!
-!            print *,'AFTER barrier orig',rank
         end if
-!        if (syncTicks == 0) call MPI_Barrier(communicator,ierror)
-!                print *,'AFTER barrier',rank
 #endif
-#endif
-!print *, 'n:',n, 't:',syncTicks, 'r:',rank,u(im/2,jm/2,km/2),v(im/2,jm/2,km/2),p(im/2,jm/2,km/2)
-
-!        if (isMaster()) then
-!        do i=20,30
-!          write(*,*) "main_p",p(i,5,2),i,n,l
-!        end do
-!        end if
-! -------calculate turbulent flow--------c
-!#ifdef _OPENCL_LES_WV
-!        call run_LES_kernel(n, nmax)
-!#else
 ! -------calculate turbulent flow--------c
 #ifdef TIMINGS
         print *, 'run_LES_reference: time step = ',n
-        call system_clock(timestamp(0), clock_rate)
+        call system_clock(timestamp(0,:,:,:), clock_rate)
 #endif
+#ifndef TWINNED_BUFFER
         call velnw(p,ro,dxs,u,dt,f,dys,v,g,dzs,w,h) !WV: no MPI
+#else
+        call velnw(p(0,:,:,:),ro,dxs,u,dt,f,dys,v,g,dzs,w,h) !WV: no MPI
+#endif
 #ifdef TIMINGS
         call system_clock(timestamp(1), clock_rate)
 #endif
         call bondv1(u,z2,dzn,v,w,n,n0,dt,dxs) !WV: via halos + gatheraaa/bbb. Sideflow etc should be OK as in outer domain ???
-#ifdef MPI
-#ifdef NESTED_LES
+#if defined( MPI ) && defined( NESTED_LES)
 if (n>n_nest0) then
-#endif
 #endif
 #ifdef TIMINGS
         call system_clock(timestamp(2), clock_rate)
 #endif
 #ifdef WV_NEW
-!_VELFG
       call velfg(dx1,dy1,dzn,f, &
       g,dzs,h,u,v,w, &
       uspd,vspd)
@@ -351,7 +328,7 @@ if (n>n_nest0) then
 
 #if IFBF == 1
 #ifdef WV_NEW
-        call feedbf(u,v,w,f,g,h,usum,vsum,wsum,dzn,z2,zbm,alpha,beta,dt,n) ! WV: no MPI
+        call feedbf(u,v,w,f,g,h,usum,vsum,wsum,dzn,z2,zbm,alpha,beta,dt) ! WV: no MPI
 #else
         call feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha, &
                     dt,beta,fx,fy,fz,f,g,h,n) ! WV: no MPI
@@ -361,7 +338,7 @@ if (n>n_nest0) then
         call system_clock(timestamp(4), clock_rate)
 #endif
 #ifdef WV_NEW
-        call les(u,v,w,f,g,h,uspd,vspd,sm,dx1,dy1,dzn,dzs,dxs,dys,n)
+        call les(u,v,w,f,g,h,uspd,vspd,sm,dx1,dy1,dzn,dzs,dxs,dys)
 #else
         call les(delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6, &
                  diu7,diu8,diu9,sm,f,g,h,u,v,uspd,vspd,dxs,dys,n) ! WV: calls boundsm which uses halos
@@ -376,7 +353,11 @@ if (n>n_nest0) then
         call system_clock(timestamp(6), clock_rate)
 #endif
 #ifdef WV_NEW
-        call press(u,v,w,usum,vsum,wsum,p,rhs,f,g,h,dx1,dy1,dzn,dxs,dys,dzs,dt,n,nmax,data20)
+        call press(u,v,w,p,rhs,f,g,h,dx1,dy1,dzn,dxs,dys,dzs,dt,n,nmax&
+#if !defined( NO_IO)  && !defined( MPI )
+        ,usum,vsum,wsum,data20 &
+#endif
+        )
 #else
         call press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s, &
                    cn3l,cn3s,cn4l,cn4s,n, nmax,data20,usum,vsum,wsum) !WV getGlobalSumOf and exchangeRealHalos (in boundp)
@@ -403,17 +384,36 @@ if (n>n_nest0) then
 #ifdef OLD_CODE
                     nmax,dxl,dx1,dyl,dy1,z2,amask1,zbm,&
 #endif
-                    u,w,v,p) !WV: I put the sync condition in this code
+                    u,w,v,&
+#ifndef TWINNED_BUFFER
+                    p &
+#else
+                    p(0,:,:,:) &
+#endif
+                    ) !WV: I put the sync condition in this code
       end if
       ! WV: sorry, not supported at the moment
       if (i_ifdata_out .eq. 1) then
-        call ifdata_out(n,n0,n1,nmax,time,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,hold) !WV: TODO: put the sync condition in this code
+        call ifdata_out(n,n0,n1,nmax,time,u,w,v, &
+#ifndef TWINNED_BUFFER
+                     p, &
+#else
+                     p(0,:,:,:), &
+#endif
+
+        usum,vsum,wsum,f,g,h,fold,gold,hold) !WV: TODO: put the sync condition in this code
       end if
       if (i_aveflow .eq. 1) then
 #ifdef WV_NEW
         call aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww, &
                      avesm,avesmsm,uwfx, &
-                     u,v,w,p,sm,nmax)
+                     u,v,w, &
+#ifndef TWINNED_BUFFER
+                     p &
+#else
+                     p(0,:,:,:) &
+#endif
+                     ,sm,nmax)
 #else
         call aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww, &
                      avesm,avesmsm,uwfx,avesu,avesv,avesw,avesuu,avesvv, &

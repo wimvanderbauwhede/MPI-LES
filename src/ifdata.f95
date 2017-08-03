@@ -199,7 +199,11 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou9
 #endif
+#ifndef TWINNED_BUFFER
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(InOut) :: p
+#else
+        real(kind=4), dimension(0:1,0:ip+2,0:jp+2,0:kp+1) , intent(InOut) :: p
+#endif
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: u
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: usum
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: v
@@ -544,7 +548,11 @@ contains
         read(30) (((u(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         read(30) (((v(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         read(30) (((w(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+#ifdef TWINNED_BUFFER
+        read(30) (((p(0,i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+#else
         read(30) (((p(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
+#endif
         read(30) (((usum(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         read(30) (((vsum(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         read(30) (((wsum(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
@@ -560,8 +568,11 @@ contains
         read(31) (((gold(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         read(31) (((hold(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         close(31)
-
-            call boundp2(p)
+#ifndef TWINNED_BUFFER
+        call boundp2(p)
+#else
+        call boundp2(p(0,:,:,:))
+#endif
 
 #endif
 ! WV: I added this routine to explicitly set all arrays to zero
@@ -579,8 +590,13 @@ contains
 
      end if
 
+#ifndef TWINNED_BUFFER
             call boundp1(p)
             call boundp2(p)
+#else
+            call boundp1(p(0,:,:,:))
+            call boundp2(p(0,:,:,:))
+#endif
 
 !        call velfg(kp,jp,ip,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6,dfv1, &
 !      diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
