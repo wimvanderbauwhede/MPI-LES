@@ -8,8 +8,13 @@ contains
 
       subroutine set(data10,data11,data20,data21,data22,data23,data24,data25,data26,data27,data30, &
       data31,ical,nif,n0,n1,nmax,dt,ro,vn,alpha,beta,data12,data13,data14,data15)
-      use common_sn ! create_new_include_statements() line 102
-        real(kind=4), intent(Out) :: alpha
+#ifdef WV_NEW
+    use params_common_sn
+    implicit none
+#else
+    use common_sn ! create_new_include_statements() line 102
+#endif
+            real(kind=4), intent(Out) :: alpha
         real(kind=4), intent(Out) :: beta
         character(len=70), intent(InOut) :: data10
         character(len=70), intent(InOut) :: data11

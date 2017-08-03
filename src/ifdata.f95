@@ -11,6 +11,10 @@ module module_ifdata
 #if IADAM == 1
       use module_adam
 #endif
+#ifdef WV_NEW
+    implicit none
+#endif
+
 contains
 
 #ifdef WV_NEW
@@ -23,7 +27,11 @@ contains
               nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9 &
               )
 #endif
-      use common_sn
+#ifdef WV_NEW
+    use params_common_sn
+#else
+    use common_sn ! create_new_include_statements() line 102
+#endif
 #ifndef WV_NEW
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov2
@@ -102,12 +110,11 @@ contains
 #ifdef WV_NEW
       subroutine ifdata( &
 !#if ICAL == 1
-      fold,gold,hold,fghold, time, &
+      fold,gold,hold, time, &
 !#endif
       n,u,v,w,p,usum,vsum,wsum, &
-      delx1,dx1,dy1,dzn,sm,f,g,h,z2,dt, &
-      dxs,dfu1,vn,dfv1,dfw1,dzs, &
-      fx,fy,fz,zbm,ical,nif)
+      f,g,h, &
+      ical,nif)
 #else
       subroutine ifdata( &
 !#if ICAL == 1
@@ -119,9 +126,13 @@ contains
       nou3,nou4,nou6,nou7,nou8,bmask1,cmask1,dmask1,alpha,beta,fx,fy,fz,amask1,zbm,ical,nif)
 #endif
 
-      use common_sn ! create_new_include_statements() line 102
+#ifdef WV_NEW
+    use params_common_sn
+#else
+    use common_sn ! create_new_include_statements() line 102
+#endif
 !#if ICAL == 1
-        real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: fghold
+
         real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: fold
         real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: gold
         real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: hold
@@ -130,6 +141,7 @@ contains
 
 !#endif
 #ifndef WV_NEW
+        real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: fghold
         real(kind=4), intent(In) :: alpha
         real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: amask1
         real(kind=4), intent(In) :: beta
@@ -144,12 +156,12 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov7
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov9
-#endif
         real(kind=4), dimension(kp) , intent(Out) :: delx1
+
         real(kind=4), dimension(0:ip,jp,kp) , intent(Out) :: dfu1
         real(kind=4), dimension(ip,0:jp,kp) , intent(Out) :: dfv1
         real(kind=4), dimension(ip,jp,kp) , intent(Out) :: dfw1
-#ifndef WV_NEW
+
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu2
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu3
@@ -160,17 +172,18 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu9
         real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(InOut) :: dmask1
-#endif
+
         real(kind=4), intent(In) :: dt
         real(kind=4), dimension(-1:ip+1) , intent(In) :: dx1
         real(kind=4), dimension(0:ip) , intent(In) :: dxs
         real(kind=4), dimension(0:jp+1) , intent(In) :: dy1
         real(kind=4), dimension(-1:kp+2) , intent(In) :: dzn
         real(kind=4), dimension(-1:kp+2) , intent(In) :: dzs
-        real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: f
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: fx
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: fy
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: fz
+#endif
+        real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: f
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: g
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: h
         integer, intent(InOut) :: n
@@ -187,17 +200,18 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou9
 #endif
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(InOut) :: p
-        real(kind=4), dimension(-1:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: sm
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: u
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: usum
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: v
-        real(kind=4), intent(In) :: vn
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: vsum
         real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(InOut) :: w
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: wsum
+#ifndef WV_NEW
+        real(kind=4), intent(In) :: vn
+        real(kind=4), dimension(-1:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: sm
         real(kind=4), dimension(0:kp+2) , intent(In) :: z2
         real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(InOut) :: zbm
-
+#endif
         real(kind=4),allocatable :: ua(:,:,:), ur(:,:,:)
         real(kind=4),allocatable :: va(:,:,:), vr(:,:,:)
         real(kind=4),allocatable :: wa(:,:,:), wr(:,:,:)
@@ -212,8 +226,9 @@ contains
         real(kind=4),allocatable :: golda(:,:,:)
         real(kind=4),allocatable :: holda(:,:,:)
 
-#ifdef MPI_NEW_WV
+#if defined( MPI_NEW_WV ) || defined(WV_NEW)
     character(len=70) :: filename
+    integer :: i,j,k
 #endif
 
 #if IADAM == 1
@@ -516,11 +531,7 @@ contains
 !#endif
 
 
-#ifdef NESTED_LES
-            call boundp2(n,p)
-#else
             call boundp2(p)
-#endif
 
 #else
 ! NO MPI
@@ -550,16 +561,12 @@ contains
         read(31) (((hold(i,j,k),i=1,ipmax),j=1,jpmax),k=1,kp)
         close(31)
 
-#ifdef NESTED_LES
-            call boundp2(n,p)
-#else
             call boundp2(p)
-#endif
 
 #endif
 ! WV: I added this routine to explicitly set all arrays to zero
 #ifdef WV_NEW
-        call zero_arrays(dfu1, dfv1, dfw1)
+!        call zero_arrays(dfu1, dfv1, dfw1)
 #else
         call zero_arrays( &
               cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9, &
@@ -572,13 +579,8 @@ contains
 
      end if
 
-#ifdef NESTED_LES
-            call boundp1(n,p)
-            call boundp2(n,p)
-#else
             call boundp1(p)
             call boundp2(p)
-#endif
 
 !        call velfg(kp,jp,ip,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6,dfv1, &
 !      diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &

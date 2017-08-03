@@ -1,10 +1,20 @@
 module module_aveflow
-
+#ifdef WV_NEW
+    implicit none
+#endif
 contains
-
+#ifdef WV_NEW
+subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm, &
+      uwfx,u,v,w,p,sm,nmax)
+#else
 subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm, &
       uwfx,avesu,avesv,avesw,avesuu,avesvv,avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14) !,amask1)
+#endif
+#ifdef WV_NEW
+    use params_common_sn ! create_new_include_statements() line 102
+#else
     use common_sn ! create_new_include_statements() line 102
+#endif
 #ifdef MPI
     use communication_helper_real
 #endif
@@ -12,14 +22,14 @@ subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avep
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avesm
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avesmsm
-
+#ifndef WV_NEW
     real(kind=4), dimension(ip,kp) , intent(Out) :: avesu
     real(kind=4), dimension(ip,kp) , intent(Out) :: avesuu
     real(kind=4), dimension(ip,kp) , intent(Out) :: avesv
     real(kind=4), dimension(ip,kp) , intent(Out) :: avesvv
     real(kind=4), dimension(ip,kp) , intent(Out) :: avesw
     real(kind=4), dimension(ip,kp) , intent(Out) :: avesww
-
+#endif
     real(kind=4), dimension(ip,jp,0:kp) , intent(Out) :: aveu
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: aveuu
     real(kind=4), dimension(ip,jp,0:kp) , intent(Out) :: avev
@@ -33,21 +43,24 @@ subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(In) :: p
     real(kind=4), dimension(-1:ip+1,-1:jp+1,0:kp+1) , intent(In) :: sm
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: uwfx
+#ifndef WV_NEW
     real(kind=4), dimension(ip,kp) , intent(InOut) :: uwfxs
-#ifdef MPI_NEW_WV
+#endif
+#if defined(MPI_NEW_WV) || defined(WV_NEW)
     integer :: irec
     character(len=70) :: filename
 #endif
       integer :: k
       integer :: j
       integer :: i
+#ifndef WV_NEW
     real(kind=4), intent(In) :: time
     character(len=70), intent(In) :: data10
     character(len=70), intent(In) :: data11
-
     ! extra
     character(len=70), intent(In) :: data13
     character(len=70), intent(In) :: data14
+#endif
     !
     integer, intent(In) :: n
     integer, intent(In) :: n1
@@ -80,6 +93,8 @@ subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm
  !   real(kind=4), dimension(kp) :: avessvv
  !   real(kind=4), dimension(kp) :: avessww
  !   real(kind=4), dimension(kp) :: uwfxss
+
+    integer :: ibuffer, jbuffer ! WV: note that these are only declared, not assigned!
 
     real(kind=4),allocatable :: aveua(:,:,:)
     real(kind=4),allocatable :: aveva(:,:,:)
@@ -159,7 +174,7 @@ subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm
 
   if(n == nmax) then
   !WV: I reason that for this n, syncTicks should always be 0
-  print *, rank,syncTicks
+!  print *, rank,syncTicks
       do k = 1,kp
           do j = 1,jp
               do i = 1,ip

@@ -4,20 +4,25 @@ module module_feedbfm
 #endif
 contains
 #ifdef WV_NEW
-subroutine feedbfm(zbm,z2,dzn)
+subroutine feedbfm(zbm)
 #else
 subroutine feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
 #endif
+#ifdef WV_NEW
+    use params_common_sn
+#else
     use common_sn ! create_new_include_statements() line 102
+#endif
     implicit none
 #ifndef WV_NEW
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: amask1
     real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1) , intent(Out) :: bmask1
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: cmask1
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: dmask1
-#endif
     real(kind=4), dimension(-1:kp+2) , intent(In) :: dzn
     real(kind=4), dimension(0:kp+2) , intent(In) :: z2
+
+#endif
     real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(InOut) :: zbm
     integer :: i, j, k
     real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) :: dsm,dem

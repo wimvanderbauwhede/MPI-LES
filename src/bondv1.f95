@@ -9,7 +9,11 @@ module module_bondv1
 contains
 
 subroutine bondv1(u,z2,dzn,v,w,n,n0,dt,dxs)
+#ifdef WV_NEW
+    use params_common_sn
+#else
     use common_sn ! create_new_include_statements() line 102
+#endif
     implicit none
     real(kind=4), intent(In) :: dt
     real(kind=4), dimension(0:ip) , intent(In) :: dxs

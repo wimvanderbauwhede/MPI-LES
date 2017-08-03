@@ -6,12 +6,20 @@ contains
 
 #ifdef NESTED_LES
 subroutine boundsm(n,sm)
-   use common_sn ! create_new_include_statements() line 102
+#ifdef WV_NEW
+    use params_common_sn
+#else
+    use common_sn ! create_new_include_statements() line 102
+#endif
     implicit none
     integer, intent(In) :: n
 #else
 subroutine boundsm(sm)
-   use common_sn ! create_new_include_statements() line 102
+#ifdef WV_NEW
+    use params_common_sn
+#else
+    use common_sn ! create_new_include_statements() line 102
+#endif
     implicit none
 #endif
 

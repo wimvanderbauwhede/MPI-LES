@@ -13,7 +13,12 @@ subroutine press(u,v,w,usum,vsum,wsum,p,rhs,f,g,h,dx1,dy1,dzn,dxs,dys,dzs,dt,n,n
 subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,cn4s, &
                  n,nmax,data20,usum,vsum,wsum)
 #endif
+#ifdef WV_NEW
+    use params_common_sn
+    implicit none
+#else
     use common_sn ! create_new_include_statements() line 102
+#endif
 #ifndef WV_NEW
     real(kind=4), dimension(ip,jp,kp) , intent(In) :: cn1
     real(kind=4), dimension(ip) , intent(In) :: cn2l
@@ -55,12 +60,7 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
     integer, parameter  :: nmaxp = 50 ! WV was 50
     real, parameter  :: omega = 1.
 
-#ifdef NESTED_LES
-    call bondfg(n,f,g,h)
-#else
     call bondfg(f,g,h)
-#endif
-
 
     do k = 1,kp
         do j = 1,jp
@@ -156,17 +156,9 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
                     end do
                 end do
             end do
-#ifdef NESTED_LES
-            call boundp1(n,p)
-#else
             call boundp1(p)
-#endif
         end do
-#ifdef NESTED_LES
-        call boundp2(n,p)
-#else
         call boundp2(p)
-#endif
 #ifndef NO_IO
 #ifdef VERBOSE
 ! --check
@@ -233,19 +225,11 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
 #ifdef WV_DEBUG
     print *, "F95: P_SUM_ADJ=",sum(p)
 #endif
-#ifdef NESTED_LES
-    call boundp1(n,p)
-#else
     call boundp1(p)
-#endif
 #ifdef WV_DEBUG
     print *, "F95: P_SUM_1=",sum(p)
 #endif
-#ifdef NESTED_LES
-    call boundp2(n,p)
-#else
     call boundp2(p)
-#endif
 #ifdef WV_DEBUG
     print *, "F95: P_SUM_BOUND=",sum(p)
 #endif

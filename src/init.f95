@@ -3,12 +3,17 @@ module module_init
       use module_feedbfm ! add_module_decls() line 156
 contains
 #ifdef WV_NEW
-      subroutine init(u,v,w,p,dxs,dys,dzs,zbm,z2,dzn)
+      subroutine init(u,v,w,p,zbm)
 #else
       subroutine init(u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,amask1, &
       bmask1,cmask1,dmask1,zbm,z2,dzn)
 #endif
-      use common_sn ! create_new_include_statements() line 102
+#ifdef WV_NEW
+    use params_common_sn
+    implicit none
+#else
+    use common_sn ! create_new_include_statements() line 102
+#endif
 #ifndef WV_NEW
         real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: amask1
         real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1) , intent(Out) :: bmask1
@@ -22,18 +27,21 @@ contains
         real(kind=4), dimension(jp) , intent(Out) :: cn3s
         real(kind=4), dimension(kp) , intent(Out) :: cn4l
         real(kind=4), dimension(kp) , intent(Out) :: cn4s
-#endif
         real(kind=4), dimension(0:ip) , intent(In) :: dxs
         real(kind=4), dimension(0:jp) , intent(In) :: dys
-        real(kind=4), dimension(-1:kp+2) , intent(In) :: dzn
         real(kind=4), dimension(-1:kp+2) , intent(In) :: dzs
+        real(kind=4), dimension(-1:kp+2) , intent(In) :: dzn
+        real(kind=4), dimension(0:kp+2) , intent(In) :: z2
+#endif
+
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(Out) :: p
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: u
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: v
         real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(Out) :: w
-        real(kind=4), dimension(0:kp+2) , intent(In) :: z2
         real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) , intent(InOut) :: zbm
-!
+#ifdef WV_NEW
+    integer :: i,j,k
+#endif
 ! WV: The original boundary was 0,kp;0,jp;0,ip. This does not init the boundary values,so I changed it to the dimensions of u,v,w,p
 !      do k = 0,kp
 !      do j = 0,jp
@@ -76,7 +84,7 @@ contains
 #ifndef WV_NEW
       call feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
 #else
-        call feedbfm(zbm,z2,dzn)
+        call feedbfm(zbm)
 #endif
 !      if(ifbf == 1) call feedbfm(km,jp,ip,amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
 #endif

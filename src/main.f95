@@ -30,7 +30,12 @@ program main
     use module_press
     use module_adam
 !#endif
-    use common_sn
+#ifdef WV_NEW
+    use params_common_sn
+    implicit none
+#else
+    use common_sn ! create_new_include_statements() line 102
+#endif
     real(kind=4) :: alpha
 !    integer :: ianime
     integer :: ical
@@ -195,7 +200,7 @@ program main
     call createBottomRowCommunicator(procPerRow)
 #endif
 #ifdef NESTED_LES
-    syncTicksLocal = 0
+!    syncTicksLocal = 0
     syncTicks = 0
 #endif
 #endif
@@ -208,7 +213,7 @@ program main
     call grid(dx1,dxl,dy1,dyl,z2,dzn,dzs,dxs,dys)
     call timdata()
 #ifdef WV_NEW
-    call init(u,v,w,p,dxs,dys,dzs,zbm,z2,dzn)
+    call init(u,v,w,p,zbm)
 #else
     call init(u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,&
               amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
@@ -219,12 +224,11 @@ program main
 !#ifndef WV_DEBUG_MPI
     call ifdata( &
 !#if ICAL == 1
-                fold,gold,hold,fghold, time, &
+                fold,gold,hold, time, &
 !#endif
-                n,u,v,w,p,usum,vsum,wsum,delx1,dx1,dy1,dzn,&
-                sm,f,g,h,z2,dt,dxs, &
-                dfu1,vn,dfv1,dfw1,dzs,&
-                fx,fy,fz,zbm,ical,nif)
+                n,u,v,w,p,usum,vsum,wsum,&
+                f,g,h, &
+                ical,nif)
 !#endif
 
 #else
@@ -332,27 +336,14 @@ if (n>n_nest0) then
 #endif
 #ifdef WV_NEW
 !_VELFG
-#ifdef NESTED_LES
-      call velfg(n,dx1,dfu1,dy1,dzn,vn,f, &
-      dfv1,g,dfw1,dzs,h,u,v,w, &
+      call velfg(dx1,dy1,dzn,f, &
+      g,dzs,h,u,v,w, &
       uspd,vspd)
-#else
-      call velfg(dx1,dfu1,dy1,dzn,vn,f, &
-      dfv1,g,dfw1,dzs,h,u,v,w, &
-      uspd,vspd)
-#endif
-#else
-#ifdef NESTED_LES
-        call velfg(n,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn, &
-                   vn,f,cov4,cov5,cov6,dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9, &
-                   dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
-                   nou4,nou6,nou7,nou8,uspd,vspd) !WV: calls vel2 which uses halos
 #else
         call velfg(dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn, &
                    vn,f,cov4,cov5,cov6,dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9, &
                    dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
                    nou4,nou6,nou7,nou8,uspd,vspd) !WV: calls vel2 which uses halos
-#endif
 #endif
 #ifdef TIMINGS
         call system_clock(timestamp(3), clock_rate)
@@ -370,7 +361,7 @@ if (n>n_nest0) then
         call system_clock(timestamp(4), clock_rate)
 #endif
 #ifdef WV_NEW
-        call les(u,v,w,f,g,h,uspd,vspd,sm,delx1,dx1,dy1,dzn,dzs,dxs,dys,n)
+        call les(u,v,w,f,g,h,uspd,vspd,sm,dx1,dy1,dzn,dzs,dxs,dys,n)
 #else
         call les(delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6, &
                  diu7,diu8,diu9,sm,f,g,h,u,v,uspd,vspd,dxs,dys,n) ! WV: calls boundsm which uses halos
@@ -419,9 +410,15 @@ if (n>n_nest0) then
         call ifdata_out(n,n0,n1,nmax,time,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,hold) !WV: TODO: put the sync condition in this code
       end if
       if (i_aveflow .eq. 1) then
+#ifdef WV_NEW
+        call aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww, &
+                     avesm,avesmsm,uwfx, &
+                     u,v,w,p,sm,nmax)
+#else
         call aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww, &
                      avesm,avesmsm,uwfx,avesu,avesv,avesw,avesuu,avesvv, &
                      avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14)! ,amask1)  !WV: TODO: put the sync condition in this code
+#endif
       end if
 #endif
 

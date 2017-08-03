@@ -5,16 +5,14 @@ module module_bondFG
 
 contains
 
-#ifdef NESTED_LES
-subroutine bondfg(n,f,g,h)
-    use common_sn ! create_new_include_statements() line 102
-    implicit none
-    integer, intent(In) :: n
-#else
 subroutine bondfg(f,g,h)
+#ifdef WV_NEW
+    use params_common_sn
+#else
     use common_sn ! create_new_include_statements() line 102
-    implicit none
 #endif
+    implicit none
+
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: f
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: g
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: h
@@ -52,7 +50,6 @@ subroutine bondfg(f,g,h)
 #ifdef MPI
 ! --halo exchanges
 #ifdef NESTED_LES
-!   if (syncTicks == 0  .and. n > 2) then
    if (syncTicks == 0) then
 #endif
     call exchangeRealHalos(f, procPerRow, neighbours, 1, 0, 1, 0)

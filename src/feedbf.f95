@@ -1,4 +1,7 @@
 module module_feedbf
+#ifdef WV_NEW
+    implicit none
+#endif
 
 contains
 #ifdef WV_NEW
@@ -31,7 +34,11 @@ subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
                   dt,beta,fx,fy,fz,f,g,h,n)
 #endif
 
+#ifdef WV_NEW
+    use params_common_sn
+#else
     use common_sn ! create_new_include_statements() line 102
+#endif
     real(kind=4), intent(In) :: alpha
     real(kind=4), intent(In) :: beta
 #ifndef WV_NEW
@@ -63,6 +70,10 @@ subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: vsum
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: wsum
+#ifdef WV_NEW
+    integer :: i,j,k
+    real(kind=4) :: f1x,f1y,f1z,f2x,f2y,f2z
+#endif
 #ifdef WV_DEBUG
     print *, 'F95 UVWSUMSUM after bondv1:',sum(usum)+sum(vsum)+sum(wsum)
     print *, 'F95 USUMSUM after bondv1:',sum(usum)

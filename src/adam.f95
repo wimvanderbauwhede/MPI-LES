@@ -1,9 +1,16 @@
 module module_adam
-
+#ifdef WV_NEW
+    implicit none
+#endif
 contains
 
 subroutine adam(n,nmax,data21,fold,gold,hold,fghold,f,g,h)
+#ifdef WV_NEW
+    use params_common_sn
+
+#else
     use common_sn ! create_new_include_statements() line 102
+#endif
     character(len=70), intent(In) :: data21
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: f
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: g
@@ -14,6 +21,10 @@ subroutine adam(n,nmax,data21,fold,gold,hold,fghold,f,g,h)
     real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: hold
     integer, intent(In) :: n
     integer, intent(In) :: nmax
+#ifdef WV_NEW
+    integer :: i,j,k
+    real(kind=4) :: fd,gd,hd
+#endif
 #if !defined(NO_IO) && !defined(MPI)
     if (mod(n,1000) == 0.or.n == nmax) then
         open(unit=21,file=data21,form='unformatted',status='unknown')

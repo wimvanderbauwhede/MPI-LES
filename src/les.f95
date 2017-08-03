@@ -8,11 +8,16 @@ contains
       subroutine les(delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g, &
       h,u,v,uspd,vspd,dxs,dys,n)
 #else
-        subroutine les(u,v,w,f,g,h,uspd,vspd,sm,delx1,dx1,dy1,dzn,dzs,dxs,dys,n)
+        subroutine les(u,v,w,f,g,h,uspd,vspd,sm,dx1,dy1,dzn,dzs,dxs,dys,n)
 #endif
-      use common_sn ! create_new_include_statements() line 102
-        real(kind=4), dimension(kp) , intent(Out) :: delx1
+#ifdef WV_NEW
+    use params_common_sn
+    implicit none
+#else
+    use common_sn ! create_new_include_statements() line 102
+#endif
 #ifndef WV_NEW
+        real(kind=4), dimension(kp) , intent(Out) :: delx1
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(In) :: diu1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(In) :: diu2
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(In) :: diu3
@@ -23,6 +28,7 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(In) :: diu8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(In) :: diu9
 #else
+        real(kind=4), dimension(kp) :: delx1
         real(kind=4) :: diu1_i_j_k, diu2_i_j_k,diu3_i_j_k,diu4_i_j_k,diu5_i_j_k,diu6_i_j_k,diu7_i_j_k,diu8_i_j_k,diu9_i_j_k
         real(kind=4) :: diu1_ip1_j_k, diu2_im1_j_k , diu2_im1_jp1_k , diu2_i_jp1_k , diu3_im1_j_k , diu3_im1_j_kp1 , diu3_i_j_kp1
         real(kind=4) :: diu4_i_jm1_k , diu4_ip1_j_k , diu4_ip1_jm1_k , diu5_i_jp1_k
@@ -58,7 +64,7 @@ contains
         real(kind=4) :: evsx2, evsx1, evsy2, evsy1, evsz2, evsz1
         real(kind=4) :: vfu,vfv,vfw
 
-!
+! WV: as this is passed in, why is it defined here?
 ! --length scale
         do k = 1,kp
 !  WV: was          delx1(k)=(dx1(i)*dy1(j)*dzn(k))**(1./3.)

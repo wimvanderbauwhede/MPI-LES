@@ -7,12 +7,10 @@ module module_boundp
 implicit none
 
 contains
-#ifdef NESTED_LES
-subroutine boundp2(n,p)
-    use common_sn ! create_new_include_statements() line 102
-    integer, intent(In) :: n
-#else
 subroutine boundp2(p)
+#ifdef WV_NEW
+    use params_common_sn
+#else
     use common_sn ! create_new_include_statements() line 102
 #endif
 
@@ -28,7 +26,6 @@ subroutine boundp2(p)
     end do
 #ifdef MPI
 #ifdef NESTED_LES
-!   if (syncTicks == 0  .and. n > 2) then
    if (syncTicks == 0) then
 #endif
 ! --halo exchanges
@@ -39,11 +36,10 @@ subroutine boundp2(p)
 #endif
 end subroutine boundp2
 
-#ifdef NESTED_LES
-subroutine boundp1(n,p)
-    integer, intent(In) :: n
-#else
 subroutine boundp1(p)
+#ifdef WV_NEW
+    use params_common_sn
+#else
     use common_sn ! create_new_include_statements() line 102
 #endif
 

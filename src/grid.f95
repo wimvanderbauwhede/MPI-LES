@@ -10,7 +10,11 @@ contains
 
       subroutine grid(dx1,dxl,dy1,dyl,z2,dzn,dzs,dxs,dys)
 
-      use common_sn ! create_new_include_statements() line 102
+#ifdef WV_NEW
+    use params_common_sn
+#else
+    use common_sn ! create_new_include_statements() line 102
+#endif
         real(kind=4), dimension(-1:ip+1) , intent(Out) :: dx1
         real(kind=4), dimension(0:ip) , intent(Out) :: dxl
         real(kind=4), dimension(0:ip) , intent(Out) :: dxs

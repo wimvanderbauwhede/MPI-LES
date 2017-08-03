@@ -14,29 +14,19 @@ module module_velFG
 contains
 #ifndef WV_NEW
 !_VELFG
-#ifdef NESTED_LES
-      subroutine velfg(n,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6, &
-      dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2, &
-      nou3,nou4,nou6,nou7,nou8,uspd,vspd)
-#else
       subroutine velfg(dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6, &
       dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2, &
       nou3,nou4,nou6,nou7,nou8,uspd,vspd)
-#endif
 #else
-#ifdef NESTED_LES
-      subroutine velfg(n,dx1,dfu1,dy1,dzn,vn,f, &
-      dfv1,g,dfw1,dzs,h,u,v,w, &
-      uspd,vspd)
-#else
-      subroutine velfg(dx1,dfu1,dy1,dzn,vn,f, &
-      dfv1,g,dfw1,dzs,h,u,v,w, &
+      subroutine velfg(dx1,dy1,dzn,f, &
+      g,dzs,h,u,v,w, &
       uspd,vspd)
 #endif
-#endif
-      use common_sn ! create_new_include_statements() line 102
-#ifdef NESTED_LES
-        integer, intent(In) :: n
+#ifdef WV_NEW
+    use params_common_sn
+    implicit none
+#else
+    use common_sn ! create_new_include_statements() line 102
 #endif
 
 #ifndef WV_NEW
@@ -50,10 +40,11 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov7
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov9
-#endif
         real(kind=4), dimension(0:ip,jp,kp) , intent(Out) :: dfu1
         real(kind=4), dimension(ip,0:jp,kp) , intent(Out) :: dfv1
         real(kind=4), dimension(ip,jp,kp) , intent(Out) :: dfw1
+        real(kind=4), intent(In) :: vn
+#endif
 #ifndef WV_NEW
 !_VELFG
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu1
@@ -94,7 +85,6 @@ contains
 
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
-        real(kind=4), intent(In) :: vn
         real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
 
 !wall function
@@ -110,13 +100,8 @@ contains
 !
 !
 #ifndef WV_NEW
-#ifdef NESTED_LES
-      call vel2(n,nou1,u,diu1,dx1,nou5,v,diu5,dy1,nou9,w,diu9,dzn,cov1,cov5,cov9,nou2,diu2, &
-           cov2,nou3,diu3,dzs,cov3,nou4,diu4,cov4,nou6,diu6,cov6,nou7,diu7,cov7,nou8,diu8,cov8,uspd,vspd)
-#else
       call vel2(nou1,u,diu1,dx1,nou5,v,diu5,dy1,nou9,w,diu9,dzn,cov1,cov5,cov9,nou2,diu2, &
            cov2,nou3,diu3,dzs,cov3,nou4,diu4,cov4,nou6,diu6,cov6,nou7,diu7,cov7,nou8,diu8,cov8,uspd,vspd)
-#endif
 #else
 !
 !wall function
@@ -300,11 +285,7 @@ contains
 ! WV: This seems not necessary, perhaps because it is called in press.
 #ifdef WV_NEW
 !_VELFG
-#ifdef NESTED_LES
-    call bondfg(n,f,g,h)
-#else
     call bondfg(f,g,h)
-#endif
 #endif
 !
 ! =======================================

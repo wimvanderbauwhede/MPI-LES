@@ -3,7 +3,12 @@ module module_velnw
 contains
 
       subroutine velnw(p,ro,dxs,u,dt,f,dys,v,g,dzs,w,h)
-      use common_sn ! create_new_include_statements() line 102
+#ifdef WV_NEW
+    use params_common_sn
+    implicit none
+#else
+    use common_sn ! create_new_include_statements() line 102
+#endif
         real(kind=4), intent(In) :: dt
         real(kind=4), dimension(0:ip) , intent(In) :: dxs
         real(kind=4), dimension(0:jp) , intent(In) :: dys

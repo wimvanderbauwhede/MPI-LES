@@ -75,9 +75,11 @@ subroutine anime(n,n0,n1,&
     nmax,dxl,dx1,dyl,dy1,z2,amask1,zbm,&
 #endif
     u,w,v,p)
-
+#ifdef WV_NEW
+    use params_common_sn
+#else
     use common_sn ! create_new_include_statements() line 102
-
+#endif
     integer, intent(In) :: n
     integer, intent(In) :: n0
     integer, intent(In) :: n1
@@ -100,11 +102,12 @@ subroutine anime(n,n0,n1,&
 
 
 !average_out
-#ifdef MPI
-#ifdef MPI_NEW_WV
+
+#if (defined(MPI) && defined(MPI_NEW_WV) )|| defined(WV_NEW)
     integer :: irec, i,j,k, i_s, j_s
     character(len=70) :: filename
 #endif
+#ifdef MPI
 #ifdef MPI_NEW_WV2
     real(kind=4), dimension(ip,jp,kp)  :: uani
     real(kind=4), dimension(ip,jp,kp)  :: vani
@@ -525,7 +528,7 @@ subroutine anime(n,n0,n1,&
 #else
 ! NO MPI
 !We simply write the uani,... to the file
-    integer ::  i,j,k
+!    integer ::  i,j,k
 !    character(len=70) :: filename
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: uani
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: vani
@@ -633,8 +636,11 @@ end subroutine anime
 !data30,31
 subroutine ifdata_out(n,n0,n1,nmax,time,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,hold)
 
-
+#ifdef WV_NEW
+    use params_common_sn ! create_new_include_statements() line 102
+#else
     use common_sn ! create_new_include_statements() line 102
+#endif
     integer, intent(In) :: n
     integer, intent(In) :: n0
     integer, intent(In) :: nmax
@@ -670,7 +676,10 @@ subroutine ifdata_out(n,n0,n1,nmax,time,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,h
 !    real(kind=4), dimension(0:ipmax+1,-1:jpmax+1,-1:kp+1)  :: wa
 !    real(kind=4), dimension(0:ipmax+1,0:jpmax+1,0:kp+1)   :: amask1a
 !    real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1,1) , intent(in) :: zbm1
-!    character(len=70) :: filename
+#if defined(MPI_NEW_WV) || defined( WV_NEW )
+    character(len=70) :: filename
+    integer :: i,j,k
+#endif
 #ifdef MPI
     real(kind=4),allocatable :: ua(:,:,:)
     real(kind=4),allocatable :: va(:,:,:)
@@ -688,8 +697,7 @@ subroutine ifdata_out(n,n0,n1,nmax,time,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,h
 
 
 #ifdef MPI_NEW_WV
-    integer :: irec, i,j,k
-    character(len=70) :: filename
+    integer :: irec
 #endif
 
 ! WV: considering  do n = n0,nmax, and n1 = 1, n != n1-1
