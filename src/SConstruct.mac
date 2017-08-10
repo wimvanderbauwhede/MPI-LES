@@ -63,7 +63,7 @@ if with_mpi == '1':
 #    envF['F95']='mpif90'
     if OSX==0:    
         envF['LINK']=envF['F95']
-        envF.Append(LIBS=['netcdf']) # for version less than 4.2.0
+        envF.Append(LIBS=['netcdff']) # for version less than 4.2.0
     else:
         envF['F95']=os.environ['FC']
         envF['LINK']=os.environ['FC']
@@ -141,9 +141,11 @@ if OSX == 1:
     LIBPATH = ['/opt/local/lib','/opt/local/lib/openmpi-gcc49/']
 else:
 # test for devtoolset-2 ... so better use a var $DEVTOOLSETROOT?
-    if os.path.exists('/opt/rh/devtoolset-2'):
-        INCLPATH = ['/opt/rh/devtoolset-2/root/usr/include' ]
-        LIBPATH = '/opt/rh/devtoolset-2/root/usr/lib'
+# test for devtoolset-2 ... so better use a var $DEVTOOLSETROOT?
+    DEVTOOLSETROOT = os.environ.get('DEVTOOLSETROOT')
+    if DEVTOOLSETROOT is not None:
+        INCLPATH = [DEVTOOLSETROOT+'/usr/include' ]
+        LIBPATH = [DEVTOOLSETROOT+'/usr/lib']
     else:
 # reasonable default ...
   	NETCDF = os.environ.get('NETCDF_DIR')
