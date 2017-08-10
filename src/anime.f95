@@ -83,8 +83,8 @@ subroutine anime(n,n0,n1,&
     integer, intent(In) :: n
     integer, intent(In) :: n0
     integer, intent(In) :: n1
+    integer :: i,j,k
 #ifdef OLD_CODE
-
     integer, intent(In) :: nmax
 
     real(kind=4), dimension(-1:ip+1) , intent(In) :: dx1
@@ -104,7 +104,7 @@ subroutine anime(n,n0,n1,&
 !average_out
 
 #if (defined(MPI) && defined(MPI_NEW_WV) )|| defined(WV_NEW)
-    integer :: irec, i,j,k, i_s, j_s
+    integer :: irec, i_s, j_s
     character(len=70) :: filename
 #endif
 #ifdef MPI
@@ -644,6 +644,7 @@ subroutine ifdata_out(n,n0,n1,nmax,time,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,h
     integer, intent(In) :: n
     integer, intent(In) :: n0
     integer, intent(In) :: nmax
+    integer :: i,j,k
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
@@ -678,7 +679,7 @@ subroutine ifdata_out(n,n0,n1,nmax,time,u,w,v,p,usum,vsum,wsum,f,g,h,fold,gold,h
 !    real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1,1) , intent(in) :: zbm1
 #if defined(MPI_NEW_WV) || defined( WV_NEW )
     character(len=70) :: filename
-    integer :: i,j,k
+
 #endif
 #ifdef MPI
     real(kind=4),allocatable :: ua(:,:,:)
