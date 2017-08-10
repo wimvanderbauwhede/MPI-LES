@@ -45,20 +45,24 @@ else:
     if other !='':
         TIMINGS = '-D'+other
 
-# GR: MPI specific build config
+# MPI specific build config
 WITH_MPI=''
 PROC_PER_ROW=''
 PROC_PER_COL=''
 USE_NETCDF_OUTPUT=''
 with_mpi = getOpt('mpi','Use MPI','0')
 with_nesting = getOpt('nested','Nested Grid','0')
+
+# WV: I observe that the SOR is never actually converging anyway, so no point in computing the global error
+NO_GLOBAL_SOR='-DNO_GLOBAL_SOR'
+
 if with_mpi == '1':
     procPerRow= getOpt('procPerRow', 'Processes Per Row', '2')
     procPerCol= getOpt('procPerCol', 'Processes Per Col', '2')
     PROC_PER_ROW = '-DPROC_PER_ROW=' + procPerRow
     PROC_PER_COL = '-DPROC_PER_COL=' + procPerCol
     WITH_MPI = '-DMPI'
-    USE_NETCDF_OUTPUT='-DUSE_NETCDF_OUTPUT'
+#    USE_NETCDF_OUTPUT='-DUSE_NETCDF_OUTPUT'
 #    envF['F95']='mpiifort'
 #    envF['F95']='mpif90'
     if OSX==0:    
@@ -86,20 +90,27 @@ if gr_debug == '1':
 WV_DEBUG=''
 wv_debug = getOpt('wv_debug', 'WV Debug', '0')
 if wv_debug =='1':
-    WV_DEBUG='-DMPI_NEW_WV'
+    WV_DEBUG='-DWV_DEBUG'
 
+MPI_NEW_WV=''
+mpi_new_wv = getOpt('mpi_new_wv', 'New MPI code (WV)', '0')
+if mpi_new_wv =='1':
+    MPI_NEW_WV='-DMPI_NEW_WV'
+
+WV_TEST = '-DWV_TEST'
+WV_DEBUG_MPI = '-DWV_DEBUG_MPI'
 NO_FILE_IO='-DNO_FILE_IO'
 ICAL = '-DICAL=0'
 IFBF='-DIFBF=1'
 IANIME='-DIANIME=1'
 IADAM='-DIADAM=0'
-FFLAGS  = [USE_NETCDF_OUTPUT, WITH_MPI, NESTED_LES, GR_DEBUG, WV_DEBUG, PROC_PER_ROW, PROC_PER_COL, WITH_OCL, NO_FILE_IO, ICAL, IFBF,IANIME, IADAM]
+FFLAGS  = [USE_NETCDF_OUTPUT, WITH_MPI, NESTED_LES,NO_GLOBAL_SOR, GR_DEBUG, WV_DEBUG,MPI_NEW_WV,WV_TEST,WV_DEBUG_MPI, PROC_PER_ROW, PROC_PER_COL, WITH_OCL, NO_FILE_IO, ICAL, IFBF,IANIME, IADAM,VERBOSE,TIMINGS]
 
 if with_ocl == '0':
-#    FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium', VERBOSE,TIMINGS]
-#     FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium', '-fno-range-check','-fbounds-check','-Wuninitialized','-ffpe-trap=invalid,zero,overflow', VERBOSE,TIMINGS]
-     FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium','-fbounds-check', VERBOSE,TIMINGS]
-#    FFLAGS += ['-cpp','-Ofast', '-m64', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', VERBOSE,TIMINGS]
+#    FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium' ]
+#     FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium', '-fno-range-check','-fbounds-check','-Wuninitialized','-ffpe-trap=invalid,zero,overflow' ]
+#    FFLAGS += ['-cpp','-Ofast', '-m64', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian' ]
+     FFLAGS += ['-cpp', '-O', '-Wall','-Wno-unused','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium','-fbounds-check' ]
 
 csources=[]
 CC= os.environ['CC']
@@ -110,7 +121,8 @@ if csources:
 fsources = []
 
 if with_mpi == '1':
-    fsources += ['./communication_common.f95', './communication_helper.f95', './communication_helper_integer.f95', './communication_helper_mpi.f95', './communication_helper_real.f95']
+    fsources += ['./communication_common.f95', './communication_helper.f95',  './communication_helper_mpi.f95', './communication_helper_real.f95']
+    #'./communication_helper_integer.f95',
     
 if with_nesting == '1':
 	fsources += ['./nesting_support.f95']

@@ -64,7 +64,7 @@ if with_mpi == '1':
     envF['LINK']=envF['F95']
 
 #if other =='':
-    USE_NETCDF_OUTPUT='-DUSE_NETCDF_OUTPUT'
+#    USE_NETCDF_OUTPUT='-DUSE_NETCDF_OUTPUT'
     if OSX==0:    
         envF.Append(LIBS=['netcdff']) # for version >= 4.2.0
     else:
@@ -100,10 +100,10 @@ if with_ocl == '0':
 #    FFLAGS += ['-cpp','-Ofast', '-m64', '-Wall','-ffree-form', '-fconvert=big-endian', VERBOSE,TIMINGS]
 
 csources=[]
-CC= os.environ['CC']
-envC=Environment(CC=CC)
-if csources:
-    envC.Library('csubs',csources)
+#CC= os.environ['CC']
+#envC=Environment(CC=CC)
+#if csources:
+#    envC.Library('csubs',csources)
 
 fsources = []
 
