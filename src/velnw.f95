@@ -16,7 +16,12 @@ contains
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(In) :: f
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(In) :: g
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(In) :: h
+
+#ifndef TWINNED_BUFFER
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(In) :: p
+#else
+        real(kind=4), dimension(0:1,0:ip+2,0:jp+2,0:kp+1) , intent(In) :: p
+#endif
         real(kind=4), intent(In) :: ro
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: u
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: v
@@ -30,7 +35,11 @@ contains
       do k = 1,kp
       do j = 1,jp
       do i = 1,ip
+#ifndef TWINNED_BUFFER
         pz = (-p(i,j,k)+p(i+1,j,k))/ro/dxs(i)
+#else
+        pz = (-p(0,i,j,k)+p(0,i+1,j,k))/ro/dxs(i)
+#endif
         u(i,j,k) = u(i,j,k)+dt*(f(i,j,k)-pz)
 !        u(i,j,k) = u(i,j,k)
       end do
@@ -41,7 +50,11 @@ contains
       do k = 1,kp
       do j = 1,jp
       do i = 1,ip
+#ifndef TWINNED_BUFFER
         pz = (-p(i,j,k)+p(i,j+1,k))/ro/dys(j)
+#else
+        pz = (-p(0,i,j,k)+p(0,i,j+1,k))/ro/dys(j)
+#endif
 !        if (k==kp/2 .and. j==jp/2 .and. i==ip/2) then
 !            print *,'timestep', p(i,j,k),p(i,j+1,k),v(i,j,k),v(i,j,k)+dt*(g(i,j,k)-pz)
 !        end if
@@ -54,7 +67,11 @@ contains
       do k = 1,kp-1
       do j = 1,jp
       do i = 1,ip
+#ifndef TWINNED_BUFFER
         pz = (-p(i,j,k)+p(i,j,k+1))/ro/dzs(k)
+#else
+        pz = (-p(0,i,j,k)+p(0,i,j,k+1))/ro/dzs(k)
+#endif
         w(i,j,k) = w(i,j,k)+dt*(h(i,j,k)-pz)
 !        w(i,j,k) = w(i,j,k)
       end do

@@ -173,8 +173,8 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
                         cn2s = 2./(dxs(i-1)*(dxs(i-1)+dxs(i)))
                         cn2l = 2./(dxs(i)*(dxs(i-1)+dxs(i)))
 
-                        cn1 = 2./(dxs(i-1)*dxs(i))  + 2./(dys(j-1)*dys(j)) + 2./(dz1*dz2)
-                        cn1 = 1./cn1
+                        cn1 = 1./ (2./(dxs(i-1)*dxs(i))  + 2./(dys(j-1)*dys(j)) + 2./(dz1*dz2))
+!                        cn1 = 1./cn1
 #ifndef TWINNED_BUFFER
                         reltmp = omega*(cn1 *(cn2l*p(i+1,j,k) + &
                                  cn2s*p(i-1,j,k) +cn3l*p(i,j+1,k) + &

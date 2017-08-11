@@ -16,18 +16,24 @@ integer, parameter :: kp=80
     reorder /.false./
 
 #ifndef NESTED_LES
-    integer, parameter :: ipmax = 300, jpmax = 300 !
-    integer, parameter :: ip = ipmax/PROC_PER_COL ! rows per process
-    integer, parameter :: jp = jpmax/PROC_PER_ROW ! columns per process
+    integer, parameter :: ipmax = 300
+    integer, parameter :: jpmax = 300
+     ! rows per process
+    integer, parameter :: ip = ipmax/PROC_PER_COL
+     ! columns per process
+    integer, parameter :: jp = jpmax/PROC_PER_ROW
 #endif
 
 #else
 ! NO MPI
 #ifndef NESTED_LES
 #ifndef TEST_SMALL_DOMAIN
-    integer, parameter :: ip = 300, jp = 300 ! so @4m, max is 1200m x 1200m
+ ! so @4m, max is 1200m x 1200m
+    integer, parameter :: ip = 300
+    integer, parameter :: jp = 300
 #else
-    integer, parameter :: ip = 25, jp = 25
+    integer, parameter :: ip = 25
+    integer, parameter :: jp = 25
 #endif
     integer, parameter :: ipmax = ip
     integer, parameter :: jpmax = jp
@@ -44,18 +50,20 @@ integer, parameter :: kp=80
 #endif
 
 #ifndef NESTED_LES
-!-- grid
-    real, parameter :: dxgrid = 4. ! meters
+!-- grid in meters
+    real, parameter :: dxgrid = 4.
     real, parameter :: dygrid = 4.
 #endif
 
 !-- les
-    real, parameter :: cs0 = 0.14 !smagorinsky constant
+ !smagorinsky constant
+    real, parameter :: cs0 = 0.14
  
 !-- parameter for anime
     integer, parameter :: i_anime=1
-    integer, parameter :: avetime=2, km_sl=80 ! WV: was 20
-
+    ! WV: was 20
+    integer, parameter :: avetime=2
+    integer, parameter :: km_sl=80
 !-- parameter for aveflow
     integer, parameter :: i_aveflow=0
 

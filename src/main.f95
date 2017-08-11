@@ -94,7 +94,7 @@ program main
     real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1)  :: bmask1
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: cmask1
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  :: dmask1
-#endif
+
     real(kind=4), dimension(ip,jp,kp)  :: cn1
     real(kind=4), dimension(ip)  :: cn2l
     real(kind=4), dimension(ip)  :: cn2s
@@ -102,7 +102,7 @@ program main
     real(kind=4), dimension(jp)  :: cn3s
     real(kind=4), dimension(kp)  :: cn4l
     real(kind=4), dimension(kp)  :: cn4s
-#ifndef WV_NEW
+
     real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2)  :: cov1
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: cov2
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: cov3
@@ -297,11 +297,7 @@ inNest = inNestedGrid()
         print *, 'run_LES_reference: time step = ',n
         call system_clock(timestamp(0,:,:,:), clock_rate)
 #endif
-#ifndef TWINNED_BUFFER
         call velnw(p,ro,dxs,u,dt,f,dys,v,g,dzs,w,h) !WV: no MPI
-#else
-        call velnw(p(0,:,:,:),ro,dxs,u,dt,f,dys,v,g,dzs,w,h) !WV: no MPI
-#endif
 #ifdef TIMINGS
         call system_clock(timestamp(1), clock_rate)
 #endif
@@ -377,9 +373,9 @@ if (n>n_nest0) then
         call timseris(n,dt,u,v,w)
 #endif
 
-#if IANIME == 1
+£ifdef I_ANIME
     !print *, n,rank, 'NO ANIME!'
-      if (i_anime .eq. 1) then
+!      if (i_anime .eq. 1) then
         call anime(n,n0,n1,&
 #ifdef OLD_CODE
                     nmax,dxl,dx1,dyl,dy1,z2,amask1,zbm,&
@@ -391,9 +387,11 @@ if (n>n_nest0) then
                     p(0,:,:,:) &
 #endif
                     ) !WV: I put the sync condition in this code
-      end if
+!      end if
+£endif
+#ifdef I_IFDATA_OUT
       ! WV: sorry, not supported at the moment
-      if (i_ifdata_out .eq. 1) then
+!      if (i_ifdata_out .eq. 1) then
         call ifdata_out(n,n0,n1,nmax,time,u,w,v, &
 #ifndef TWINNED_BUFFER
                      p, &
@@ -402,8 +400,11 @@ if (n>n_nest0) then
 #endif
 
         usum,vsum,wsum,f,g,h,fold,gold,hold) !WV: TODO: put the sync condition in this code
-      end if
-      if (i_aveflow .eq. 1) then
+!      end if
+#endif
+
+#ifdef I_AVEFLOW
+!      if (i_aveflow .eq. 1) then
 #ifdef WV_NEW
         call aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww, &
                      avesm,avesmsm,uwfx, &
@@ -419,8 +420,9 @@ if (n>n_nest0) then
                      avesm,avesmsm,uwfx,avesu,avesv,avesw,avesuu,avesvv, &
                      avesww,u,v,w,p,sm,nmax,uwfxs,data10,time,data11,data13,data14)! ,amask1)  !WV: TODO: put the sync condition in this code
 #endif
-      end if
+!      end if
 #endif
+
 
 #ifdef MPI
 #ifdef NESTED_LES
