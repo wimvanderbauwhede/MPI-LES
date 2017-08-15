@@ -601,25 +601,25 @@ contains
 !        call velfg(kp,jp,ip,dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6,dfv1, &
 !      diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2,nou3, &
 !      nou4,nou6,nou7,nou8)
-#if IFBF == 1
+!#if IFBF == 1
 !        if(ifbf == 1) then
 !        call feedbf(kp,jp,ip,usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,dt,beta,fx,fy,fz,f,g, &
 !      h)
 !        call feedbfm(kp,jp,ip,amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
 !        endif
-#endif
+!#endif
 !        call les(kp,delx1,dx1,dy1,dzn,jp,ip,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g,h)
 
 ! --adam
 ! WV iadam is not defined!
-#if IADAM == 1
+!#if IADAM == 1
 ! WV        if(iadam.eq.1) then
 !            n1=1
 !            n2=2
 !            data21dummy=""
 !          call adam(n1,n2,data21dummy,fold,ip,jp,kp,gold,hold,fghold,f,g,h)
 ! WV        end if
-#endif
+!#endif
 !
       end subroutine ifdata
 

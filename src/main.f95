@@ -14,7 +14,7 @@ program main
 #endif
     use module_aveflow
     use module_ifdata
-#if IANIME == 1
+#ifdef I_ANIME
     use module_anime
 #endif
 !#ifdef _OPENCL_LES_WV
@@ -137,9 +137,9 @@ program main
     real(kind=4), dimension(-1:kp+2)  :: dzn
     real(kind=4), dimension(-1:kp+2)  :: dzs
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: f
-#if ICAL == 1
+!#if ICAL == 1
     real(kind=4), dimension(ip,jp,kp)  :: fghold
-#endif
+!#endif
     real(kind=4), dimension(ip,jp,kp)  :: fold
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: fx
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: fy
@@ -148,9 +148,9 @@ program main
     real(kind=4), dimension(ip,jp,kp)  :: gold
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: h
     real(kind=4), dimension(ip,jp,kp)  :: hold
-#ifndef _OPENCL_LES_WV
+!#ifndef _OPENCL_LES_WV
     real(kind=4), dimension(ip,jp,kp)  :: fghold
-#endif
+!#endif
 #ifndef WV_NEW
     real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2)  :: nou1
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: nou2
@@ -373,7 +373,7 @@ if (n>n_nest0) then
         call timseris(n,dt,u,v,w)
 #endif
 
-£ifdef I_ANIME
+#ifdef I_ANIME
     !print *, n,rank, 'NO ANIME!'
 !      if (i_anime .eq. 1) then
         call anime(n,n0,n1,&
@@ -388,7 +388,7 @@ if (n>n_nest0) then
 #endif
                     ) !WV: I put the sync condition in this code
 !      end if
-£endif
+#endif
 #ifdef I_IFDATA_OUT
       ! WV: sorry, not supported at the moment
 !      if (i_ifdata_out .eq. 1) then

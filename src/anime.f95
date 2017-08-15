@@ -13,11 +13,8 @@ contains
 
 #ifdef MPI
 
+! Added by WV for use with MPI_NEW_WV
 #ifdef MPI_NEW_WV
-#define MPI_NEW_WV2
-#endif
-! Added by WV for use with MPI_NEW_WV2
-#ifdef MPI_NEW_WV2
 !real function calc_avg_ua(ua,i,j,k) result(avg)
 real function calc_avg_ua(ua,i,i_s,idx) result(avg)
     !real, dimension(:,:,:), intent(In) :: ua
@@ -108,7 +105,7 @@ subroutine anime(n,n0,n1,&
     character(len=70) :: filename
 #endif
 #ifdef MPI
-#ifdef MPI_NEW_WV2
+#ifdef MPI_NEW_WV
     real(kind=4), dimension(ip,jp,kp)  :: uani
     real(kind=4), dimension(ip,jp,kp)  :: vani
     real(kind=4), dimension(ip,jp,kp) :: wani
@@ -128,7 +125,7 @@ subroutine anime(n,n0,n1,&
 !    real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1,1) , intent(in) :: zbm1
 !    character(len=70) :: filename
 
-#ifdef MPI_NEW_WV2
+#ifdef MPI_NEW_WV
     real(kind=4),allocatable :: ua(:)
     real(kind=4),allocatable :: va(:)
     real(kind=4),allocatable :: wa(:)
@@ -190,7 +187,7 @@ subroutine anime(n,n0,n1,&
 !    if (syncTicks == 0) then
 !#endif
 !average_out
-#ifndef MPI_NEW_WV2
+#ifndef MPI_NEW_WV
       do k=0,kp
       do j=0,jp
       do i=0,ip
@@ -247,7 +244,7 @@ subroutine anime(n,n0,n1,&
 
 ! ---- ua ----
 
-#ifdef MPI_NEW_WV2
+#ifdef MPI_NEW_WV
         if (isMaster()) then
             allocate(ua(ipmax*jpmax*kp))
         end if
@@ -342,7 +339,7 @@ subroutine anime(n,n0,n1,&
        deallocate(ua)
 #endif
 ! ---- wa -----
-#ifdef MPI_NEW_WV2
+#ifdef MPI_NEW_WV
         if (isMaster()) then
             allocate(wa(ipmax*jpmax*kp))
         end if
@@ -397,7 +394,7 @@ subroutine anime(n,n0,n1,&
 
 
 ! ---- va ----
-#ifdef MPI_NEW_WV2
+#ifdef MPI_NEW_WV
         if (isMaster()) allocate(va(ipmax*jpmax*kp))
 
         call MPI_Gather(vani, ip*jp*kp, MPI_REAL, va, ip*jp*kp, MPI_REAL, 0, communicator, ierror)
@@ -455,7 +452,7 @@ subroutine anime(n,n0,n1,&
 
 
 !--------pressure-----------
-#ifdef MPI_NEW_WV2
+#ifdef MPI_NEW_WV
        if (isMaster()) allocate(pa(ipmax*jpmax*kp))
        call MPI_Gather(pani, ip*jp*kp, MPI_REAL, pa, ip*jp*kp, MPI_REAL, 0, communicator, ierror)
        call checkMPIError()
@@ -503,7 +500,7 @@ subroutine anime(n,n0,n1,&
 #endif
 
 
-#ifdef MPI_NEW_WV2
+#ifdef MPI_NEW_WV
       uani=0.
       vani=0.
       wani=0.

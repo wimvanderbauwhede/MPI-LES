@@ -66,7 +66,7 @@ subroutine bondv1(u,z2,dzn,v,w,n,n0,dt,dxs)
     end if
 #endif
 
-#if ICAL == 0
+!#if ICAL == 0
 !    if(ical == 0.and.n == 1) then
 
 #ifdef NESTED_LES
@@ -109,7 +109,7 @@ subroutine bondv1(u,z2,dzn,v,w,n,n0,dt,dxs)
 
     endif
 
-#endif
+!#endif
 
 #ifdef WV_DEBUG
     print *, 'F95: BONDV1_INIT_UVW: UVWSUM: ',n,sum(u)+sum(v)+sum(w)

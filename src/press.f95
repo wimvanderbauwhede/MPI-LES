@@ -353,8 +353,8 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
     print *, "F95: P_SUM_BOUND=",sum(p)
 #endif
 
-#ifndef NO_IO
-#ifdef VERBOSE
+#if !defined( NO_IO ) && defined( VERBOSE )
+
 #ifdef MPI
     if (rank == mpi_size / 2 + procPerRow / 2 - 1 ) then
 #endif
@@ -391,7 +391,7 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
     end if
 #endif
 #endif
-#endif
+
 
 #ifndef NO_IO
     if(mod(n,1000) == 0 .or. n == nmax) then
