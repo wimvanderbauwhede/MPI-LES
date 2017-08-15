@@ -8,7 +8,9 @@ program main
     use module_init
     use module_grid
     use module_set
+#ifdef TIMDATA
     use module_timdata
+#endif
 #ifdef TIMSERIS_FIXED
     use module_timseris
 #endif
@@ -215,7 +217,9 @@ program main
              data27,data30,data31,ical,nif,n0,n1,nmax,dt,ro,&
              vn,alpha,beta,data12,data13,data14,data15)
     call grid(dx1,dxl,dy1,dyl,z2,dzn,dzs,dxs,dys)
+#ifdef TIMDATA
     call timdata()
+#endif
 #ifdef WV_NEW
     call init(u,v,w,p,zbm)
 #else
