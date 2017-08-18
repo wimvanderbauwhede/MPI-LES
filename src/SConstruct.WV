@@ -1,5 +1,7 @@
 import os
 import os.path # for getting environmental variables on the system
+import subprocess
+
 
 # Importing OclBuilder, this is not required for ocl=0
 # If you want to build just the Fortran code without OpenCL support, use SConstruct.F95_only
@@ -25,41 +27,41 @@ else:
         OSFLAG='-D__LINUX__'
 
 
+macro_source_str = getOpt('m','Macros','./macros.h')
+macro_sources = macro_source_str.split(",")
+MACROS = []
+for macro_source in macro_sources:
+    macros_str =  subprocess.check_output( ['perl', '-e', '@ls=<>;$str=join(\" \",map {$_=~s/\n//;s/^\s*//;s/\s*$//;s/.define\s*/-D/;s/.undef\s*/-U/;s/\s+/=/;$_} @ls);print $str',macro_source])
+    MACROS += macros_str.split()
+
 # Then build the rest of the code
 verbose = getOpt('v','Verbose','1')
-other=''
-WITH_OCL=''
-with_ocl= getOpt('ocl','Use OpenCL','0')
-if with_ocl == '1':
-    WITH_OCL = '-D_OPENCL_LES_WV'
-    envF=initOcl(envF)
-    kernel_opts = envF['KERNEL_OPTS']
-else:
-    envF['F95']=os.environ['FC']
-    envF['LINK']=os.environ['FC']
-    VERBOSE = '-DVERBOSE'
-    if verbose == '0':
+VERBOSE = '-DVERBOSE'
+if verbose == '0':
         VERBOSE = ''
-    other = '' #getOpt('D','Other macro','')
-    TIMINGS=''
-    if other !='':
-        TIMINGS = '-D'+other
-    defs=getOpt('D','Defines',None)
-    defflags=[]
-    if defs!=None:
+envF['F95']=os.environ['FC']
+envF['LINK']=os.environ['FC']
+
+defs=getOpt('D','Defines',None)
+defflags=[]
+if defs!=None:
         deflist=defs.split(',')
         defflags=map (lambda s: '-D'+s, deflist)  
-    OTHER_MACROS = defflags
+OTHER_MACROS = defflags
+
 # MPI specific build config
 WITH_MPI=''
 PROC_PER_ROW=''
 PROC_PER_COL=''
 USE_NETCDF_OUTPUT=''
+if '-DUSE_NETCDF_OUTPUT' in MACROS:
+    USE_NETCDF_OUTPUT = '-DUSE_NETCDF_OUTPUT' 
+    
 with_mpi = getOpt('mpi','Use MPI','0')
 with_nesting = getOpt('nested','Nested Grid','0')
 
 # WV: I observe that the SOR is never actually converging anyway, so no point in computing the global error
-NO_GLOBAL_SOR='-DNO_GLOBAL_SOR'
+#NO_GLOBAL_SOR='-DNO_GLOBAL_SOR'
 
 if with_mpi == '1':
     procPerRow= getOpt('procPerRow', 'Processes Per Row', '2')
@@ -67,9 +69,6 @@ if with_mpi == '1':
     PROC_PER_ROW = '-DPROC_PER_ROW=' + procPerRow
     PROC_PER_COL = '-DPROC_PER_COL=' + procPerCol
     WITH_MPI = '-DMPI'
-#    USE_NETCDF_OUTPUT='-DUSE_NETCDF_OUTPUT'
-#    envF['F95']='mpiifort'
-#    envF['F95']='mpif90'
     if OSX==0:    
         envF['LINK']=envF['F95']
         if USE_NETCDF_OUTPUT != '':
@@ -100,37 +99,32 @@ wv_debug = getOpt('wv_debug', 'WV Debug', '0')
 if wv_debug =='1':
     WV_DEBUG='-DWV_DEBUG'
 
-MPI_NEW_WV=''
-mpi_new_wv = getOpt('mpi_new_wv', 'New MPI code (WV)', '0')
-if mpi_new_wv =='1':
-    MPI_NEW_WV='-DMPI_NEW_WV'
+#MPI_NEW_WV=''
+#mpi_new_wv = getOpt('mpi_new_wv', 'New MPI code (WV)', '0')
+#if mpi_new_wv =='1':
+#    MPI_NEW_WV='-DMPI_NEW_WV'
 
-WV_TEST = '-DWV_TEST'
-WV_DEBUG_MPI = '' #'-DWV_DEBUG_MPI'
-NO_FILE_IO='-DNO_FILE_IO'
-ICAL = '-DICAL=0'
-IFBF='-DIFBF=1'
-IANIME='-DIANIME=1'
-IADAM='-DIADAM=0'
-FFLAGS  = [USE_NETCDF_OUTPUT, WITH_MPI, NESTED_LES,NO_GLOBAL_SOR, GR_DEBUG, WV_DEBUG,MPI_NEW_WV,WV_TEST,WV_DEBUG_MPI, PROC_PER_ROW, PROC_PER_COL, WITH_OCL, NO_FILE_IO, ICAL, IFBF,IANIME, IADAM,VERBOSE,TIMINGS,OTHER_MACROS]
+#WV_TEST = '-DWV_TEST'
+#WV_DEBUG_MPI = '' #'-DWV_DEBUG_MPI'
+#NO_FILE_IO='-DNO_FILE_IO'
+#ICAL = '-DICAL=0'
+#IFBF='-DIFBF=1'
+#IANIME='-DIANIME=1'
+#IADAM='-DIADAM=0'
+#FFLAGS  = [USE_NETCDF_OUTPUT, WITH_MPI, NESTED_LES,NO_GLOBAL_SOR, GR_DEBUG, WV_DEBUG,MPI_NEW_WV,WV_TEST,WV_DEBUG_MPI, PROC_PER_ROW, PROC_PER_COL, WITH_OCL, NO_FILE_IO, ICAL, IFBF,IANIME, IADAM,VERBOSE,TIMINGS,OTHER_MACROS]
+FFLAGS  = [WITH_MPI, NESTED_LES, GR_DEBUG, PROC_PER_ROW, PROC_PER_COL, VERBOSE, OTHER_MACROS] + MACROS
 
-if with_ocl == '0':
+
 #    FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium' ]
 #     FFLAGS += ['-cpp', '-O', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian', '-mcmodel=medium', '-fno-range-check','-fbounds-check','-Wuninitialized','-ffpe-trap=invalid,zero,overflow' ]
 #    FFLAGS += ['-cpp','-Ofast', '-m64', '-Wall','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian' ]
-     FFLAGS += ['-cpp', '-O','-Wall','-Wno-unused','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian','-fbounds-check' ,'-mcmodel=medium','-mlarge-data-threshold=0']
+FFLAGS += ['-cpp', '-O','-Wall','-Wno-unused','-ffree-form', '-ffree-line-length-none','-fconvert=big-endian','-fbounds-check' ,'-mcmodel=medium','-mlarge-data-threshold=0']
 
 #-- intel compiler ifort
 #     FFLAGS += [ '-O', '-convert', 'big_endian', '-shared-intel','-fpp', '-free','-Tf' ] # Order matters, -Tf must come last!
 #-- PGI compiler pgfort
 #     FFLAGS += ['-cpp','-Mipa=fast','-fast','-m64','-Mfree','-mcmodel=medium'])
 
-
-csources=[]
-CC= os.environ['CC']
-envC=Environment(CC=CC)
-if csources:
-    envC.Library('csubs',csources)
 
 fsources = []
 
@@ -146,20 +140,8 @@ if USE_NETCDF_OUTPUT != '':
 
 fsources+= ['./fortran_helper.f95', './anime.f95','./aveflow.f95','./bondFG.f95','./bondv1.f95','./boundp.f95','./boundsm.f95','./vel2.f95','./velFG.f95','./feedbf.f95','./feedbfm.f95','./les.f95','./grid.f95','./ifdata.f95','./init.f95','./main.f95','./set.f95','./timdata.f95','./common_sn.f95','./params_common_sn.f95']
 
-ffsources=[]
+ffsources = fsources + ['./adam.f95','./press.f95','./velnw.f95']
 
-if with_ocl == '1':
-    ffsources = fsources + ['./module_LES_conversions.f95','./module_LES_combined_ocl.f95','./oclWrapper.o']
-else:
-    ffsources = fsources + ['./adam.f95','./press.f95','./velnw.f95']
-
-
-if with_ocl == '1':
-    # Linker flags for OclWrapper
-    OPENCL_DIR=os.environ['OPENCL_DIR']
-    OCL_LDFLAGS =  ['-L.','-L'+OPENCL_DIR+'/OpenCLIntegration']
-else:
-    OCL_LDFLAGS =  []
 
 if OSX == 1:
 # Assuming MacPorts
@@ -202,16 +184,4 @@ mpi_ext=''
 if with_mpi == '1':
     mpi_ext='_mpi'
 
-ocl_ext=''
-if with_ocl == '1':
-    envF.Append(LIBS=['OclWrapperF','stdc++','OclWrapper'])
-    ocl_ext='_ocl'
-    if OSX==1:
-            envF.Append(FRAMEWORKS=['OpenCL'])
-    else:
-            envF.Append(LIBS=['OpenCL'])
-
-if csources:
-    envF.Append(LIBS=['csubs'])
-
-prog = envF.Program('les_main'+ocl_ext+mpi_ext,ffsources)
+prog = envF.Program('les_main'+mpi_ext,ffsources)

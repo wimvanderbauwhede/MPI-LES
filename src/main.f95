@@ -151,7 +151,7 @@ program main
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: h
     real(kind=4), dimension(ip,jp,kp)  :: hold
 !#ifndef _OPENCL_LES_WV
-    real(kind=4), dimension(ip,jp,kp)  :: fghold
+!    real(kind=4), dimension(ip,jp,kp)  :: fghold
 !#endif
 #ifndef WV_NEW
     real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2)  :: nou1
@@ -188,6 +188,7 @@ program main
 
 #ifdef TIMINGS
     integer (kind=4), dimension(0:9) :: timestamp
+    integer (kind=4) :: i
 #endif
 #ifdef NESTED_LES
 !    integer :: syncTicksLocal
@@ -299,7 +300,7 @@ inNest = inNestedGrid()
 ! -------calculate turbulent flow--------c
 #ifdef TIMINGS
         print *, 'run_LES_reference: time step = ',n
-        call system_clock(timestamp(0,:,:,:), clock_rate)
+        call system_clock(timestamp(0), clock_rate)
 #endif
         call velnw(p,ro,dxs,u,dt,f,dys,v,g,dzs,w,h) !WV: no MPI
 #ifdef TIMINGS

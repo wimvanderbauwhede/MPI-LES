@@ -151,25 +151,35 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
         sor = 0.0
         do nrd = 0,1
             do k = 1,kp
+#ifndef WV_OPENCL
 #ifdef WV_NEW
                 dz1 = dzs(k-1)
                 dz2 = dzs(k)
                 cn4s = 2./(dz1*(dz1+dz2))
                 cn4l = 2./(dz2*(dz1+dz2))
 #endif
+#endif
                 do j = 1,jp
+#ifndef WV_OPENCL
 #ifdef WV_NEW
                     cn3s = 2./(dys(j-1)*(dys(j-1)+dys(j)))
                     cn3l = 2./(dys(j)*(dys(j-1)+dys(j)))
 #endif
-
+#endif
 #ifndef TWINNED_BUFFER
                     do i = 1+mod(k+j+nrd,2),ip,2
 #else
                     do i=1,ip
 #endif
-
 #ifdef WV_NEW
+#ifdef WV_OPENCL
+                dz1 = dzs(k-1)
+                dz2 = dzs(k)
+                cn4s = 2./(dz1*(dz1+dz2))
+                cn4l = 2./(dz2*(dz1+dz2))
+                    cn3s = 2./(dys(j-1)*(dys(j-1)+dys(j)))
+                    cn3l = 2./(dys(j)*(dys(j-1)+dys(j)))
+#endif
                         cn2s = 2./(dxs(i-1)*(dxs(i-1)+dxs(i)))
                         cn2l = 2./(dxs(i)*(dxs(i-1)+dxs(i)))
 

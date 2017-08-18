@@ -1,3 +1,4 @@
+#define WV_OPENCL
 #define WV_NEW
 #define NO_GLOBAL_SOR 
 #define TWINNED_BUFFER 

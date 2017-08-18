@@ -39,12 +39,12 @@ velFG_host.f95
 velnw_host.f95
 =cut
 
-my $ref_dir = '../src';
+my $ref_dir = '../PostCPP';
 for my $src (@sources) {
    system("cp $ref_dir/$src .");
 }
 
-my @sources2=qw(macros.h
+my @sources2=qw(macros_kernel.h
 SConstruct.auto
 generate_OpenCL_kernel.sh
 rf4a_to_C.cfg

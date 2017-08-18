@@ -130,7 +130,7 @@ close $STASH;
 sub run_cpp_and_clean_up { (my $no_macros, my $includestr, my $definestr, my $src_path, my $out_path) = @_;
     my $cmd_cpp =  $no_macros ? "cat $src_path " : "cpp -Wno-invalid-pp-token -P  $includestr $definestr -Wno-extra-tokens $src_path ";
     my $redir = $out_path eq '' ? '' : '>';
-    my $cmd_clean_up = "| grep -v -E '^\\s*\\!|^\\s*\$' | perl -p -e 's/\\s*\\!.+\$//;s/\£/\#/' $redir $out_path";#$wd/../PostCPP/$src_path";
+    my $cmd_clean_up = "| grep -v -E '^\\s*\\!\\s*[a-z\#]|^\\s*\$' | perl -p -e 's/^([^\\!]+)\\s*\\!.+\$/\$1/' $redir $out_path";#$wd/../PostCPP/$src_path";
 #    my $cmd_clean_up = "| grep -v -E '^\\s*\\!|^\\s*\$' | perl -p -e 's/\\s*\\!.+\$//;s/\£/\#/' > $wd/../PostCPP/$srcdir/$srcf";
 #    my $cmd_cpp = "cpp -Wno-invalid-pp-token -P  $includestr_l1 $definestr -Wno-extra-tokens $wd/../PostCPP/PrePostCPP/$srcdir/$srcf ";
         my $cmd = $cmd_cpp.$cmd_clean_up;
@@ -152,6 +152,8 @@ sub stash_lines_to_skip { (my $srcfile, my $stash_ref, my $macros_list, my $outp
     my $placeholder = 7188;
     my @out_lines=();
     my $in_block='';
+    my $in_decls=0;
+    
     $stash_ref->{$srcfile}={};
     open my $IN, '<', $srcfile or die $!;
     while (my $line = <$IN>) {
@@ -166,25 +168,26 @@ sub stash_lines_to_skip { (my $srcfile, my $stash_ref, my $macros_list, my $outp
             if (exists $macros_to_skip{$macro}) { 
                 # put the placeholder line
                 $in_block=$macro;
-                push @out_lines, '  '.$placeholder.' continue';
+                $in_decls=0;
                 $stash_ref->{$srcfile}{$placeholder}=[];
                 # push the line onto the list of lines for this placeholder
                 push @{ $stash_ref->{$srcfile}{$placeholder}}, $line;
             } else {
-            if ($in_block ne '') {
-                push @{ $stash_ref->{$srcfile}{$placeholder}}, $line;
-            } else {
+	            if ($in_block ne '') {
+    	            push @{ $stash_ref->{$srcfile}{$placeholder}}, $line;
+        	    } else {
                 # do nothing
-                push @out_lines, $line;
+                	push @out_lines, $line;
+           		}
             }
-            }
-
         } elsif ($line=~/^\s*\#endif/) { 
             # pop off the stack
             my $macro = pop @blocks_stack;
             # if this line is the end of a block, resume normal operation
             if (scalar @blocks_stack == 0 and $in_block eq $macro and $macro ne '') {
                 push @{ $stash_ref->{$srcfile}{$placeholder}}, $line;
+                my $maybe_comment = $in_decls ? '!' : '';
+                push @out_lines, $maybe_comment.'  '.$placeholder.' continue';
                 $in_block='';
                 $placeholder++;
             } else {
@@ -197,8 +200,11 @@ sub stash_lines_to_skip { (my $srcfile, my $stash_ref, my $macros_list, my $outp
             }
         } else {
             if ($in_block ne '') {
-            # if we're in a block, stash
-             push @{ $stash_ref->{$srcfile}{$placeholder}}, $line;
+	            # if we're in a block, stash
+             	push @{ $stash_ref->{$srcfile}{$placeholder}}, $line;
+             	if ($line=~/^\s*use\s+|::/) {
+             		$in_decls=1;
+             	} 
             } else {
             # otherwise, do nothing
              push @out_lines, $line;
