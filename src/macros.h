@@ -10,3 +10,4 @@
 #define IADAM=0 
 #undef I_IFDATA_OUT
 #undef I_AVEFLOW
+#define I_ANIME

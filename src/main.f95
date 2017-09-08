@@ -71,9 +71,6 @@ program main
     real(kind=4) :: ro
     real(kind=4) :: time
     real(kind=4) :: vn
-#ifdef TIMINGS
-    integer :: clock_rate
-#endif
 
     real(kind=4), dimension(ip,jp,kp)  :: avel
     real(kind=4), dimension(ip,jp,kp)  :: avep
@@ -186,14 +183,24 @@ program main
     real(kind=4), dimension(0:ip+1,0:jp+1)  :: vspd
   
 
-#ifdef TIMINGS
+!#ifdef TIMINGS
+    integer :: clock_rate
     integer (kind=4), dimension(0:9) :: timestamp
     integer (kind=4) :: i
-#endif
+!#endif
 #ifdef NESTED_LES
 !    integer :: syncTicksLocal
     logical :: inNest
 #endif
+!      u=0.0
+!      v=0.0
+!      w=0.0
+!      f=0.0
+!      g=0.0
+!      h=0.0
+!      rhs=0.0
+!      p=0.0
+
 #ifdef MPI
     call initialise_mpi()
     if (mpi_size .ne. procPerRow * procPerCol) then

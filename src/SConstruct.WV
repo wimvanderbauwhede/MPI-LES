@@ -31,7 +31,7 @@ macro_source_str = getOpt('m','Macros','./macros.h')
 macro_sources = macro_source_str.split(",")
 MACROS = []
 for macro_source in macro_sources:
-    macros_str =  subprocess.check_output( ['perl', '-e', '@ls=<>;$str=join(\" \",map {$_=~s/\n//;s/^\s*//;s/\s*$//;s/.define\s*/-D/;s/.undef\s*/-U/;s/\s+/=/;$_} @ls);print $str',macro_source])
+    macros_str =  subprocess.check_output( ['perl', '-e', '@ls=<>;$macros_str=join(\" \",map {$_=~s/\n//;s/^\s*//;s/\s*$//;s/.define\s*/-D/;s/.undef\s*/-U/;s/\s+/=/;$_} @ls);print $macros_str',macro_source])
     MACROS += macros_str.split()
 
 # Then build the rest of the code

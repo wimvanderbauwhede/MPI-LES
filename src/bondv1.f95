@@ -120,7 +120,6 @@ subroutine bondv1(u,z2,dzn,v,w,n,n0,dt,dxs)
 !
 
     aaa = 0.0
-    gaaa = 0.0
     do k = 1,kp
         do j = 1,jp
             aaa = amax1(aaa,u(ip,j,k))
@@ -130,11 +129,13 @@ subroutine bondv1(u,z2,dzn,v,w,n,n0,dt,dxs)
 !WV what this call does: if the process is in the bottom row then gaaa is the max of all processes in that row. Otherwise it is 0
 !WV so all processes compute aaa, but only the bottom row does the gather. Very strange.
 ! print *, rank,'sync:',syncTicks,'bondv1 BGA'
+    gaaa = 0.0
     call gatheraaa(gaaa, aaa, procPerRow)
 ! print *, rank,'sync:',syncTicks,'bondv1 AGA'
+#else
+    gaaa = aaa
 #endif
     bbb = aaa
-    gbbb = gaaa
     do k = 1,kp
         do j = 1,jp
             bbb = amin1(bbb,u(ip,j,k))
@@ -142,8 +143,11 @@ subroutine bondv1(u,z2,dzn,v,w,n,n0,dt,dxs)
     end do
 #ifdef MPI
 ! print *, rank,'sync:',syncTicks,'bondv1 BGB'
+    gbbb = gaaa
     call gatherbbb(gbbb, bbb, procPerRow)
 ! print *, rank,'sync:',syncTicks,'bondv1 AGB'
+#else
+    gbbb=bbb
 #endif
 
 #if GR_DEBUG

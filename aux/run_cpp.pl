@@ -23,6 +23,7 @@ if (-e 'macros.h') {
     open my $MACROS, '<', 'macros.h' or die $!;
     while(my $line=<$MACROS>) {
         chomp $line;
+        next if $line=~/^\s*$/;
         $line=~s/^\s*#(\w+)\s+//;
         my $cmd = $1;
         $line=~s/\s+//;

@@ -5,7 +5,7 @@ module module_feedbf
 
 contains
 #ifdef WV_NEW
-
+#ifdef NOT_INLINED
 subroutine calc_abcd_mask(zbm, z2, dzn, i,j,k, abcd_mask1)
     use params_common_sn
     integer, intent(In) :: i,j,k
@@ -27,7 +27,7 @@ subroutine calc_abcd_mask(zbm, z2, dzn, i,j,k, abcd_mask1)
     end if
 
 end subroutine calc_abcd_mask
-
+#endif
 subroutine feedbf(u,v,w,f,g,h,usum,vsum,wsum,dzn,z2,zbm,alpha,beta,dt)
 #else
 subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
@@ -118,8 +118,20 @@ subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
     do k = 1,kp
         do j = 1,jp
             do i = 1,ip
-
+#ifdef NOT_INLINED
                 call calc_abcd_mask(zbm, z2, dzn, i,j,k, abcd_mask)
+#else
+                abcd_mask1(0) = 1.
+                abcd_mask1(1) = 0.
+                abcd_mask1(2) = 0.
+                abcd_mask1(3) = 0.
+                if(zbm(i,j) > z2(k)+0.5*dzn(k)) then
+                    abcd_mask1(0) = 0.0
+                    abcd_mask1(1) = 1.0
+                    abcd_mask1(2) = 1.0
+                    abcd_mask1(3) = 1.0
+                end if
+#endif
                 usum(i,j,k) = (usum(i,j,k)+u(i,j,k))*abcd_mask(1)
                 vsum(i,j,k) = (vsum(i,j,k)+v(i,j,k))*abcd_mask(2)
                 wsum(i,j,k) = (wsum(i,j,k)+w(i,j,k))*abcd_mask(3)

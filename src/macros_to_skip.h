@@ -1,2 +1,2 @@
 #define TIMINGS
-#define I_ANIME
+#undef I_ANIME
