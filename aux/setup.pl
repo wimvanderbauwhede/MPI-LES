@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-use v5.24;
+use v5.10;
 use strict;
 use warnings;
 if (not -d 'data') {

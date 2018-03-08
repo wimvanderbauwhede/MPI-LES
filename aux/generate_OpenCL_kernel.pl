@@ -7,7 +7,7 @@ my $macros_kernel_src = './macros_kernel.h';
 if (not -e $macros_kernel_src  && !@ARGV) {
     die "Please specify the source for the macros NTH and NUNITS\n";
 }
-system($ENV{HOME}.'/Git/RefactorF4Acc/refactorF4acc.pl -P translate_to_OpenCL -c rf4a_to_C.cfg adam_bondv1_feedbf_les_press_v_etc_superkernel');
+system($ENV{HOME}.'/Git/RefactorF4Acc/bin/refactorF4acc.pl -P translate_to_OpenCL -c rf4a_to_C.cfg adam_bondv1_feedbf_les_press_v_etc_superkernel');
 system('cp  module_adam_bondv1_feedbf_les_press_v_etc_superkernel.cl module_adam_bondv1_feedbf_les_press_v_etc_superkernel_ORIG.cl');
 open my $MK, '<', $macros_kernel_src or die $!;
 my @ls=<$MK>;
