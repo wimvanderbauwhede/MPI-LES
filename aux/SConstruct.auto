@@ -1,8 +1,4 @@
 import subprocess
-
-external_wind_profile = False
-distributed_computation = False
-
 import os
 import commands
 import glob
@@ -32,25 +28,33 @@ if dbg  == '1':
 nth = getOpt('nth', 'Number of threads', '0')
 nunits = getOpt('nunits', 'Number of compute units', '0')
 
-macro_source_str = getOpt('m','Macros','./macros.h')
+
+macro_source_str = getOpt('m','Macros','./macros.h,./macros_to_skip.h')
 macro_sources = macro_source_str.split(",")
 MACROS = []
 for macro_source in macro_sources:
     macros_str =  subprocess.check_output( ['perl', '-e', '@ls=<>;$str=join(\" \",map {$_=~s/\n//;s/^\s*//;s/\s*$//;s/.define\s*/-D/;s/.undef\s*/-U/;s/\s+/=/;$_} @ls);print $str',macro_source])
     MACROS += macros_str.split()
 
+    nth_nunits_str =  subprocess.check_output( ['perl', '-e', '@ls=<>;$str=join(\" \",map {$_=~s/\n//;s/^\s*//;s/\s*$//;s/.define\s*//;$_} @ls);print $str','./macros_kernel.h'])
+    NTH_NUNITS = nth_nunits_str.split()
+
+nth_nunits_dict = {} 
+nth_nunits_dict[ NTH_NUNITS[0] ] = NTH_NUNITS[1]
+nth_nunits_dict[ NTH_NUNITS[2] ] = NTH_NUNITS[3]
+
+if nth == '0':
+    nth=nth_nunits_dict['NTH']
+if nunits == '0':
+    nth=nth_nunits_dict['NUNITS']
+
+#TODO: more defensive!!!
+
+# Needed for NetCDF library linking
 USE_NETCDF_OUTPUT=''
 if '-DUSE_NETCDF_OUTPUT' in MACROS:
     USE_NETCDF_OUTPUT = '-DUSE_NETCDF_OUTPUT' 
-TIMSERIS_FIXED=''
-if '-DTIMSERIS_FIXED' in MACROS:
-    TIMSERIS_FIXED = '-DTIMSERIS_FIXED' 
-TIMDATA=''
-if '-DTIMDATA' in MACROS:
-    TIMDATA = '-DTIMDATA' 
     
-WITH_OCL=''
-
 envF=initOcl(envF)
 barrier_ok=''
 if OclBuilder.dev == 'GPU':
@@ -64,7 +68,6 @@ OclBuilder.kopts='-cl-mad-enable -cl-fast-relaxed-math -I. -DNTH='+str(nth)+' -D
 print 'OclBuilder.kopts: '+OclBuilder.kopts
 
 #OclBuilder.kopts
-WITH_OCL = '-D_OPENCL_LES_WV'
 kernel_opts = envF['KERNEL_OPTS'] 
 print "envF['KERNEL_OPTS']: ", kernel_opts 
 
@@ -131,33 +134,11 @@ def manufactureTempName():
         count += 1
     return current
 
-#TEST_SMALL_DOMAIN = 0
-#USE_NETCDF_OUTPUT = 0
-
-#NO_FILE_IO='-DNO_FILE_IO'
-#ICAL = '-DICAL=0'
-#IFBF='-DIFBF'
-#IANIME='-DIANIME=0'
-#IADAM='-DIADAM=0'
-#TIMSERIS_FIXED='' #  '-DTIMSERIS_FIXED'
-#TIMDATA='' #  '-DTIMDATA'
-
 #sor_max_iters = getOpt('nmaxsor','SOR max iters','50') 
 #SOR_MAX_ITERS = '-DSOR_MAX_ITERS ='+sor_max_iters
 
-NUNITS = '-DNUNITS=' + str(nunits)
-NTH = '-DNTH=' + str(nth)
 
-#FFLAGS  = [ WITH_OCL, TIMSERIS_FIXED, NO_FILE_IO, NO_COMPUTE, ICAL, IFBF,IANIME, IADAM] + SOR_FLAGS + EXTRA_FLAGS
-FFLAGS  = [ WITH_OCL ] + EXTRA_FLAGS + MACROS
-#if USE_NETCDF_OUTPUT == 1:
-#    FFLAGS  += ['-DUSE_NETCDF_OUTPUT']
-#if TEST_SMALL_DOMAIN == 1:
-#    FFLAGS  += ['-DTEST_SMALL_DOMAIN']
-if external_wind_profile:
-    FFLAGS  += ['-DEXTERNAL_WIND_PROFILE']
-if distributed_computation:
-    FFLAGS += ['-DHALO_EXCHANGE']
+FFLAGS  = EXTRA_FLAGS + MACROS
 
 status=0
 envF['STATUS'] = status
@@ -171,7 +152,7 @@ csources=[]
 if os.path.exists('./noop.c'):
     csources=['./noop.c']
 
-envC=Environment(CC='gcc')
+envC=Environment(CC=os.environ['CC'])
 if csources:
     envC.Library('csubs',csources)
 
@@ -181,12 +162,6 @@ fsources = ['./anime.f95','./aveflow.f95','./bondFG.f95','./boundp.f95','./bound
 
 fsources.append('oclWrapper.o')
 	
-if TIMDATA != '':
-    fsources.append('./timdata.f95')
-
-if TIMSERIS_FIXED != '':
-    fsources.append('./timseris.f95')
-
 cwd = os.getcwd()
 
 # Basically, it's Linux unless it's OS X
