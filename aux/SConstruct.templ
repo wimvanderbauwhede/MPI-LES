@@ -156,13 +156,9 @@ envC=Environment(CC=os.environ['CC'])
 if csources:
     envC.Library('csubs',csources)
 
-hostsources = [ __HOST_MAIN__ __HOST_KERNELS__ __MODULE_INIT__ ]
+hostsources = [ __HOST_SRCS__ , __MODULE_INIT__ ]
 kernelSource = __KERNEL_SRC_CL__
 fsources = [ __ORIG_SOURCES__ ]
-
-hostsources = ['./main_host.f95','./adam_host.f95','./feedbf_host.f95','./les_host.f95','./press_host.f95','./velnw_host.f95','./bondv1_host.f95','./velFG_host.f95','./module_adam_bondv1_feedbf_les_press_v_etc_superkernel_init.f95']
-kernelSource = 'module_adam_bondv1_feedbf_les_press_v_etc_superkernel.cl'
-fsources = ['./anime.f95','./aveflow.f95','./bondFG.f95','./boundp.f95','./boundsm.f95','./feedbfm.f95','./grid.f95','./ifdata.f95','./init.f95','./set.f95','common_sn.f95','params_common_sn.f95','./timseris.f95']
 
 fsources.append('oclWrapper.o')
 	

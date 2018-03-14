@@ -135,7 +135,7 @@ subroutine bondv1(u,z2,dzn,v,w,n,n0,dt,dxs)
 #else
     gaaa = aaa
 #endif
-    bbb = aaa
+    bbb = 1e38 ! aaa FIXME
     do k = 1,kp
         do j = 1,jp
             bbb = amin1(bbb,u(ip,j,k))

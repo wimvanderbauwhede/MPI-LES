@@ -121,15 +121,15 @@ subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
 #ifdef NOT_INLINED
                 call calc_abcd_mask(zbm, z2, dzn, i,j,k, abcd_mask)
 #else
-                abcd_mask1(0) = 1.
-                abcd_mask1(1) = 0.
-                abcd_mask1(2) = 0.
-                abcd_mask1(3) = 0.
+                abcd_mask(0) = 1.
+                abcd_mask(1) = 0.
+                abcd_mask(2) = 0.
+                abcd_mask(3) = 0.
                 if(zbm(i,j) > z2(k)+0.5*dzn(k)) then
-                    abcd_mask1(0) = 0.0
-                    abcd_mask1(1) = 1.0
-                    abcd_mask1(2) = 1.0
-                    abcd_mask1(3) = 1.0
+                    abcd_mask(0) = 0.0
+                    abcd_mask(1) = 1.0
+                    abcd_mask(2) = 1.0
+                    abcd_mask(3) = 1.0
                 end if
 #endif
                 usum(i,j,k) = (usum(i,j,k)+u(i,j,k))*abcd_mask(1)
