@@ -6,7 +6,6 @@ Note that the GIS files do not contain the actual GIS data for Kyoto but synthet
 # Requirements
 - Python 2.7 or a later version of Python 2.x (not Python 3).
 - SConstruct (http://www.scons.org/)
-- OpenCL Integration (https://github.com/wimvanderbauwhede/OpenCLIntegration)
 - An MPI library (MPICH 3.1.3 and OpenMPI 1.8.4 used during testing).
 
 # Compiling and running the LES
@@ -16,11 +15,7 @@ Original single threaded LES:
 scons ocl=0 mpi=0
 ./les_main
 ```
-OpenCL LES:
-```shell
-scons ocl=1 mpi=0
-./les_main_ocl
-```
+
 MPI LES:
 
 ```shell
