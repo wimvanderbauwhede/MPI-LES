@@ -1,7 +1,7 @@
 package RunCpp;
 
 # 
-#   (c) 2018- Wim Vanderbauwhede <wim@dcs.gla.ac.uk>
+#   (c) 2018- Wim Vanderbauwhede <wim.vanderbauwhede@glasgow.ac.uk>
 #   
 	
 use vars qw( $VERSION );

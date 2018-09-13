@@ -23,11 +23,11 @@ use Getopt::Long;
 
 # Name 
 
-
+  generate_and_build_OpenCL_version.pl
 
 # Description
 
-The purpose of this script is to convert sequential Fortran 77 code to Fortran 95 code with parallelis OpenCL kernels which can be offloaded to a GPU or run multithreaded on the CPU. 
+The purpose of this script is to convert sequential Fortran 77 code to Fortran 95 code with parallelised OpenCL kernels which can be offloaded to a GPU or run multithreaded on the CPU. 
 
 # Prerequisites
 
@@ -39,6 +39,7 @@ The compilers used by the script do not work on all Fortran 77 or Fortran 95 cod
 
 # Usage
 =cut
+
 my $plat = 'GPU';
 my $nth = 256;
 my $nunits = 16;
@@ -152,30 +153,11 @@ if (length($superkernel_name)==30) {
 }
 
 my $TRUST_THE_COMPILER = 1 - $use_separate_stash_step;
-# 5-bit binary mask, 0 is run the step, 1 is skip it. So all 0 means run all steps
-# 1 = skip step 1 
-# 2 = skip step 2
-# 4 = skip step 3
-# 8 = skip step 4
-# 16 = don't trust the compiler
-
-# Given we trust the compiler;
-# 14 = run only step 1 
-# 13 = run only step 2
-# 11 = run only step 3
-# 7 = run only step 4
-
-
-my $mask = 0;
     
-#if (@ARGV) {
-#    $mask = $ARGV[0];
-#}
-my $skip_step_0 = 1;# $mask & 1;
-my $skip_step_1 = 1;# $mask & 1;
-my $skip_step_2 = 1;# ($mask & 2) >>1; 
-my $skip_step_3 = 1;# ($mask & 4) >>2; # unused!
-my $skip_step_4 = 1;# ($mask & 8) >>3;
+my $skip_step_0 = 1;
+my $skip_step_1 = 1;
+my $skip_step_2 = 1;
+my $skip_step_3 = 1;
 
 my %stages = map { $_ => $_} split(/\s*,\s*/,$stages_str);
 
@@ -189,20 +171,8 @@ if (exists $stages{convert}) {
     $skip_step_2 = 0;
 }
 if (exists $stages{build}) {
-    $skip_step_4 = 0;
+    $skip_step_3 = 0;
 }
-#$TRUST_THE_COMPILER = 1 - ( ($mask & 16) >> 8);
-$TRUST_THE_COMPILER = 1 - ( ($mask & 16) >> 8);
-
-
-#say $skip_step_0 ;
-#say $skip_step_1 ;
-#say $skip_step_2 ;
-#say $skip_step_3 ;
-#say $skip_step_4 ;
-#
-#say $TRUST_THE_COMPILER ;
-#die;
 
 my $gen_dir = 'GeneratedCode';
 if ($TRUST_THE_COMPILER==1) {
@@ -226,6 +196,9 @@ if (not -d 'GIS') {
 chdir $wd;
  
 my $refactored=0;
+
+# Step 0. Check if the code needs to be refactored from F77 to F95
+# If so, refactor it; if not, say why not.
 if (not $skip_step_0) {
     chdir 'src';
     my @f77_sources = glob('*.f77 *.F77 *.f *.F');
@@ -239,7 +212,7 @@ if (not $skip_step_0) {
         system($ENV{HOME}.'/Git/RefactorF4Acc/bin/'.'refactorF4acc.pl -c ./rf4a.cfg '.$vflag); 
  
     } else {
-        say "Refactoring step stage skipped:\n";
+        say "Refactoring step stage skipped because already done:\n";
         if (!$has_rf4a_cfg) {
         say "\t- No rf4a.cfg file"; 
         }
@@ -251,14 +224,14 @@ if (not $skip_step_0) {
 }
     my $src_dir = $refactored ? 'RefactoredSources' : 'src';
 
+# Step 1. Run the auto-parallelizing GPU compiler `AutoParallel-Fortran-exe`. The output is stored in `GeneratedCodeV2`
 if (not $skip_step_1) {
     if ($TRUST_THE_COMPILER) {
         chdir $src_dir;
         ##
         say'*NOTE 2018-03-07* 
         The `AutoParallel-Fortran` compiler has built-in handling of macros via the -D and -X flags. 
-        This should generate the same code as when using the `run_cpp.pl` and `restore_stashed_lines.pl` scripts. 
-        However, this is _TO BE TESTED_!
+        This generates the same code as when using the `run_cpp.pl` and `restore_stashed_lines.pl` scripts. 
         ' if 0;
         
         (my $defined_macros_str, my $undef_macros_str) = macro_file_to_cmd_line_str( './macros.h','-D');
@@ -285,9 +258,7 @@ if (not $skip_step_1) {
         }
          
         chdir 'PostCPP';
-    #    system('which AutoParallel-Fortran-exe');
         say("AutoParallel-Fortran-exe $kernel_sources_str -out ../$gen_dir/ -iowrite $iowrite_subs_str -main ./$main_src $vflag -plat $plat");
-    #    die cwd();
         system("AutoParallel-Fortran-exe $kernel_sources_str -out ../$gen_dir/ -iowrite $iowrite_subs_str -main ./$main_src $vflag -plat $plat");
         
         ##
@@ -300,7 +271,7 @@ if (not $skip_step_1) {
     
     }
 }
-
+# Step 2. Copy non-modified source files and scripts and config files needed to build the OpenCL kernel, and generate the OpenCL kernel
 if (not $skip_step_2) { 
     
     ##
@@ -344,10 +315,6 @@ ENDCFG
         system("cp $ref_dir_2/$src . ");
     }
 
-    #}
-
-
-    #if (not $skip_step_3) {
     ##
     say '* Then we generate the actual OpenCL kernel code using `RefactorF4Acc`' if $VV;
     chdir $wd;
@@ -386,11 +353,11 @@ ENDCFG
 
 }
 
-if (not $skip_step_4) {
+# Step 3. Build the host code for the OpenCL kernel
+if (not $skip_step_3) {
 ##
     chdir $wd;
     chdir $gen_dir;
-    
     
     ## SConstruct.auto is generated
     create_sconstruct($main_src, \@kernel_sources, \@orig_sources, $superkernel_name);
@@ -404,46 +371,48 @@ if (not $skip_step_4) {
     system("scons -f SConstruct.auto -s mcm=m dev=$plat nth=$nth nunits=$nunits");
 }
 
+# ----- Helper functions -----
+# 
 sub create_sconstruct { (my $main_src, my $kernel_sources, my $orig_sources, my $superkernel_name)=@_;
 
-my @host_srcs = map {
+    my @host_srcs = map {
         my $name = strip_ext($_);
         my $host_name = $name.'_host';
         my $host_src = "'$host_name.f95'";
         $host_src
     } ($main_src, @{ $kernel_sources } );
-    
+
     my $host_srcs_str = join(',',@host_srcs);
     my @q_orig_sources = map { "'./$_'" } @{ $orig_sources };
     my $orig_srcs_str = join(',',@q_orig_sources);
-    
+
     my $module_init_str = "'./module_${superkernel_name}_init.f95'";
     my $kernel_src_cl_str = "'module_${superkernel_name}.cl'";
 
     if (not -e "SConstruct.auto" ) {
-    open my $SCONS_TEMPL,'<',"$wd/aux/SConstruct.templ";    
-    open my $SCONS,'>', "SConstruct.auto";
-    while (my $line= <$SCONS_TEMPL> ) {
-        $line=~/__HOST_SRCS__/ && do {
-            $line=~s/__HOST_SRCS__/$host_srcs_str/;            
-        }; 
-        $line=~/__MODULE_INIT__/ && do {
-            $line=~s/__MODULE_INIT__/$module_init_str/;
-        }; 
-        $line=~/__KERNEL_SRC_CL__/ && do {
-            $line=~s/__KERNEL_SRC_CL__/$kernel_src_cl_str/;
-        };
-        $line=~/__ORIG_SOURCES__/ && do {
-            $line=~s/__ORIG_SOURCES__/$orig_srcs_str/;
-        }; 
-        print $SCONS $line;
-    }
-    close $SCONS;
-    close $SCONS_TEMPL;
+        open my $SCONS_TEMPL,'<',"$wd/aux/SConstruct.templ";    
+        open my $SCONS,'>', "SConstruct.auto";
+        while (my $line= <$SCONS_TEMPL> ) {
+            $line=~/__HOST_SRCS__/ && do {
+                $line=~s/__HOST_SRCS__/$host_srcs_str/;            
+            }; 
+            $line=~/__MODULE_INIT__/ && do {
+                $line=~s/__MODULE_INIT__/$module_init_str/;
+            }; 
+            $line=~/__KERNEL_SRC_CL__/ && do {
+                $line=~s/__KERNEL_SRC_CL__/$kernel_src_cl_str/;
+            };
+            $line=~/__ORIG_SOURCES__/ && do {
+                $line=~s/__ORIG_SOURCES__/$orig_srcs_str/;
+            }; 
+            print $SCONS $line;
+        }
+        close $SCONS;
+        close $SCONS_TEMPL;
     } else {
         say "SConstruct.auto already exists, not overwriting. Delete or rename the file and run the build stage again.";
     }
-    
+
 }
 
 sub strip_ext { (my $fn)=@_;
