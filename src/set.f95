@@ -89,10 +89,10 @@ contains
       n1 = 1
 ! --setnmax
 
-#ifndef WV_TEST
+#ifndef WV_TIMESTEPS
         nmax = 8000
 #else
-        nmax = 100
+        nmax = WV_TIMESTEPS
 #endif
 
 

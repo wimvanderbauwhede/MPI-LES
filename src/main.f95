@@ -152,7 +152,7 @@ program main
 !#ifndef _OPENCL_LES_WV
 !    real(kind=4), dimension(ip,jp,kp)  :: fghold
 !#endif
-#ifndef WV_NEW_VELFG
+#ifndef WV_NEW_LES2
     real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2)  :: nou1
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: nou2
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: nou3
@@ -241,7 +241,7 @@ program main
 #endif
 !    n0=200
 
-#if defined( WV_NEW ) && defined( WV_NEW_LES ) && defined( WV_NEW_FEEDBF ) && defined( WV_NEW_VELFG )
+#if defined( WV_NEW ) && defined( WV_NEW_LES ) && defined( WV_NEW_LES2 ) && defined( WV_NEW_FEEDBF ) && defined( WV_NEW_VELFG )
 !#ifndef WV_DEBUG_MPI
     call ifdata( &
 !#if ICAL == 1
@@ -267,8 +267,8 @@ program main
                 cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9,&
 #endif
                 dfw1,dzs,&
-#ifndef WV_NEW_VELFG
-                nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,&
+#ifndef WV_NEW_LES2
+                nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9,&
 #endif
 #ifndef WV_NEW_FEEDBF
                 amask1,bmask1,cmask1,dmask1,&
@@ -340,7 +340,9 @@ if (n>n_nest0) then
         diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9, &
 #endif
         cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9, &
+#ifndef WV_NEW_LES2
         nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9, &
+#endif
         uspd,vspd) !WV: calls vel2 which uses halos
 #endif
 #ifdef TIMINGS

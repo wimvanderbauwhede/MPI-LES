@@ -17,20 +17,19 @@ module module_ifdata
 
 contains
 
-#if defined( WV_NEW )  && defined( WV_NEW_FEEDBF ) && defined( WV_NEW_VELFG ) && defined(WV_NEW_LES)
+#if defined( WV_NEW ) && defined( WV_NEW_FEEDBF ) && defined( WV_NEW_VELFG ) && defined(WV_NEW_LES)  && defined(WV_NEW_LES2)
       subroutine zero_arrays(dfu1, dfv1, dfw1)
 #else
       subroutine zero_arrays(&
 #ifndef WV_NEW_VELFG
       cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9, &
 #endif
-              dfu1, dfv1, dfw1, &
+              dfu1, dfv1, dfw1 &
 #ifndef WV_NEW_LES
-              diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,  &
+              ,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9 &
 #endif
-!              f,g,h, &
-#ifndef WV_NEW_VELFG
-              nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9 &
+#ifndef WV_NEW_LES2
+              ,nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9 &
 #endif
               )
 #endif
@@ -67,7 +66,7 @@ contains
 !        real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: g
 !        real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: h
 #endif
-#ifndef WV_NEW_VELFG
+#ifndef WV_NEW_LES2
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou2
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou3
@@ -104,7 +103,7 @@ contains
               diu8 = 0.0
               diu9 = 0.0
 #endif
-#ifndef WV_NEW_VELFG
+#ifndef WV_NEW_LES2
               nou1 = 0.0
               nou5 = 0.0
 
@@ -125,7 +124,7 @@ contains
 
       end subroutine
 
-#if defined( WV_NEW ) && defined( WV_NEW_LES ) && defined( WV_NEW_FEEDBF ) && defined( WV_VELFG)
+#if defined( WV_NEW ) && defined( WV_NEW_LES ) && defined( WV_NEW_LES2 ) && defined( WV_NEW_FEEDBF ) && defined( WV_VELFG)
       subroutine ifdata( &
 !#if ICAL == 1
       fold,gold,hold, time, &
@@ -134,6 +133,28 @@ contains
       f,g,h, &
       ical,nif)
 #else
+
+!    call ifdata( &
+!!#if ICAL == 1
+!                fold,gold,hold,fghold, time, &
+!!#endif
+!                n,u,v,w,p,usum,vsum,wsum,delx1,dx1,dy1,dzn,&
+!#ifndef WV_NEW_LES
+!                diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,&
+!#endif
+!                sm,f,g,h,z2,dt,dxs,dfu1,vn,dfv1, &
+!#ifndef WV_NEW_VELFG
+!                cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9,&
+!#endif
+!                dfw1,dzs,&
+!#ifndef WV_NEW_LES2
+!                nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9,&
+!#endif
+!#ifndef WV_NEW_FEEDBF
+!                amask1,bmask1,cmask1,dmask1,&
+!#endif
+!                alpha,beta,fx,fy,fz,zbm,ical,nif)
+
       subroutine ifdata( &
 !#if ICAL == 1
                 fold,gold,hold,fghold, time, &
@@ -147,8 +168,8 @@ contains
                 cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9,&
 #endif
                 dfw1,dzs,&
-#ifndef WV_NEW_VELFG
-                nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,&
+#ifndef WV_NEW_LES2
+                nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9,&
 #endif
 #ifndef WV_NEW_FEEDBF
                 amask1,bmask1,cmask1,dmask1,&
@@ -170,7 +191,7 @@ contains
         integer, intent(In) :: ical
 
 !#endif
-#if !defined( WV_NEW ) || (defined( WV_NEW ) && (!defined( WV_NEW_FEEDBF ) || !defined( WV_NEW_VELFG ) || !defined(WV_NEW_LES)))
+#if !defined( WV_NEW ) || (defined( WV_NEW ) && (!defined( WV_NEW_FEEDBF ) || !defined( WV_NEW_VELFG ) || !defined(WV_NEW_LES)|| !defined(WV_NEW_LES2)))
         real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: fghold
         real(kind=4), intent(In) :: alpha
         real(kind=4), intent(In) :: beta
@@ -192,7 +213,7 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov9
 #endif
-#if !defined( WV_NEW ) || (defined( WV_NEW ) && (!defined( WV_NEW_FEEDBF ) || !defined( WV_NEW_VELFG ) || !defined(WV_NEW_LES)))
+#if !defined( WV_NEW ) || (defined( WV_NEW ) && (!defined( WV_NEW_FEEDBF ) || !defined( WV_NEW_VELFG ) || !defined(WV_NEW_LES) || !defined(WV_NEW_LES2) ))
         real(kind=4), dimension(kp) , intent(Out) :: delx1
 
         real(kind=4), dimension(0:ip,jp,kp) , intent(Out) :: dfu1
@@ -210,7 +231,7 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu9
 #endif
-#if !defined( WV_NEW ) || (defined( WV_NEW ) && (!defined( WV_NEW_FEEDBF ) || !defined( WV_NEW_VELFG ) || !defined(WV_NEW_LES)))
+#if !defined( WV_NEW ) || (defined( WV_NEW ) && (!defined( WV_NEW_FEEDBF ) || !defined( WV_NEW_VELFG ) || !defined(WV_NEW_LES) || !defined(WV_NEW_LES2)))
         real(kind=4), intent(In) :: dt
         real(kind=4), dimension(-1:ip+1) , intent(In) :: dx1
         real(kind=4), dimension(0:ip) , intent(In) :: dxs
@@ -226,7 +247,7 @@ contains
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: h
         integer, intent(InOut) :: n
         integer, intent(in) :: nif   
-#if !defined( WV_NEW ) || (defined( WV_NEW ) && (!defined( WV_NEW_FEEDBF ) || !defined( WV_NEW_VELFG ) || !defined(WV_NEW_LES)))
+#ifndef WV_NEW_LES2
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou2
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou3
@@ -248,7 +269,7 @@ contains
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: vsum
         real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(InOut) :: w
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: wsum
-#if !defined( WV_NEW ) || (defined( WV_NEW ) && (!defined( WV_NEW_FEEDBF ) || !defined( WV_NEW_VELFG ) || !defined(WV_NEW_LES)))
+#if !defined( WV_NEW ) || (defined( WV_NEW ) && (!defined( WV_NEW_FEEDBF ) || !defined( WV_NEW_VELFG ) || !defined(WV_NEW_LES) || !defined(WV_NEW_LES2)))
         real(kind=4), intent(In) :: vn
         real(kind=4), dimension(-1:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: sm
         real(kind=4), dimension(0:kp+2) , intent(In) :: z2
@@ -610,12 +631,12 @@ contains
 #ifndef WV_NEW_VELFG
       cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9, &
 #endif
-              dfu1, dfv1, dfw1, &
+              dfu1, dfv1, dfw1 &
 #ifndef WV_NEW_LES
-              diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,  &
+              ,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9  &
 #endif
-#ifndef WV_NEW_VELFG
-              nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9 &
+#ifndef WV_NEW_LES2
+              ,nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9 &
 #endif
               )
 #endif

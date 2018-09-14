@@ -6,7 +6,9 @@ module module_vel2
 contains
 
       subroutine vel2( &
+#ifndef WV_NEW_LES2
       nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,&
+#endif
 #ifndef WV_NEW_LES
       diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,&
 #endif
@@ -46,6 +48,7 @@ contains
         real(kind=4), dimension(0:jp+1) , intent(In) :: dy1
         real(kind=4), dimension(-1:kp+2) , intent(In) :: dzn
         real(kind=4), dimension(-1:kp+2) , intent(In) :: dzs
+#ifndef WV_NEW_LES2
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou2
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou3
@@ -55,6 +58,11 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou7
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou9
+#else
+        real(kind=4) :: nou1_,nou2_,nou3_,nou4_,nou5_,nou6_,nou7_,nou8_,nou9_
+        real(kind=4) :: nou3_ij1, nou6_ij1
+#endif
+
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
         real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
@@ -102,6 +110,7 @@ contains
         cov5(i,j,k) = nou5(i,j,k)*diu5(i,j,k)
         cov9(i,j,k) = nou9(i,j,k)*diu9(i,j,k)
 #else
+#ifndef WV_NEW_LES2
         nou1(i,j,k) = ( u(i-1,j,k)+u(i,j,k))/2. ! i.e 2-point average of u in i-direction
         diu1_ = (-u(i-1,j,k)+u(i,j,k))/dx1(i) ! i.e. du/dx
         nou5(i,j,k) = ( v(i,j-1,k)+v(i,j,k))/2.
@@ -112,6 +121,18 @@ contains
         cov1(i,j,k) = nou1(i,j,k)*diu1_ !
         cov5(i,j,k) = nou5(i,j,k)*diu5_
         cov9(i,j,k) = nou9(i,j,k)*diu9_
+#else
+        nou1_ = ( u(i-1,j,k)+u(i,j,k))/2. ! i.e 2-point average of u in i-direction
+        diu1_ = (-u(i-1,j,k)+u(i,j,k))/dx1(i) ! i.e. du/dx
+        nou5_ = ( v(i,j-1,k)+v(i,j,k))/2.
+        diu5_ = (-v(i,j-1,k)+v(i,j,k))/dy1(j)
+        nou9_ = ( w(i,j,k-1)+w(i,j,k))/2.
+        diu9_ = (-w(i,j,k-1)+w(i,j,k))/dzn(k)
+!
+        cov1(i,j,k) = nou1_*diu1_ !
+        cov5(i,j,k) = nou5_*diu5_
+        cov9(i,j,k) = nou9_*diu9_
+#endif
 #endif
       end do
       end do
@@ -137,9 +158,15 @@ contains
         diu2(i,j,k) = 2.*(-u(i,j-1,k)+u(i,j,k))/(dy1(j-1)+dy1(j))
         cov2(i,j,k) = nou2(i,j,k)*diu2(i,j,k)
 #else
+#ifndef WV_NEW_LES2
         nou2(i,j,k) = (dx1(i+1)*v(i,j-1,k)+dx1(i)*v(i+1,j-1,k)) /(dx1(i)+dx1(i+1))
         diu2_ = 2.*(-u(i,j-1,k)+u(i,j,k))/(dy1(j-1)+dy1(j))
         cov2(i,j,k) = nou2(i,j,k)*diu2_
+#else
+        nou2_ = (dx1(i+1)*v(i,j-1,k)+dx1(i)*v(i+1,j-1,k)) /(dx1(i)+dx1(i+1))
+        diu2_ = 2.*(-u(i,j-1,k)+u(i,j,k))/(dy1(j-1)+dy1(j))
+        cov2(i,j,k) = nou2_*diu2_
+#endif
 #endif
       end do
       end do
@@ -159,10 +186,15 @@ contains
         diu3(i,j,k) = (-u(i,j,k-1)+u(i,j,k))/dzs(k-1)
         cov3(i,j,k) = nou3(i,j,k)*diu3(i,j,k)
 #else
-
+#ifndef WV_NEW_LES2
         nou3(i,j,k) = (dx1(i+1)*w(i,j,k-1)+dx1(i)*w(i+1,j,k-1)) /(dx1(i)+dx1(i+1))
         diu3_ = (-u(i,j,k-1)+u(i,j,k))/dzs(k-1)
         cov3(i,j,k) = nou3(i,j,k)*diu3_
+#else
+        nou3_ = (dx1(i+1)*w(i,j,k-1)+dx1(i)*w(i+1,j,k-1)) /(dx1(i)+dx1(i+1))
+        diu3_ = (-u(i,j,k-1)+u(i,j,k))/dzs(k-1)
+        cov3(i,j,k) = nou3_*diu3_
+#endif
 #endif
       end do
       end do
@@ -175,9 +207,16 @@ contains
        diu3(i,j,1)=uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
        cov3(i,j,1) = nou3(i,j,1)*diu3(i,j,1)
 #else
+#ifndef WV_NEW_LES2
        nou3(i,j,1) = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
        diu3_ij1 = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
        cov3(i,j,1) = nou3(i,j,1)*diu3_ij1
+#else
+       nou3_ij1 = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
+       diu3_ij1 = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
+       cov3(i,j,1) = nou3_ij1*diu3_ij1
+
+#endif
 #endif
       end do
       end do
@@ -191,10 +230,15 @@ contains
         diu4(i,j,k) = 2.*(-v(i-1,j,k)+v(i,j,k))/(dx1(i-1)+dx1(i))
         cov4(i,j,k) = (nou4(i,j,k)-u0)*diu4(i,j,k)
 #else
-
+#ifndef WV_NEW_LES2
         nou4(i,j,k) = (dy1(j+1)*u(i-1,j,k)+dy1(j)*u(i-1,j+1,k)) /(dy1(j)+dy1(j+1))
         diu4_ = 2.*(-v(i-1,j,k)+v(i,j,k))/(dx1(i-1)+dx1(i))
         cov4(i,j,k) = (nou4(i,j,k)-u0)*diu4_
+#else
+        nou4_ = (dy1(j+1)*u(i-1,j,k)+dy1(j)*u(i-1,j+1,k)) /(dy1(j)+dy1(j+1))
+        diu4_ = 2.*(-v(i-1,j,k)+v(i,j,k))/(dx1(i-1)+dx1(i))
+        cov4(i,j,k) = (nou4_-u0)*diu4_
+#endif
 #endif
       end do
       end do
@@ -208,10 +252,15 @@ contains
         diu6(i,j,k) = (-v(i,j,k-1)+v(i,j,k))/dzs(k-1)
         cov6(i,j,k) = nou6(i,j,k)*diu6(i,j,k)
 #else
-
+#ifndef WV_NEW_LES2
         nou6(i,j,k) = (dy1(j+1)*w(i,j,k-1)+dy1(j)*w(i,j+1,k-1)) /(dy1(j)+dy1(j+1))
         diu6_ = (-v(i,j,k-1)+v(i,j,k))/dzs(k-1)
         cov6(i,j,k) = nou6(i,j,k)*diu6_
+#else
+        nou6_ = (dy1(j+1)*w(i,j,k-1)+dy1(j)*w(i,j+1,k-1)) /(dy1(j)+dy1(j+1))
+        diu6_ = (-v(i,j,k-1)+v(i,j,k))/dzs(k-1)
+        cov6(i,j,k) = nou6_*diu6_
+#endif
 #endif
       end do
       end do
@@ -224,10 +273,15 @@ contains
        diu6(i,j,1)=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
        cov6(i,j,1) = nou6(i,j,1)*diu6(i,j,1)
 #else
-
+#ifndef WV_NEW_LES2
        nou6(i,j,1) = 0.5*(dy1(j+1)*w(i,j,1)+dy1(j)*w(i,j+1,1))/(dy1(j)+dy1(j+1))
        diu6_ij1=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
        cov6(i,j,1) = nou6(i,j,1)*diu6_ij1
+#else
+       nou6_ij1 = 0.5*(dy1(j+1)*w(i,j,1)+dy1(j)*w(i,j+1,1))/(dy1(j)+dy1(j+1))
+       diu6_ij1=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
+       cov6(i,j,1) = nou6_ij1*diu6_ij1
+#endif
 #endif
       end do
       end do
@@ -241,10 +295,15 @@ contains
         diu7(i,j,k) = 2.*(-w(i-1,j,k)+w(i,j,k))/(dx1(i-1)+dx1(i))
         cov7(i,j,k) = (nou7(i,j,k)-u0)*diu7(i,j,k)
 #else
-
+#ifndef WV_NEW_LES2
         nou7(i,j,k) = (dzn(k+1)*u(i-1,j,k)+dzn(k)*u(i-1,j,k+1)) /(dzn(k)+dzn(k+1))
         diu7_ = 2.*(-w(i-1,j,k)+w(i,j,k))/(dx1(i-1)+dx1(i))
         cov7(i,j,k) = (nou7(i,j,k)-u0)*diu7_
+#else
+        nou7_ = (dzn(k+1)*u(i-1,j,k)+dzn(k)*u(i-1,j,k+1)) /(dzn(k)+dzn(k+1))
+        diu7_ = 2.*(-w(i-1,j,k)+w(i,j,k))/(dx1(i-1)+dx1(i))
+        cov7(i,j,k) = (nou7_-u0)*diu7_
+#endif
 #endif
       end do
       end do
@@ -258,10 +317,15 @@ contains
         diu8(i,j,k) = 2.*(-w(i,j-1,k)+w(i,j,k))/(dy1(j-1)+dy1(j))
         cov8(i,j,k) = nou8(i,j,k)*diu8(i,j,k)
 #else
-
+#ifndef WV_NEW_LES2
         nou8(i,j,k) = (dzn(k+1)*v(i,j-1,k)+dzn(k)*v(i,j-1,k+1)) /(dzn(k)+dzn(k+1))
         diu8_ = 2.*(-w(i,j-1,k)+w(i,j,k))/(dy1(j-1)+dy1(j))
         cov8(i,j,k) = nou8(i,j,k)*diu8_
+#else
+        nou8_ = (dzn(k+1)*v(i,j-1,k)+dzn(k)*v(i,j-1,k+1)) /(dzn(k)+dzn(k+1))
+        diu8_ = 2.*(-w(i,j-1,k)+w(i,j,k))/(dy1(j-1)+dy1(j))
+        cov8(i,j,k) = nou8_*diu8_
+#endif
 #endif
       end do
       end do
@@ -272,7 +336,9 @@ contains
 #endif
       do k = 1,kp
       do j = 1,jp
+#ifndef WV_NEW_LES2
         nou1(ip+1,j,k) = nou1(ip,j,k)
+#endif
 #ifndef WV_NEW_LES
         diu1(ip+1,j,k) = diu1(ip,j,k)
 #endif
@@ -285,13 +351,16 @@ contains
 #if !defined(MPI) || (PROC_PER_ROW==1)
       do k = 1,kp
       do i = 1,ip
-
+#ifndef WV_NEW_LES2
         nou2(i,0,k) = nou2(i,jp,k)
+#endif
 #ifndef WV_NEW_LES
         diu2(i,0,k) = diu2(i,jp,k)
 #endif
         cov2(i,0,k) = cov2(i,jp,k)
+#ifndef WV_NEW_LES2
         nou2(i,jp+1,k) = nou2(i,1,k)
+#endif
 #ifndef WV_NEW_LES
         diu2(i,jp+1,k) = diu2(i,1,k)
 #endif
@@ -316,7 +385,9 @@ contains
         diu4(ip+1,j,k) = diu4(ip,j,k)
         cov4(ip+1,j,k) = cov4(ip,j,k)
 #else
+#ifndef WV_NEW_LES2
         nou4(ip+1,j,k) = nou4(ip,j,k)
+#endif
         cov4(ip+1,j,k) = cov4(ip,j,k)
 #endif
       end do
@@ -335,9 +406,13 @@ contains
         diu5(i,jp+1,k) = diu5(i,1,k)
         cov5(i,jp+1,k) = cov5(i,1,k)
 #else
+#ifndef WV_NEW_LES2
         nou5(i,0,k) = nou5(i,jp,k)
+#endif
         cov5(i,0,k) = cov5(i,jp,k)
+#ifndef WV_NEW_LES2
         nou5(i,jp+1,k) = nou5(i,1,k)
+#endif
         cov5(i,jp+1,k) = cov5(i,1,k)
 #endif
       end do
@@ -360,7 +435,9 @@ contains
         diu7(ip+1,j,k) = diu7(ip,j,k)
         cov7(ip+1,j,k) = cov7(ip,j,k)
 #else
+#ifndef WV_NEW_LES2
         nou7(ip+1,j,k) = nou7(ip,j,k)
+#endif
         cov7(ip+1,j,k) = cov7(ip,j,k)
 #endif
       end do
@@ -379,9 +456,13 @@ contains
         diu8(i,jp+1,k) = diu8(i,1,k)
         cov8(i,jp+1,k) = cov8(i,1,k)
 #else
+#ifndef WV_NEW_LES2
         nou8(i,0,k) = nou8(i,jp,k)
+#endif
         cov8(i,0,k) = cov8(i,jp,k)
+#ifndef WV_NEW_LES2
         nou8(i,jp+1,k) = nou8(i,1,k)
+#endif
         cov8(i,jp+1,k) = cov8(i,1,k)
 #endif
       end do

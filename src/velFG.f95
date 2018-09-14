@@ -23,7 +23,9 @@ contains
         diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9, &
 #endif
         cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9, &
+#ifndef WV_NEW_LES2
         nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9, &
+#endif
         uspd,vspd) !WV: calls vel2 which uses halos
 
 #else
@@ -77,6 +79,7 @@ contains
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: h
 #ifndef WV_NEW_VELFG
 !_VELFG
+#ifndef WV_NEW_LES2
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou2
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou3
@@ -86,6 +89,7 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou7
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou9
+#endif
 #endif
         real(kind=4) :: nou1_i,nou2_j,nou3_k, nou4_i,nou5_j,nou6_k, nou7_i,nou8_j,nou9_k
         real(kind=4) :: diu1_i,diu2_j,diu3_k, diu4_i,diu5_j,diu6_k, diu7_i,diu8_j,diu9_k
@@ -112,7 +116,9 @@ contains
 !
 #ifndef WV_NEW_VELFG
       call vel2( &
+#ifndef WV_NEW_LES2
             nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,&
+#endif
 #ifndef WV_NEW_LES
             diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,&
 #endif
