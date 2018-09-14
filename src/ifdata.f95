@@ -365,7 +365,11 @@ contains
         do k=1,kp
         do j=1,jp
         do i=1,ip
+#ifndef TWINNED_BUFFER
          p(i,j,k)=pa(i,j,k)
+#else
+         p(0,i,j,k)=pa(i,j,k)
+#endif
         end do
         end do
         end do

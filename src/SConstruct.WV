@@ -26,7 +26,7 @@ else:
         OSX=0
         OSFLAG='-D__LINUX__'
 
-
+print "MACROS are read from ./macros.h"
 macro_source_str = getOpt('m','Macros','./macros.h')
 macro_sources = macro_source_str.split(",")
 MACROS = []
@@ -99,10 +99,10 @@ wv_debug = getOpt('wv_debug', 'WV Debug', '0')
 if wv_debug =='1':
     WV_DEBUG='-DWV_DEBUG'
 
-#MPI_NEW_WV=''
-#mpi_new_wv = getOpt('mpi_new_wv', 'New MPI code (WV)', '0')
-#if mpi_new_wv =='1':
-#    MPI_NEW_WV='-DMPI_NEW_WV'
+MPI_NEW_WV=''
+mpi_new_wv = getOpt('mpi_new_wv', 'New MPI code (WV)', '0')
+if mpi_new_wv =='1':
+    MPI_NEW_WV='-DMPI_NEW_WV'
 
 #WV_TEST = '-DWV_TEST'
 #WV_DEBUG_MPI = '' #'-DWV_DEBUG_MPI'

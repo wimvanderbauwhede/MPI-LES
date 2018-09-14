@@ -227,7 +227,7 @@ subroutine anime(n,n0,n1,&
 !    end if
     if(n>=n1 .and. mod(nn,avetime) == 0) then !default
 #else
-    if(n=>n1.and.mod(n,avetime)==0) then !default
+    if(n>=n1.and.mod(n,avetime)==0) then !default
 #endif
 !        print *, n,nn,rank,uani(ip/2,jp/2,kp/2)
 !       if(mod(n,avetime).eq.0) then !default
