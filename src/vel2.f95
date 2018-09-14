@@ -129,9 +129,15 @@ contains
         nou9_ = ( w(i,j,k-1)+w(i,j,k))/2.
         diu9_ = (-w(i,j,k-1)+w(i,j,k))/dzn(k)
 !
+
         cov1(i,j,k) = nou1_*diu1_ !
         cov5(i,j,k) = nou5_*diu5_
         cov9(i,j,k) = nou9_*diu9_
+#ifdef WV_NEW_VEL2
+        cov1(ip+1,j,k) = cov1(ip,j,k)
+        cov5(i,0,k) = cov5(i,jp,k)
+        cov5(i,jp+1,k) = cov5(i,1,k)
+#endif
 #endif
 #endif
       end do
@@ -166,6 +172,12 @@ contains
         nou2_ = (dx1(i+1)*v(i,j-1,k)+dx1(i)*v(i+1,j-1,k)) /(dx1(i)+dx1(i+1))
         diu2_ = 2.*(-u(i,j-1,k)+u(i,j,k))/(dy1(j-1)+dy1(j))
         cov2(i,j,k) = nou2_*diu2_
+#ifdef WV_NEW_VEL2
+! Could be anything, really
+        if (j==1) then
+        cov2(i,jp+1,k) = cov2(i,1,k)
+        end if
+#endif
 #endif
 #endif
       end do
@@ -194,17 +206,26 @@ contains
         nou3_ = (dx1(i+1)*w(i,j,k-1)+dx1(i)*w(i+1,j,k-1)) /(dx1(i)+dx1(i+1))
         diu3_ = (-u(i,j,k-1)+u(i,j,k))/dzs(k-1)
         cov3(i,j,k) = nou3_*diu3_
+#ifdef WV_NEW_VEL2
+!This guard is ad-hoc, we could always compute this
+        if (k==2) then
+        nou3_ij1 = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
+        diu3_ij1 = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
+        cov3(i,j,1) = nou3_ij1*diu3_ij1
+        end if
+#endif
 #endif
 #endif
       end do
       end do
       end do
 
+! So here we set cov3(i,j,1) but it is independent of the other values, so it could be in the same loop with a condition
       do j=1,jp
       do i=1,ip
 #ifndef WV_NEW_LES
        nou3(i,j,1) = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
-       diu3(i,j,1)=uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
+       diu3(i,j,1) = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
        cov3(i,j,1) = nou3(i,j,1)*diu3(i,j,1)
 #else
 #ifndef WV_NEW_LES2
@@ -212,10 +233,11 @@ contains
        diu3_ij1 = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
        cov3(i,j,1) = nou3(i,j,1)*diu3_ij1
 #else
+#ifndef WV_NEW_VEL2
        nou3_ij1 = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
        diu3_ij1 = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
        cov3(i,j,1) = nou3_ij1*diu3_ij1
-
+#endif
 #endif
 #endif
       end do
@@ -238,12 +260,19 @@ contains
         nou4_ = (dy1(j+1)*u(i-1,j,k)+dy1(j)*u(i-1,j+1,k)) /(dy1(j)+dy1(j+1))
         diu4_ = 2.*(-v(i-1,j,k)+v(i,j,k))/(dx1(i-1)+dx1(i))
         cov4(i,j,k) = (nou4_-u0)*diu4_
+#ifdef WV_NEW_VEL2
+        ! Don't need the guard, we could simply recompute
+        if (i==ip) then
+        cov4(ip+1,j,k) = cov4(ip,j,k)
+        end if
+#endif
 #endif
 #endif
       end do
       end do
       end do
 !
+
       do k = 2,kp+1
       do j = 1,jp
       do i = 1,ip
@@ -257,15 +286,24 @@ contains
         diu6_ = (-v(i,j,k-1)+v(i,j,k))/dzs(k-1)
         cov6(i,j,k) = nou6(i,j,k)*diu6_
 #else
+
         nou6_ = (dy1(j+1)*w(i,j,k-1)+dy1(j)*w(i,j+1,k-1)) /(dy1(j)+dy1(j+1))
         diu6_ = (-v(i,j,k-1)+v(i,j,k))/dzs(k-1)
         cov6(i,j,k) = nou6_*diu6_
+#ifdef WV_NEW_VEL2
+        if (k==1) then
+        nou6_ij1 = 0.5*(dy1(j+1)*w(i,j,1)+dy1(j)*w(i,j+1,1))/(dy1(j)+dy1(j+1))
+        diu6_ij1=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
+        cov6(i,j,1) = nou6_ij1*diu6_ij1
+        end if
 #endif
 #endif
+#endif
       end do
       end do
       end do
-!
+
+! Same here for cov6(i,j,1), the loops could be merged
       do j=1,jp
       do i=1,ip
 #ifndef WV_NEW_LES
@@ -278,9 +316,11 @@ contains
        diu6_ij1=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
        cov6(i,j,1) = nou6(i,j,1)*diu6_ij1
 #else
+#ifndef WV_NEW_VEL2
        nou6_ij1 = 0.5*(dy1(j+1)*w(i,j,1)+dy1(j)*w(i,j+1,1))/(dy1(j)+dy1(j+1))
        diu6_ij1=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
        cov6(i,j,1) = nou6_ij1*diu6_ij1
+#endif
 #endif
 #endif
       end do
@@ -303,6 +343,11 @@ contains
         nou7_ = (dzn(k+1)*u(i-1,j,k)+dzn(k)*u(i-1,j,k+1)) /(dzn(k)+dzn(k+1))
         diu7_ = 2.*(-w(i-1,j,k)+w(i,j,k))/(dx1(i-1)+dx1(i))
         cov7(i,j,k) = (nou7_-u0)*diu7_
+#ifdef WV_NEW_VEL2
+        if (i==ip) then
+        cov7(ip+1,j,k) = cov7(ip,j,k)
+        end if
+#endif
 #endif
 #endif
       end do
@@ -325,12 +370,18 @@ contains
         nou8_ = (dzn(k+1)*v(i,j-1,k)+dzn(k)*v(i,j-1,k+1)) /(dzn(k)+dzn(k+1))
         diu8_ = 2.*(-w(i,j-1,k)+w(i,j,k))/(dy1(j-1)+dy1(j))
         cov8(i,j,k) = nou8_*diu8_
+#ifndef WV_NEW_LES2
+        if (j==1) then
+        cov8(i,jp+1,k) = cov8(i,1,k)
+        end if
+#endif
 #endif
 #endif
       end do
       end do
       end do
 ! ====================================
+! This again could be combined in the main loop
 #ifdef MPI
     if (isBottomRow(procPerRow)) then
 #endif
@@ -342,12 +393,15 @@ contains
 #ifndef WV_NEW_LES
         diu1(ip+1,j,k) = diu1(ip,j,k)
 #endif
+#ifndef WV_NEW_VEL2
         cov1(ip+1,j,k) = cov1(ip,j,k)
+#endif
       end do
       end do
 #ifdef MPI
     end if
 #endif
+! And again
 #if !defined(MPI) || (PROC_PER_ROW==1)
       do k = 1,kp
       do i = 1,ip
@@ -364,7 +418,9 @@ contains
 #ifndef WV_NEW_LES
         diu2(i,jp+1,k) = diu2(i,1,k)
 #endif
+#ifndef WV_NEW_VEL2
         cov2(i,jp+1,k) = cov2(i,1,k)
+#endif
       end do
       end do
 #else
@@ -375,6 +431,8 @@ contains
     call sideflowLeftRight(diu2, procPerRow, 2, jp+2, 1, 2, 1, 2)
     call sideflowLeftRight(cov2, procPerRow, 2, jp+2, 1, 2, 1, 2)
 #endif
+
+! Can be merged
 #ifdef MPI
     if (isBottomRow(procPerRow)) then
 #endif
@@ -388,13 +446,17 @@ contains
 #ifndef WV_NEW_LES2
         nou4(ip+1,j,k) = nou4(ip,j,k)
 #endif
+#ifndef WV_NEW_VEL2
         cov4(ip+1,j,k) = cov4(ip,j,k)
+#endif
 #endif
       end do
       end do
 #ifdef MPI
     end if
 #endif
+
+! Can be merged
 #if !defined(MPI) || (PROC_PER_ROW==1)
       do k = 1,kp
       do i = 1,ip
@@ -408,11 +470,10 @@ contains
 #else
 #ifndef WV_NEW_LES2
         nou5(i,0,k) = nou5(i,jp,k)
-#endif
-        cov5(i,0,k) = cov5(i,jp,k)
-#ifndef WV_NEW_LES2
         nou5(i,jp+1,k) = nou5(i,1,k)
 #endif
+#ifndef WV_NEW_VEL2
+        cov5(i,0,k) = cov5(i,jp,k)
         cov5(i,jp+1,k) = cov5(i,1,k)
 #endif
       end do
@@ -438,7 +499,9 @@ contains
 #ifndef WV_NEW_LES2
         nou7(ip+1,j,k) = nou7(ip,j,k)
 #endif
+#ifndef WV_NEW_VEL2
         cov7(ip+1,j,k) = cov7(ip,j,k)
+#endif
 #endif
       end do
       end do
@@ -463,7 +526,9 @@ contains
 #ifndef WV_NEW_LES2
         nou8(i,jp+1,k) = nou8(i,1,k)
 #endif
+#ifndef WV_NEW_VEL2
         cov8(i,jp+1,k) = cov8(i,1,k)
+#endif
 #endif
       end do
       end do
