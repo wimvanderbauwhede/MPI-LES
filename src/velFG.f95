@@ -2,17 +2,17 @@ module module_velFG
 #ifdef MPI
     use communication_helper_mpi
 #endif
-#ifndef WV_NEW
+#ifndef WV_NEW_VELFG
 !_VELFG
     use module_vel2 ! add_module_decls() line 156
 #endif
-#ifdef WV_NEW
+#ifdef WV_NEW_VELFG
     use module_bondfg
 #endif
     implicit none
 
 contains
-#ifndef WV_NEW
+#ifndef WV_NEW_VELFG
 !_VELFG
       subroutine velfg(dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6, &
       dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2, &
@@ -29,7 +29,7 @@ contains
     use common_sn ! create_new_include_statements() line 102
 #endif
 
-#ifndef WV_NEW
+#ifndef WV_NEW_VELFG
 !_VELFG
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov2
@@ -45,7 +45,7 @@ contains
         real(kind=4), dimension(ip,jp,kp) , intent(Out) :: dfw1
         real(kind=4), intent(In) :: vn
 #endif
-#ifndef WV_NEW
+#ifndef WV_NEW_VELFG
 !_VELFG
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu2
@@ -64,7 +64,7 @@ contains
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: f
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: g
         real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: h
-#ifndef WV_NEW
+#ifndef WV_NEW_VELFG
 !_VELFG
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou2
@@ -93,13 +93,13 @@ contains
  
         integer :: i,j,k
         real(kind=4) :: covc,covx1,covy1,covz1
-#ifdef WV_NEW
+#ifdef WV_NEW_VELFG
 !_VELFG
         integer, parameter  :: u0 = 0
 #endif
 !
 !
-#ifndef WV_NEW
+#ifndef WV_NEW_VELFG
       call vel2(nou1,u,diu1,dx1,nou5,v,diu5,dy1,nou9,w,diu9,dzn,cov1,cov5,cov9,nou2,diu2, &
            cov2,nou3,diu3,dzs,cov3,nou4,diu4,cov4,nou6,diu6,cov6,nou7,diu7,cov7,nou8,diu8,cov8,uspd,vspd)
 #else
@@ -122,7 +122,7 @@ contains
 #ifdef MPI
        if (rank == mpi_size / 2 + procPerRow / 2 - 1 ) then
 #endif
-        write(6,*) 'CHK_uspd=',uspd(ip/2,jp/2),vspd(ip/2,jp/2)
+        write(6,*) 'CHK_uspd_vspd=',uspd(ip/2,jp/2),vspd(ip/2,jp/2)
 #ifdef MPI
        end if
 #endif
@@ -133,7 +133,7 @@ contains
       do i = 1,ip
         ! So here we could say:
         ! calculate cov1:
-#ifdef WV_NEW
+#ifdef WV_NEW_VELFG
 !_VELFG
         nou1_i = (u(i-1,j,k)+u(i,j,k))/2.
         diu1_i = (-u(i-1,j,k)+u(i,j,k))/dx1(i)
@@ -184,7 +184,7 @@ contains
       do k = 1,kp
       do j = 1,jp
       do i = 1,ip
-#ifdef WV_NEW
+#ifdef WV_NEW_VELFG
 !_VELFG
         nou4_i = (dy1(j+1)*u(i-1,j,k)+dy1(j)*u(i-1,j+1,k)) /(dy1(j)+dy1(j+1))
         diu4_i = 2.*(-v(i-1,j,k)+v(i,j,k))/(dx1(i-1)+dx1(i))
@@ -236,7 +236,7 @@ contains
       do k = 1,kp-1
       do j = 1,jp
       do i = 1,ip
-#ifdef WV_NEW
+#ifdef WV_NEW_VELFG
 !_VELFG
         nou7_i = (dzn(k+1)*u(i-1,j,k)+dzn(k)*u(i-1,j,k+1)) /(dzn(k)+dzn(k+1))
         diu7_i = 2.*(-w(i-1,j,k)+w(i,j,k))/(dx1(i-1)+dx1(i))
@@ -283,7 +283,7 @@ contains
       end do
       end do
 ! WV: This seems not necessary, perhaps because it is called in press.
-#ifdef WV_NEW
+#ifdef WV_NEW_VELFG
 #if !defined( INLINE_BOUND_CALCS ) || defined( MPI )
     call bondfg(f,g,h)
 #else

@@ -71,7 +71,7 @@ contains
 #ifdef MPI
        if (rank == mpi_size / 2 + procPerRow / 2 - 1 ) then
 #endif
-        write(6,*) 'CHK_uspd=',uspd(ip/2,jp/2),vspd(ip/2,jp/2)
+        write(6,*) 'CHK_uspd_vspd=',uspd(ip/2,jp/2),vspd(ip/2,jp/2)
 #ifdef MPI
        end if
 #endif

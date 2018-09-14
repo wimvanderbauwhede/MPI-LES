@@ -3,7 +3,7 @@ module module_feedbfm
     use communication_helper_real
 #endif
 contains
-#ifdef WV_NEW
+#ifdef WV_NEW_FEEDBF
 subroutine feedbfm(zbm)
 #else
 subroutine feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
@@ -14,7 +14,7 @@ subroutine feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
     use common_sn ! create_new_include_statements() line 102
 #endif
     implicit none
-#ifndef WV_NEW
+#ifndef WV_NEW_FEEDBF
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: amask1
     real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1) , intent(Out) :: bmask1
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: cmask1
@@ -27,7 +27,7 @@ subroutine feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
     integer :: i, j, k
     real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1) :: dsm,dem
 
-#ifndef WV_NEW
+#ifndef WV_NEW_FEEDBF
 !
 !    print *, 'Urban model'
 ! -------Urban model----------
@@ -77,7 +77,7 @@ subroutine feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
       end if !for imaster
       call distributeZBM(zbm, ip, jp, ipmax, jpmax, procPerRow)
 #endif
-#ifndef WV_NEW
+#ifndef WV_NEW_FEEDBF
 ! print *, 'assign amask'
       do j = 1,jp
           do i = 1,ip

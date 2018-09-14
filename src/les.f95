@@ -4,7 +4,7 @@ module module_les
       implicit none
 contains
 
-#ifndef WV_NEW
+#ifndef WV_NEW_LES
       subroutine les(delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g, &
       h,u,v,uspd,vspd,dxs,dys,n)
 #else
@@ -16,7 +16,7 @@ contains
 #else
     use common_sn ! create_new_include_statements() line 102
 #endif
-#ifndef WV_NEW
+#ifndef WV_NEW_LES
         real(kind=4), dimension(kp) , intent(Out) :: delx1
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(In) :: diu1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(In) :: diu2
@@ -77,7 +77,7 @@ contains
       do j = 1,jp
       do i = 1,ip
 ! --calculation of sgs eddy viscosity coeficient
-#ifndef WV_NEW
+#ifndef WV_NEW_LES
       dudxx1 =  diu1(i,j,k)
       dudyx1 =  (diu2(i-1,j,k)+diu2(i-1,j+1,k) +diu2(i  ,j,k)+diu2(i  ,j+1,k) ) *.25
       dudzx1 =  (diu3(i-1,j,k)+diu3(i-1,j,k+1) +diu3(i  ,j,k)+diu3(i  ,j,k+1) ) *.25
@@ -206,7 +206,7 @@ contains
       k-1)) /(dx1(i)+dx1(i+1))) +dzn(k-1)*((dx1(i+1)*sm(i,j,k)+dx1(i)*sm(i+1,j, &
       k)) /(dx1(i)+dx1(i+1)))) /(dzn(k-1)+dzn(k))
 !
-#ifndef WV_NEW
+#ifndef WV_NEW_LES
       visux2 = (evsx2)*2.*diu1(i+1,j  ,k  )
       visux1 = (evsx1)*2.*diu1(i  ,j,  k  )
       visuy2 = (evsy2)* ( diu2(i  ,j+1,k  )+diu4(i+1,j  ,k  ) )
@@ -256,7 +256,7 @@ contains
       evsz2=(dzn(2)*((dx1(i+1)*sm(i,j,1)+dx1(i)*sm(i+1,j,1))/(dx1(i)+dx1(i+1)))&
       +dzn(1)*((dx1(i+1)*sm(i,j,2)+dx1(i)*sm(i+1,j,2))/(dx1(i)+dx1(i+1))))/(dzn(1)+dzn(2))
 
-#ifndef WV_NEW
+#ifndef WV_NEW_LES
       visux2=(evsx2)*2.*diu1(i+1,j  ,1  )
       visux1=(evsx1)*2.*diu1(i  ,j,  1  )
       visuy2=(evsy2)* ( diu2(i  ,j+1,1  )+diu4(i+1,j  ,1 ) )
@@ -309,7 +309,7 @@ contains
       k-1)) /(dx1(i)+dx1(i+1))) +dzn(k-1)*((dx1(i+1)*sm(i,j,k)+dx1(i)*sm(i+1,j, &
       k)) /(dx1(i)+dx1(i+1)))) /(dzn(k-1)+dzn(k))
 !
-#ifndef WV_NEW
+#ifndef WV_NEW_LES
       visvx2 = (evsx2)* ( diu2(i  ,j+1,k  )+diu4(i+1,j  ,k  ) )
       visvx1 = (evsx1)* ( diu2(i-1,j+1,k  )+diu4(i  ,j  ,k  ) )
       visvy2 = (evsy2)*2.*diu5(i  ,j+1,k  )
@@ -361,7 +361,7 @@ contains
       evsz2=(dzn(2)*((dx1(i+1)*sm(i,j,1)+dx1(i)*sm(i+1,j,1))/(dx1(i)+dx1(i+1)))&
       +dzn(1)*((dx1(i+1)*sm(i,j,2)+dx1(i)*sm(i+1,j,2))/(dx1(i)+dx1(i+1))))/(dzn(1)+dzn(2))
 !
-#ifndef WV_NEW
+#ifndef WV_NEW_LES
       visvx2=(evsx2)* ( diu2(i  ,j+1,1  )+diu4(i+1,j  ,1  ) )
       visvx1=(evsx1)* ( diu2(i-1,j+1,1  )+diu4(i  ,j  ,1  ) )
       visvy2=(evsy2)*2.*diu5(i  ,j+1,1  )
@@ -416,7 +416,7 @@ contains
       k)) /(dy1(j-1)+dy1(j))) +dzn(k)*((dy1(j)*sm(i,j-1,k+1)+dy1(j-1)*sm(i,j, &
       k+1)) /(dy1(j-1)+dy1(j)))) /(dzn(k)+dzn(k+1))
 !
-#ifndef WV_NEW
+#ifndef WV_NEW_LES
       viswx2 = (evsx2)* ( diu3(i  ,j  ,k+1)+diu7(i+1,j  ,k  ) )
       viswx1 = (evsx1)* ( diu3(i-1,j  ,k+1)+diu7(i  ,j  ,k  ) )
       viswy2 = (evsy2)* ( diu6(i  ,j  ,k+1)+diu8(i  ,j+1,k  ) )

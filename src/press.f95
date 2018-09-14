@@ -37,7 +37,7 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
     real(kind=4), dimension(-1:kp+2) , intent(In) :: dzs
     real(kind=4) :: cn1,cn2l,cn2s,cn3l,cn3s,cn4l,cn4s,dz1,dz2
 #endif
-#if !defined( NO_IO)  && !defined( MPI )
+#if (!defined( NO_IO)  && !defined( MPI )) || !defined( WV_NEW )
     character(len=70), intent(In) :: data20
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(In) :: usum
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(In) :: vsum
