@@ -14,9 +14,18 @@ module module_velFG
 contains
 #ifndef WV_NEW_VELFG
 !_VELFG
-      subroutine velfg(dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6, &
-      dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2, &
-      nou3,nou4,nou6,nou7,nou8,uspd,vspd)
+!      subroutine velfg(dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6, &
+!      dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2, &
+!      nou3,nou4,nou6,nou7,nou8,uspd,vspd)
+        subroutine velfg(dx1,dy1,dzn,f,g,h,u,v,w &
+        dfu1,dfv1,dfw1,vn,dzs &
+#ifndef WV_NEW_LES
+        diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9, &
+#endif
+        cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9, &
+        nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9, &
+        uspd,vspd) !WV: calls vel2 which uses halos
+
 #else
       subroutine velfg(dx1,dy1,dzn,f, &
       g,dzs,h,u,v,w, &
@@ -46,6 +55,7 @@ contains
         real(kind=4), intent(In) :: vn
 #endif
 #ifndef WV_NEW_VELFG
+#ifndef WV_NEW_LES
 !_VELFG
         real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu1
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu2
@@ -56,6 +66,7 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu7
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu8
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu9
+#endif
 #endif
         real(kind=4), dimension(-1:ip+1) , intent(In) :: dx1
         real(kind=4), dimension(0:jp+1) , intent(In) :: dy1
@@ -100,8 +111,13 @@ contains
 !
 !
 #ifndef WV_NEW_VELFG
-      call vel2(nou1,u,diu1,dx1,nou5,v,diu5,dy1,nou9,w,diu9,dzn,cov1,cov5,cov9,nou2,diu2, &
-           cov2,nou3,diu3,dzs,cov3,nou4,diu4,cov4,nou6,diu6,cov6,nou7,diu7,cov7,nou8,diu8,cov8,uspd,vspd)
+      call vel2(
+            nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,&
+#ifndef WV_NEW_LES
+            diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,&
+#endif
+            cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9,&
+            u,v,dx1,dy1,wdzn,dzs,uspd,vspd)
 #else
 !
 !wall function
