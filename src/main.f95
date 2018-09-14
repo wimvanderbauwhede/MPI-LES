@@ -88,12 +88,13 @@ program main
     real(kind=4), dimension(ip,jp,kp)  :: avevv
     real(kind=4), dimension(ip+1,jp,0:kp+2)  :: avew
     real(kind=4), dimension(ip,jp,kp)  :: aveww
-#ifndef WV_NEW
+#ifndef WV_NEW_FEEEDBF
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  :: amask1
     real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1)  :: bmask1
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: cmask1
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  :: dmask1
-
+#endif
+#if !defined( WV_NEW ) || (defined( WV_NEW ) && !defined( WV_NEW_FEEDBF ))
     real(kind=4), dimension(ip,jp,kp)  :: cn1
     real(kind=4), dimension(ip)  :: cn2l
     real(kind=4), dimension(ip)  :: cn2s
@@ -101,7 +102,8 @@ program main
     real(kind=4), dimension(jp)  :: cn3s
     real(kind=4), dimension(kp)  :: cn4l
     real(kind=4), dimension(kp)  :: cn4s
-
+#endif
+#ifndef WV_NEW_VELFG
     real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2)  :: cov1
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: cov2
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: cov3
@@ -116,7 +118,7 @@ program main
     real(kind=4), dimension(0:ip,jp,kp)  :: dfu1
     real(kind=4), dimension(ip,0:jp,kp)  :: dfv1
     real(kind=4), dimension(ip,jp,kp)  :: dfw1
-#ifndef WV_NEW
+#ifndef WV_NEW_LES
     real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2)  :: diu1
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: diu2
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: diu3
@@ -150,7 +152,7 @@ program main
 !#ifndef _OPENCL_LES_WV
 !    real(kind=4), dimension(ip,jp,kp)  :: fghold
 !#endif
-#ifndef WV_NEW
+#ifndef WV_NEW_VELFG
     real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2)  :: nou1
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: nou2
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: nou3
@@ -228,15 +230,18 @@ program main
 #ifdef TIMDATA
     call timdata()
 #endif
-#ifdef WV_NEW
+#if defined( WV_NEW ) && defined( WV_NEW_FEEDBF )
     call init(u,v,w,p,zbm)
 #else
     call init(u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,&
-              amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
+#ifndef WV_NEW_FEEDBF
+              amask1,bmask1,cmask1,dmask1, &
+#endif
+              zbm,z2,dzn)
 #endif
 !    n0=200
 
-#ifdef WV_NEW
+#if defined( WV_NEW ) && defined( WV_NEW_LES ) && defined( WV_NEW_FEEDBF )
 !#ifndef WV_DEBUG_MPI
     call ifdata( &
 !#if ICAL == 1
@@ -253,11 +258,22 @@ program main
 !#if ICAL == 1
                 fold,gold,hold,fghold, time, &
 !#endif
-                n,u,v,w,p,usum,vsum,wsum,delx1,dx1,dy1,dzn,diu1,diu2,&
-                diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g,h,z2,dt,dxs,cov1, &
-                cov2,cov3,dfu1,vn,cov4,cov5,cov6,dfv1,cov7,cov8,cov9,dfw1,dzs,&
-                nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,bmask1,cmask1,&
-                dmask1,alpha,beta,fx,fy,fz,amask1,zbm,ical,nif)
+                n,u,v,w,p,usum,vsum,wsum,delx1,dx1,dy1,dzn,&
+#ifndef WV_NEW_LES
+                diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,&
+#endif
+                sm,f,g,h,z2,dt,dxs,dfu1,vn,dfv1, &
+#ifndef WV_NEW_VELFG
+                cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9,&
+#endif
+                dfw1,dzs,&
+#ifndef WV_NEW_VELFG
+                nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,&
+#endif
+#ifndef WV_NEW_FEEDBF
+                amask1,bmask1,cmask1,dmask1,&
+#endif
+                alpha,beta,fx,fy,fz,zbm,ical,nif)
 !#endif
 #endif
 !     n=n0
@@ -320,7 +336,7 @@ if (n>n_nest0) then
 #ifdef TIMINGS
         call system_clock(timestamp(2), clock_rate)
 #endif
-#ifdef WV_NEW
+#ifdef WV_NEW_VELFG
       call velfg(dx1,dy1,dzn,f, &
       g,dzs,h,u,v,w, &
       uspd,vspd)
@@ -335,7 +351,7 @@ if (n>n_nest0) then
 #endif
 
 #if IFBF == 1
-#ifdef WV_NEW
+#ifdef WV_NEW_FEEDBF
         call feedbf(u,v,w,f,g,h,usum,vsum,wsum,dzn,z2,zbm,alpha,beta,dt) ! WV: no MPI
 #else
         call feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha, &
@@ -345,7 +361,7 @@ if (n>n_nest0) then
 #ifdef TIMINGS
         call system_clock(timestamp(4), clock_rate)
 #endif
-#ifdef WV_NEW
+#ifdef WV_NEW_LES
         call les(u,v,w,f,g,h,uspd,vspd,sm,dx1,dy1,dzn,dzs,dxs,dys)
 #else
         call les(delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6, &

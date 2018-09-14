@@ -92,7 +92,7 @@ contains
 #ifndef WV_TEST
         nmax = 8000
 #else
-        nmax = 500
+        nmax = 100
 #endif
 
 

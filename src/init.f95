@@ -2,11 +2,14 @@ module module_init
 
       use module_feedbfm ! add_module_decls() line 156
 contains
-#ifdef WV_NEW
+#if defined( WV_NEW ) && defined( WV_NEW_FEEDBF)
       subroutine init(u,v,w,p,zbm)
 #else
-      subroutine init(u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1,amask1, &
-      bmask1,cmask1,dmask1,zbm,z2,dzn)
+      subroutine init(u,v,w,p,cn2s,dxs,cn2l,cn3s,dys,cn3l,dzs,cn4s,cn4l,cn1, &
+#ifndef WV_NEW_FEEDBF
+      amask1,bmask1,cmask1,dmask1, &
+#endif
+      zbm,z2,dzn)
 #endif
 #ifdef WV_NEW
     use params_common_sn
@@ -14,12 +17,13 @@ contains
 #else
     use common_sn ! create_new_include_statements() line 102
 #endif
-#ifndef WV_NEW
+#ifndef WV_NEW_FEEDBF
         real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: amask1
         real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1) , intent(Out) :: bmask1
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(Out) :: cmask1
         real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: dmask1
-
+#endif
+#if !defined( WV_NEW ) || (defined( WV_NEW ) && !defined( WV_NEW_FEEDBF))
         real(kind=4), dimension(ip,jp,kp) , intent(Out) :: cn1
         real(kind=4), dimension(ip) , intent(Out) :: cn2l
         real(kind=4), dimension(ip) , intent(Out) :: cn2s
@@ -81,7 +85,7 @@ contains
 !print *, 'call feedbfm'
 ! --check
 #if IFBF == 1
-#ifndef WV_NEW
+#ifndef WV_NEW_FEEDBF
       call feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
 #else
         call feedbfm(zbm)

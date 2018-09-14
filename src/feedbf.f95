@@ -4,7 +4,7 @@ module module_feedbf
 #endif
 
 contains
-#ifdef WV_NEW
+#ifdef WV_NEW_FEEDBF
 #ifdef NOT_INLINED
 subroutine calc_abcd_mask(zbm, z2, dzn, i,j,k, abcd_mask1)
     use params_common_sn
@@ -34,14 +34,14 @@ subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
                   dt,beta,fx,fy,fz,f,g,h,n)
 #endif
 
-#ifdef WV_NEW
+#ifdef WV_NEW_FEEDBF
     use params_common_sn
 #else
     use common_sn ! create_new_include_statements() line 102
 #endif
     real(kind=4), intent(In) :: alpha
     real(kind=4), intent(In) :: beta
-#ifndef WV_NEW
+#ifndef WV_NEW_FEEDBF
     real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1) , intent(In) :: bmask1
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: cmask1
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(In) :: dmask1
@@ -54,7 +54,7 @@ subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
 #endif
     real(kind=4), intent(In) :: dt
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: f
-#ifndef WV_NEW
+#ifndef WV_NEW_FEEDBF
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: fx
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: fy
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(Out) :: fz
@@ -71,10 +71,10 @@ subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: vsum
     real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: wsum
-#ifdef WV_NEW
+!#ifdef WV_NEW_FEEDBF
     integer :: i,j,k
     real(kind=4) :: f1x,f1y,f1z,f2x,f2y,f2z
-#endif
+!#endif
 #ifdef WV_DEBUG
     print *, 'F95 UVWSUMSUM after bondv1:',sum(usum)+sum(vsum)+sum(wsum)
     print *, 'F95 USUMSUM after bondv1:',sum(usum)
@@ -86,7 +86,7 @@ subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
 !      write(*,*) "u",u(i,5,2),i,rank,n
 !      end do
 !    end if 
-#ifndef WV_NEW
+#ifndef WV_NEW_FEEDBF
     do k = 1,kp
         do j = 1,jp
             do i = 1,ip
