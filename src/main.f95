@@ -241,7 +241,7 @@ program main
 #endif
 !    n0=200
 
-#if defined( WV_NEW ) && defined( WV_NEW_LES ) && defined( WV_NEW_FEEDBF )
+#if defined( WV_NEW ) && defined( WV_NEW_LES ) && defined( WV_NEW_FEEDBF ) && defined( WV_NEW_VELFG )
 !#ifndef WV_DEBUG_MPI
     call ifdata( &
 !#if ICAL == 1
@@ -334,9 +334,11 @@ if (n>n_nest0) then
       g,dzs,h,u,v,w, &
       uspd,vspd)
 #else
-        call velfg(dx1,dy1,dzn,f,g,h,u,v,w &
-        dfu1,dfv1,dfw1,vn,dzs &
+        call velfg(dx1,dy1,dzn,f,g,h,u,v,w, &
+        dfu1,dfv1,dfw1,vn,dzs, &
+#ifndef WV_NEW_LES
         diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9, &
+#endif
         cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9, &
         nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9, &
         uspd,vspd) !WV: calls vel2 which uses halos

@@ -17,8 +17,8 @@ contains
 !      subroutine velfg(dx1,cov1,cov2,cov3,dfu1,diu1,diu2,dy1,diu3,dzn,vn,f,cov4,cov5,cov6, &
 !      dfv1,diu4,diu5,diu6,g,cov7,cov8,cov9,dfw1,diu7,diu8,diu9,dzs,h,nou1,u,nou5,v,nou9,w,nou2, &
 !      nou3,nou4,nou6,nou7,nou8,uspd,vspd)
-        subroutine velfg(dx1,dy1,dzn,f,g,h,u,v,w &
-        dfu1,dfv1,dfw1,vn,dzs &
+        subroutine velfg(dx1,dy1,dzn,f,g,h,u,v,w, &
+        dfu1,dfv1,dfw1,vn,dzs, &
 #ifndef WV_NEW_LES
         diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9, &
 #endif
@@ -111,13 +111,13 @@ contains
 !
 !
 #ifndef WV_NEW_VELFG
-      call vel2(
+      call vel2( &
             nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,&
 #ifndef WV_NEW_LES
             diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,&
 #endif
             cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9,&
-            u,v,dx1,dy1,wdzn,dzs,uspd,vspd)
+            u,v,w,dx1,dy1,dzn,dzs,uspd,vspd)
 #else
 !
 !wall function

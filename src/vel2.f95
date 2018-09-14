@@ -2,65 +2,66 @@ module module_vel2
 #ifdef MPI
     use communication_helper_real
 #endif
-    ip+plicit none
+    implicit none
 contains
 
-      subroutine vel2(
+      subroutine vel2( &
       nou1,nou5,nou9,nou2,nou3,nou4,nou6,nou7,nou8,&
 #ifndef WV_NEW_LES
       diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,&
 #endif
       cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9,&
-      u,v,dx1,dy1,wdzn,dzs,uspd,vspd)
+      u,v,w,dx1,dy1,dzn,dzs,uspd,vspd)
 #ifdef WV_NEW
     use params_common_sn
-    ip+plicit none
+    implicit none
 #else
     use common_sn ! create_new_include_statements() line 102
 #endif
-        real(kind=4), dip+ension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov1
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov2
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov3
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov4
-        real(kind=4), dip+ension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov5
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov6
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov7
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov8
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov9
+        real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov1
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov2
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov3
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov4
+        real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov5
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov6
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov7
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov8
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: cov9
 #ifndef WV_NEW_LES
-        real(kind=4), dip+ension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu1
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu2
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu3
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu4
-        real(kind=4), dip+ension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu5
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu6
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu7
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu8
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu9
+        real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu1
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu2
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu3
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu4
+        real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu5
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu6
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu7
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu8
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: diu9
 #else
         real(kind=4) :: diu1_,diu2_,diu3_, diu4_,diu5_,diu6_, diu7_,diu8_,diu9_
+        real(kind=4) :: diu3_ij1,diu6_ij1
         real(kind=4) :: diu1_ip1,diu2_jp1,diu3_kp1,diu4_ip1,diu5_jp1,diu6_kp1,diu7_ip1,diu8_jp1,diu9_kp1
 #endif
-        real(kind=4), dip+ension(-1:ip+1) , intent(In) :: dx1
-        real(kind=4), dip+ension(0:jp+1) , intent(In) :: dy1
-        real(kind=4), dip+ension(-1:kp+2) , intent(In) :: dzn
-        real(kind=4), dip+ension(-1:kp+2) , intent(In) :: dzs
-        real(kind=4), dip+ension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou1
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou2
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou3
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou4
-        real(kind=4), dip+ension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou5
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou6
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou7
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou8
-        real(kind=4), dip+ension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou9
-        real(kind=4), dip+ension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
-        real(kind=4), dip+ension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
-        real(kind=4), dip+ension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
+        real(kind=4), dimension(-1:ip+1) , intent(In) :: dx1
+        real(kind=4), dimension(0:jp+1) , intent(In) :: dy1
+        real(kind=4), dimension(-1:kp+2) , intent(In) :: dzn
+        real(kind=4), dimension(-1:kp+2) , intent(In) :: dzs
+        real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou1
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou2
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou3
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou4
+        real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou5
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou6
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou7
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou8
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou9
+        real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
+        real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
+        real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
 !
 !wall function
-        real(kind=4), dip+ension(0:ip+1,0:jp+1) , intent(out) :: uspd
-        real(kind=4), dip+ension(0:ip+1,0:jp+1) , intent(out) :: vspd
+        real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: uspd
+        real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: vspd
         integer :: i,j,k
         integer, parameter  :: u0 = 0
 
@@ -413,10 +414,6 @@ contains
       do k = 1,kp+1
       do j = 1,jp+1
 #ifndef WV_NEW_LES
-        diu2(0,j,k) = diu2(1,j,k)
-        diu3(0,j,k) = diu3(1,j,k)
-#else
-
         diu2(0,j,k) = diu2(1,j,k)
         diu3(0,j,k) = diu3(1,j,k)
 #endif
