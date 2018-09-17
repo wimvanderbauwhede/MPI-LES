@@ -124,7 +124,7 @@ contains
 
       end subroutine
 
-#if defined( WV_NEW ) && defined( WV_NEW_LES ) && defined( WV_NEW_LES2 ) && defined( WV_NEW_FEEDBF ) && defined( WV_VELFG)
+#if defined( WV_NEW ) && defined( WV_NEW_LES ) && defined( WV_NEW_LES2 ) && defined( WV_NEW_FEEDBF ) && defined( WV_NEW_VELFG)
       subroutine ifdata( &
 !#if ICAL == 1
       fold,gold,hold, time, &

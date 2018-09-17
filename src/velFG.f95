@@ -1,3 +1,16 @@
+! We have a 2-point stencil for each cov:
+
+
+!       cov1(i,j,k),cov1(i+1,j,k) => cov1_i, cov1_ip1
+!       cov2(i,j,k),cov2(i,j+1,k)    cov2_j, cov2_jp1
+!       cov3(i,j,k),cov3(i,j,k+1)    cov3_k, cov3_kp1
+!       cov4(i,j,k),cov4(i+1,j,k)    cov4_i, cov4_ip1
+!       cov5(i,j,k),cov5(i,j+1,k)    cov5_j, cov5_jp1
+!       cov6(i,j,k),cov6(i,j,k+1)    cov6_k, cov6_kp1
+!       cov7(i,j,k),cov7(i+1,j,k)    cov7_i, cov7_ip1
+!       cov8(i,j,k),cov8(i,j+1,k)    cov8_j, cov8_jp1
+!       cov9(i,j,k),cov9(i,j,k+1)    cov9_k, cov9_kp1
+
 module module_velFG
 #ifdef MPI
     use communication_helper_mpi
@@ -91,8 +104,8 @@ contains
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2) , intent(Out) :: nou9
 #endif
 #endif
-        real(kind=4) :: nou1_i,nou2_j,nou3_k, nou4_i,nou5_j,nou6_k, nou7_i,nou8_j,nou9_k
-        real(kind=4) :: diu1_i,diu2_j,diu3_k, diu4_i,diu5_j,diu6_k, diu7_i,diu8_j,diu9_k
+        real(kind=4) :: nou1_,nou2_,nou3_, nou4_,nou5_,nou6_,nou7_,nou8_,nou9_
+        real(kind=4) :: diu1_,diu2_,diu3_,diu4_,diu5_,diu6_,diu7_,diu8_,diu9_
         real(kind=4) :: cov1_i,cov2_j,cov3_k, cov4_i,cov5_j,cov6_k, cov7_i,cov8_j,cov9_k
         real(kind=4) :: nou1_ip1,nou2_jp1,nou3_kp1,nou4_ip1,nou5_jp1,nou6_kp1,nou7_ip1,nou8_jp1,nou9_kp1
         real(kind=4) :: diu1_ip1,diu2_jp1,diu3_kp1,diu4_ip1,diu5_jp1,diu6_kp1,diu7_ip1,diu8_jp1,diu9_kp1
@@ -105,7 +118,7 @@ contains
 !wall function
         real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: uspd
         real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: vspd
- 
+
         integer :: i,j,k
         real(kind=4) :: covc,covx1,covy1,covz1
 #ifdef WV_NEW_VELFG
@@ -149,42 +162,56 @@ contains
        end if
 #endif
 #endif
+
+      
 ! --u velocity
       do k = 1,kp
       do j = 1,jp
       do i = 1,ip
-        ! So here we could say:
-        ! calculate cov1:
 #ifdef WV_NEW_VELFG
-!_VELFG
-        nou1_i = (u(i-1,j,k)+u(i,j,k))/2.
-        diu1_i = (-u(i-1,j,k)+u(i,j,k))/dx1(i)
-        cov1_i = nou1_i*diu1_i
+!1
+      nou1_ = ( u(i-1,j,k)+u(i,j,k))/2. ! i.e 2-point average of u in i-direction
+      diu1_ = (-u(i-1,j,k)+u(i,j,k))/dx1(i) ! i.e. du/dx
+      cov1_i = nou1_*diu1_ 
 
-        nou1_ip1 = (u(i,j,k)+u(i+1,j,k))/2.
-        diu1_ip1 = (-u(i,j,k)+u(i+1,j,k))/dx1(i+1)
-        cov1_ip1 = nou1_ip1*diu1_ip1
+      nou1_ip1 = ( u(i,j,k)+u(i+1,j,k))/2. ! i.e 2-point average of u in i-direction
+      diu1_ip1 = (-u(i,j,k)+u(i+1,j,k))/dx1(i+1) ! i.e. du/dx
+      cov1_ip1 = nou1_ip1*diu1_ip1 
 
-        nou2_j = (dx1(i+1)*v(i,j-1,k)+dx1(i)*v(i+1,j-1,k)) /(dx1(i)+dx1(i+1))
-        diu2_j = 2.*(-u(i,j-1,k)+u(i,j,k))/(dy1(j-1)+dy1(j))
-        cov2_j = nou2_j*diu2_j
+      if (i==ip) cov1_ip1 = cov1_i
+!      cov1(ip+1,j,k) = cov1(ip,j,k)
 
-        nou2_jp1 = (dx1(i+1)*v(i,j,k)+dx1(i)*v(i+1,j,k)) /(dx1(i)+dx1(i+1))
-        diu2_jp1 = 2.*(-u(i,j,k)+u(i,j+1,k))/(dy1(j)+dy1(j+1))
-        cov2_jp1 = nou2_jp1*diu2_jp1
+!2      
+      nou2_ = (dx1(i+1)*v(i,j-1,k)+dx1(i)*v(i+1,j-1,k)) /(dx1(i)+dx1(i+1))
+      diu2_ = 2.*(-u(i,j-1,k)+u(i,j,k))/(dy1(j-1)+dy1(j))
+      cov2_j = nou2_*diu2_
 
-        nou3_k = (dx1(i+1)*w(i,j,k-1)+dx1(i)*w(i+1,j,k-1)) /(dx1(i)+dx1(i+1))
-        diu3_k = (-u(i,j,k-1)+u(i,j,k))/dzs(k-1)
-        cov3_k = nou3_k*diu3_k
+      nou2_jp1 = (dx1(i+1)*v(i,j,k)+dx1(i)*v(i+1,j,k)) /(dx1(i)+dx1(i+1))
+      diu2_jp1 = 2.*(-u(i,j,k)+u(i,j+1,k))/(dy1(j)+dy1(j+1))
+      cov2_jp1 = nou2_jp1*diu2_jp1
+      if (j==jp) then
+      nou2_ = (dx1(i+1)*v(i,0,k)+dx1(i)*v(i+1,0,k)) /(dx1(i)+dx1(i+1))
+      diu2_ = 2.*(-u(i,0,k)+u(i,1,k))/(dy1(0)+dy1(1))
+      cov2_jp1 = nou2_*diu2_
+      end if
+!3
+        nou3_ = (dx1(i+1)*w(i,j,k-1)+dx1(i)*w(i+1,j,k-1)) /(dx1(i)+dx1(i+1))
+        diu3_ = (-u(i,j,k-1)+u(i,j,k))/dzs(k-1)
+        cov3_k = nou3_*diu3_
 
         nou3_kp1 = (dx1(i+1)*w(i,j,k)+dx1(i)*w(i+1,j,k)) /(dx1(i)+dx1(i+1))
         diu3_kp1 = (-u(i,j,k)+u(i,j,k+1))/dzs(k)
         cov3_kp1 = nou3_kp1*diu3_kp1
 
+        if (k==1) then
+        nou3_ = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
+        diu3_ = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
+        cov3_k = nou3_*diu3_
+        end if
+
         covx1 = (dx1(i+1)*cov1_i+dx1(i)*cov1_ip1) /(dx1(i)+dx1(i+1))
         covy1 = (cov2_j+cov2_jp1)/2.
         covz1 = (cov3_k+cov3_kp1)/2.
-
 #else
         covx1 = (dx1(i+1)*cov1(i,j,k)+dx1(i)*cov1(i+1,j,k)) /(dx1(i)+dx1(i+1))
         covy1 = (cov2(i,j,k)+cov2(i,j+1,k))/2.
@@ -206,31 +233,48 @@ contains
       do k = 1,kp
       do j = 1,jp
       do i = 1,ip
+!4
 #ifdef WV_NEW_VELFG
-!_VELFG
-        nou4_i = (dy1(j+1)*u(i-1,j,k)+dy1(j)*u(i-1,j+1,k)) /(dy1(j)+dy1(j+1))
-        diu4_i = 2.*(-v(i-1,j,k)+v(i,j,k))/(dx1(i-1)+dx1(i))
-        cov4_i = (nou4_i-u0)*diu4_i
+      nou4_ = (dy1(j+1)*u(i-1,j,k)+dy1(j)*u(i-1,j+1,k)) /(dy1(j)+dy1(j+1))
+      diu4_ = 2.*(-v(i-1,j,k)+v(i,j,k))/(dx1(i-1)+dx1(i))
+      cov4_i = (nou4_-u0)*diu4_
 
-        nou4_ip1 = (dy1(j+1)*u(i,j,k)+dy1(j)*u(i,j+1,k)) /(dy1(j)+dy1(j+1))
-        diu4_ip1 = 2.*(-v(i,j,k)+v(i+1,j,k))/(dx1(i)+dx1(i+1))
-        cov4_ip1 = (nou4_ip1-u0)*diu4_ip1
+      nou4_ip1 = (dy1(j+1)*u(i,j,k)+dy1(j)*u(i,j+1,k)) /(dy1(j)+dy1(j+1))
+      diu4_ip1 = 2.*(-v(i,j,k)+v(i+1,j,k))/(dx1(i)+dx1(i+1))
+      cov4_ip1 = (nou4_ip1-u0)*diu4_ip1
 
-        nou5_j = ( v(i,j-1,k)+v(i,j,k))/2.
-        diu5_j = (-v(i,j-1,k)+v(i,j,k))/dy1(j)
-        cov5_j = nou5_j*diu5_j
+      if (i==ip) cov4_ip1 = cov4_i
 
-        nou5_jp1 = ( v(i,j,k)+v(i,j+1,k))/2.
-        diu5_jp1 = (-v(i,j,k)+v(i,j+1,k))/dy1(j+1)
-        cov5_jp1 = nou5_jp1*diu5_jp1
+!5
+      nou5_ = ( v(i,j-1,k)+v(i,j,k))/2.
+      diu5_ = (-v(i,j-1,k)+v(i,j,k))/dy1(j)
+      cov5_j = nou5_*diu5_
 
-        nou6_k = (dy1(j+1)*w(i,j,k-1)+dy1(j)*w(i,j+1,k-1)) /(dy1(j)+dy1(j+1))
-        diu6_k = (-v(i,j,k-1)+v(i,j,k))/dzs(k-1)
-        cov6_k = nou6_k*diu6_k
+      nou5_jp1 = ( v(i,j,k)+v(i,j+1,k))/2.
+      diu5_jp1 = (-v(i,j,k)+v(i,j+1,k))/dy1(j+1)
+      cov5_jp1 = nou5_jp1*diu5_jp1
+
+      if (j==jp) then
+          nou5_ = ( v(i,1,k)+v(i,2,k))/2.
+          diu5_ = (-v(i,1,k)+v(i,2,k))/dy1(j)
+          cov5_jp1 = nou5_*diu5_
+      end if  
+      !cov5(i,jp+1,k) = cov5(i,1,k)
+      
+!6
+        nou6_ = (dy1(j+1)*w(i,j,k-1)+dy1(j)*w(i,j+1,k-1)) /(dy1(j)+dy1(j+1))
+        diu6_ = (-v(i,j,k-1)+v(i,j,k))/dzs(k-1)
+        cov6_k = nou6_*diu6_
 
         nou6_kp1 = (dy1(j+1)*w(i,j,k)+dy1(j)*w(i,j+1,k)) /(dy1(j)+dy1(j+1))
         diu6_kp1 = (-v(i,j,k)+v(i,j,k+1))/dzs(k)
         cov6_kp1 = nou6_kp1*diu6_kp1
+
+        if (k==1) then
+        nou6_ = 0.5*(dy1(j+1)*w(i,j,1)+dy1(j)*w(i,j+1,1))/(dy1(j)+dy1(j+1))
+        diu6_=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
+        cov6_k = nou6_*diu6_
+        end if
 
         covx1 = (cov4_i+cov4_ip1)/2.
         covy1 = (dy1(j+1)*cov5_j+dy1(j)*cov5_jp1) /(dy1(j)+dy1(j+1))
@@ -251,38 +295,48 @@ contains
       end do
       end do
       end do
-
 !
 ! =======================================
 ! --w velocity
       do k = 1,kp-1
       do j = 1,jp
       do i = 1,ip
+      !if (k<kp) then
+!7
 #ifdef WV_NEW_VELFG
-!_VELFG
-        nou7_i = (dzn(k+1)*u(i-1,j,k)+dzn(k)*u(i-1,j,k+1)) /(dzn(k)+dzn(k+1))
-        diu7_i = 2.*(-w(i-1,j,k)+w(i,j,k))/(dx1(i-1)+dx1(i))
-        cov7_i = (nou7_i-u0)*diu7_i
+      nou7_ = (dzn(k+1)*u(i-1,j,k)+dzn(k)*u(i-1,j,k+1)) /(dzn(k)+dzn(k+1))
+      diu7_ = 2.*(-w(i-1,j,k)+w(i,j,k))/(dx1(i-1)+dx1(i))
+      cov7_i = (nou7_-u0)*diu7_
 
-        nou7_ip1 = (dzn(k+1)*u(i,j,k)+dzn(k)*u(i,j,k+1)) /(dzn(k)+dzn(k+1))
-        diu7_ip1 = 2.*(-w(i,j,k)+w(i+1,j,k))/(dx1(i)+dx1(i+1))
-        cov7_ip1 = (nou7_ip1-u0)*diu7_ip1
+      nou7_ip1 = (dzn(k+1)*u(i,j,k)+dzn(k)*u(i,j,k+1)) /(dzn(k)+dzn(k+1))
+      diu7_ip1 = 2.*(-w(i,j,k)+w(i+1,j,k))/(dx1(i)+dx1(i+1))
+      cov7_ip1 = (nou7_-u0)*diu7_
 
-        nou8_j = (dzn(k+1)*v(i,j-1,k)+dzn(k)*v(i,j-1,k+1)) /(dzn(k)+dzn(k+1))
-        diu8_j = 2.*(-w(i,j-1,k)+w(i,j,k))/(dy1(j-1)+dy1(j))
-        cov8_j = nou8_j*diu8_j
+      if (i==ip) cov7_ip1 = cov7_i
+!8
+      nou8_ = (dzn(k+1)*v(i,j-1,k)+dzn(k)*v(i,j-1,k+1)) /(dzn(k)+dzn(k+1))
+      diu8_ = 2.*(-w(i,j-1,k)+w(i,j,k))/(dy1(j-1)+dy1(j))
+      cov8_j = nou8_*diu8_
 
-        nou8_jp1 = (dzn(k+1)*v(i,j,k)+dzn(k)*v(i,j,k+1)) /(dzn(k)+dzn(k+1))
-        diu8_jp1 = 2.*(-w(i,j,k)+w(i,j+1,k))/(dy1(j)+dy1(j+1))
-        cov8_jp1 = nou8_jp1*diu8_jp1
+      nou8_jp1 = (dzn(k+1)*v(i,j,k)+dzn(k)*v(i,j,k+1)) /(dzn(k)+dzn(k+1))
+      diu8_jp1 = 2.*(-w(i,j,k)+w(i,j+1,k))/(dy1(j)+dy1(j+1))
+      cov8_jp1 = nou8_jp1*diu8_jp1
 
-        nou9_k = ( w(i,j,k-1)+w(i,j,k))/2.
-        diu9_k = (-w(i,j,k-1)+w(i,j,k))/dzn(k)
-        cov9_k = nou9_k*diu9_k
-
-        nou9_kp1 = ( w(i,j,k)+w(i,j,k+1))/2.
-        diu9_kp1 = (-w(i,j,k)+w(i,j,k+1))/dzn(k+1)
-        cov9_kp1 = nou9_kp1*diu9_kp1
+      if (j==jp) then
+        nou8_ = (dzn(k+1)*v(i,0,k)+dzn(k)*v(i,0,k+1)) /(dzn(k)+dzn(k+1))
+        diu8_ = 2.*(-w(i,0,k)+w(i,1,k))/(dy1(0)+dy1(1))
+        cov8_jp1 = nou8_*diu8_
+      end if
+      !cov8(i,jp+1,k) = cov8(i,1,k)
+      !end if
+!9
+      nou9_ = ( w(i,j,k-1)+w(i,j,k))/2.
+      diu9_ = (-w(i,j,k-1)+w(i,j,k))/dzn(k)
+      cov9_k = nou9_*diu9_
+      
+      nou9_kp1 = ( w(i,j,k)+w(i,j,k+1))/2.
+      diu9_kp1 = (-w(i,j,k)+w(i,j,k+1))/dzn(k+1)
+      cov9_kp1 = nou9_kp1*diu9_kp1
 
        covx1 = (cov7_i+cov7_ip1)/2.
        covy1 = (cov8_j+cov8_jp1)/2.
@@ -291,7 +345,6 @@ contains
        covx1 = (cov7(i,j,k)+cov7(i+1,j,k))/2.
        covy1 = (cov8(i,j,k)+cov8(i,j+1,k))/2.
        covz1 = (dzn(k+1)*cov9(i,j,k)+dzn(k)*cov9(i,j,k+1)) /(dzn(k)+dzn(k+1))
-
 #endif
        covc = covx1+covy1+covz1
 !-- molecular viscous term is neglected
@@ -300,7 +353,7 @@ contains
 !        df = vn*dfw1(i,j,k)  
 !        h(i,j,k) = (-covc+df)
 !--
-        h(i,j,k) = (-covc)
+        h(i,j,k) = (-covc)      
       end do
       end do
       end do
@@ -331,6 +384,7 @@ contains
 #endif
 #endif
 !
+      
 ! =======================================
 #ifdef WV_DEBUG
     print *, 'F95 FGHSUM after velfg:',sum(f)+sum(g)+sum(h)
@@ -342,6 +396,7 @@ contains
     print *, 'F95 VSUM after velfg:', sum(v)
     print *, 'F95 WSUM after velfg:', sum(w)
 #endif
+
       return
       end subroutine velFG
 

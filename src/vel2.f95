@@ -135,7 +135,9 @@ contains
         cov9(i,j,k) = nou9_*diu9_
 #ifdef WV_NEW_VEL2
         cov1(ip+1,j,k) = cov1(ip,j,k)
+        ! I don't think this is ever used anywhere!
         cov5(i,0,k) = cov5(i,jp,k)
+        ! But this is used
         cov5(i,jp+1,k) = cov5(i,1,k)
 #endif
 #endif
@@ -175,6 +177,7 @@ contains
 #ifdef WV_NEW_VEL2
 ! Could be anything, really
         if (j==1) then
+        ! This is used
         cov2(i,jp+1,k) = cov2(i,1,k)
         end if
 #endif
@@ -209,11 +212,12 @@ contains
 #ifdef WV_NEW_VEL2
 !This guard is ad-hoc, we could always compute this
         if (k==2) then
-        nou3_ij1 = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
-        diu3_ij1 = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
-        cov3(i,j,1) = nou3_ij1*diu3_ij1
+        nou3_ = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
+        diu3_ = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
+        cov3(i,j,1) = nou3_*diu3_
         end if
 #endif
+
 #endif
 #endif
       end do
@@ -411,7 +415,9 @@ contains
 #ifndef WV_NEW_LES
         diu2(i,0,k) = diu2(i,jp,k)
 #endif
+#ifndef WV_NEW_VEL2
         cov2(i,0,k) = cov2(i,jp,k)
+#endif
 #ifndef WV_NEW_LES2
         nou2(i,jp+1,k) = nou2(i,1,k)
 #endif
@@ -476,6 +482,7 @@ contains
         cov5(i,0,k) = cov5(i,jp,k)
         cov5(i,jp+1,k) = cov5(i,1,k)
 #endif
+#endif
       end do
       end do
 #else
@@ -522,7 +529,9 @@ contains
 #ifndef WV_NEW_LES2
         nou8(i,0,k) = nou8(i,jp,k)
 #endif
+#ifndef WV_NEW_VEL2
         cov8(i,0,k) = cov8(i,jp,k)
+#endif
 #ifndef WV_NEW_LES2
         nou8(i,jp+1,k) = nou8(i,1,k)
 #endif
