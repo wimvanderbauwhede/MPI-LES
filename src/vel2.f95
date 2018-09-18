@@ -430,12 +430,14 @@ contains
       end do
       end do
 #else
+#if !defined( WV_NEW_LES ) && !defined( WV_NEW_LES2 )
     call sideflowRightLeft(nou2, procPerRow, jp+1, 1, 1, 2, 1, 2)
     call sideflowRightLeft(diu2, procPerRow, jp+1, 1, 1, 2, 1, 2)
     call sideflowRightLeft(cov2, procPerRow, jp+1, 1, 1, 2, 1, 2)
     call sideflowLeftRight(nou2, procPerRow, 2, jp+2, 1, 2, 1, 2)
     call sideflowLeftRight(diu2, procPerRow, 2, jp+2, 1, 2, 1, 2)
     call sideflowLeftRight(cov2, procPerRow, 2, jp+2, 1, 2, 1, 2)
+#endif
 #endif
 
 ! Can be merged
@@ -486,12 +488,14 @@ contains
       end do
       end do
 #else
+#if !defined( WV_NEW_LES ) && !defined( WV_NEW_LES2 )
     call sideflowRightLeft(nou5, procPerRow, jp+2, 2, 2, 2, 1, 2)
     call sideflowRightLeft(diu5, procPerRow, jp+2, 2, 2, 2, 1, 2)
     call sideflowRightLeft(cov5, procPerRow, jp+2, 2, 2, 2, 1, 2)
     call sideflowLeftRight(nou5, procPerRow, 3, jp+3, 2, 2, 1, 2)
     call sideflowLeftRight(diu5, procPerRow, 3, jp+3, 2, 2, 1, 2)
     call sideflowLeftRight(cov5, procPerRow, 3, jp+3, 2, 2, 1, 2)
+#endif
 #endif
 #ifdef MPI
     if (isBottomRow(procPerRow)) then
@@ -542,12 +546,14 @@ contains
       end do
       end do
 #else
+#if !defined( WV_NEW_LES ) && !defined( WV_NEW_LES2 )
     call sideflowRightLeft(nou8, procPerRow, jp+1, 1, 1, 2, 1, 3)
     call sideflowRightLeft(diu8, procPerRow, jp+1, 1, 1, 2, 1, 3)
     call sideflowRightLeft(cov8, procPerRow, jp+1, 1, 1, 2, 1, 3)
     call sideflowLeftRight(nou8, procPerRow, 2, jp+2, 1, 2, 1, 3)
     call sideflowLeftRight(diu8, procPerRow, 2, jp+2, 1, 2, 1, 3)
     call sideflowLeftRight(cov8, procPerRow, 2, jp+2, 1, 2, 1, 3)
+#endif
 #endif
 ! --les
 #ifdef MPI
@@ -595,6 +601,7 @@ contains
 #ifdef NESTED_LES
    if (syncTicks == 0) then
 #endif
+#if !defined( WV_NEW_LES ) && !defined( WV_NEW_LES2 ) && !defined( WV_NEW_VELFG )
     call exchangeRealHalos(nou1, procPerRow, neighbours, 1, 2, 2, 2)
     call exchangeRealHalos(diu1, procPerRow, neighbours, 1, 2, 2, 2)
     call exchangeRealHalos(cov1, procPerRow, neighbours, 1, 2, 2, 2)
@@ -622,6 +629,7 @@ contains
     call exchangeRealHalos(nou9, procPerRow, neighbours, 1, 2, 1, 2)
     call exchangeRealHalos(diu9, procPerRow, neighbours, 1, 2, 1, 2)
     call exchangeRealHalos(cov9, procPerRow, neighbours, 1, 2, 1, 2)
+#endif
 #ifdef NESTED_LES
    end if
 #endif
