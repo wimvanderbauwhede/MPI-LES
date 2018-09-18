@@ -593,8 +593,10 @@ contains
       end do
       end do
 #else
+#ifndef WV_NEW_LES
     call sideflowRightLeft(diu4, procPerRow, jp+1, 1, 1, 1, 1, 1)
     call sideflowRightLeft(diu6, procPerRow, jp+1, 1, 1, 1, 1, 1)
+#endif
 #endif
 
 #ifdef MPI
