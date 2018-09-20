@@ -181,7 +181,7 @@ contains
 ! This is OK if we have the top row
 ! But it makes me wonder, if u has the correct bounds, then it should be correct anyway, assuming dx is constant
 !      cov1(ip+1,j,k) = cov1(ip,j,k)
-#if !defined(MPI) || (PROC_PER_ROW==1)
+#if !defined( DEBUG_MPI ) && (!defined(MPI) || (PROC_PER_ROW==1))
       if (i==ip) cov1_ip1 = cov1_i
 #else
       if (isTopRow(procPerRow) .and. (i==ip)) cov1_ip1 = cov1_i
@@ -203,7 +203,7 @@ contains
 
 !        cov2(i,0,k) = cov2(i,jp,k), but this location is never accessed afaict
 !        cov2(i,jp+1,k) = cov2(i,1,k)
-#if !defined(MPI) || (PROC_PER_ROW==1)
+#if !defined( DEBUG_MPI ) && (!defined(MPI) || (PROC_PER_ROW==1))
       if (j==jp) then
           nou2_ = (dx1(i+1)*v(i,0,k)+dx1(i)*v(i+1,0,k)) /(dx1(i)+dx1(i+1))
           diu2_ = 2.*(-u(i,0,k)+u(i,1,k))/(dy1(0)+dy1(1))
@@ -221,8 +221,8 @@ contains
 
         if (k==1) then
             nou3_ = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
-!WV            diu3_ = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
-            diu3_ = 0.4*u(i,j,1) / ( alog( 5.0 * dzn(1) ) * 0.2 * dzn(1) )
+            diu3_ = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
+!WV            diu3_ = 0.4*u(i,j,1) / ( alog( 5.0 * dzn(1) ) * 0.2 * dzn(1) )
             cov3_k = nou3_*diu3_
         end if
 
@@ -261,7 +261,7 @@ contains
       cov4_ip1 = (nou4_ip1-u0)*diu4_ip1
 
     ! cov4(ip+1,j,k) = cov4(ip,j,k)
-#if !defined(MPI) || (PROC_PER_ROW==1)
+#if !defined( DEBUG_MPI ) && (!defined(MPI) || (PROC_PER_ROW==1))
       if (i==ip) cov4_ip1 = cov4_i
 #else
       if (isTopRow(procPerRow) .and. (i==ip)) cov4_ip1 = cov4_i
@@ -275,7 +275,7 @@ contains
       diu5_jp1 = (-v(i,j,k)+v(i,j+1,k))/dy1(j+1)
       cov5_jp1 = nou5_jp1*diu5_jp1
 
-#if !defined(MPI) || (PROC_PER_ROW==1)
+#if !defined( DEBUG_MPI ) && (!defined(MPI) || (PROC_PER_ROW==1))
       ! nou5(i,0,k) is never used
       ! cov5(i,jp+1,k) = cov5(i,1,k)
       if (j==jp) then
@@ -297,8 +297,8 @@ contains
 
         if (k==1) then
             nou6_ = 0.5*(dy1(j+1)*w(i,j,1)+dy1(j)*w(i,j+1,1))/(dy1(j)+dy1(j+1))
-!            diu6_=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
-            diu6_= 0.4*v(i,j,1) / (alog(5.0*dzn(1)) * 0.2 * dzn(1))
+            diu6_=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
+!WV            diu6_= 0.4*v(i,j,1) / (alog(5.0*dzn(1)) * 0.2 * dzn(1))
             cov6_k = nou6_*diu6_
         end if
 
@@ -338,7 +338,7 @@ contains
       diu7_ip1 = 2.*(-w(i,j,k)+w(i+1,j,k))/(dx1(i)+dx1(i+1))
       cov7_ip1 = (nou7_-u0)*diu7_
 
-#if !defined(MPI) || (PROC_PER_ROW==1)
+#if !defined( DEBUG_MPI ) && (!defined(MPI) || (PROC_PER_ROW==1))
       if (i==ip) cov7_ip1 = cov7_i
 #else
       if (isTopRow(procPerRow) .and. (i==ip)) cov7_ip1 = cov7_i
@@ -354,7 +354,7 @@ contains
       cov8_jp1 = nou8_jp1*diu8_jp1
 
       !cov8(i,jp+1,k) = cov8(i,1,k)
-#if !defined(MPI) || (PROC_PER_ROW==1)
+#if !defined( DEBUG_MPI ) && (!defined(MPI) || (PROC_PER_ROW==1))
       if (j==jp) then
         nou8_ = (dzn(k+1)*v(i,0,k)+dzn(k)*v(i,0,k+1)) /(dzn(k)+dzn(k+1))
         diu8_ = 2.*(-w(i,0,k)+w(i,1,k))/(dy1(0)+dy1(1))
