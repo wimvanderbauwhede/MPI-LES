@@ -180,12 +180,13 @@ contains
 
 ! This is OK if we have the top row
 ! But it makes me wonder, if u has the correct bounds, then it should be correct anyway, assuming dx is constant
+!      cov1(ip+1,j,k) = cov1(ip,j,k)
 #if !defined(MPI) || (PROC_PER_ROW==1)
       if (i==ip) cov1_ip1 = cov1_i
 #else
       if (isTopRow(procPerRow) .and. (i==ip)) cov1_ip1 = cov1_i
 #endif
-!      cov1(ip+1,j,k) = cov1(ip,j,k)
+
 
 !2      
       nou2_ = (dx1(i+1)*v(i,j-1,k)+dx1(i)*v(i+1,j-1,k)) /(dx1(i)+dx1(i+1))
@@ -200,9 +201,10 @@ contains
       diu2_jp1 = 2.*(-u(i,j,k)+u(i,j+1,k))/(dy1(j)+dy1(j+1))
       cov2_jp1 = nou2_jp1*diu2_jp1
 
+!        cov2(i,0,k) = cov2(i,jp,k), but this location is never accessed afaict
+!        cov2(i,jp+1,k) = cov2(i,1,k)
 #if !defined(MPI) || (PROC_PER_ROW==1)
       if (j==jp) then
-      ! nou2(i,jp+1,k) = nou2(i,1,k)
           nou2_ = (dx1(i+1)*v(i,0,k)+dx1(i)*v(i+1,0,k)) /(dx1(i)+dx1(i+1))
           diu2_ = 2.*(-u(i,0,k)+u(i,1,k))/(dy1(0)+dy1(1))
           cov2_jp1 = nou2_*diu2_
@@ -256,8 +258,9 @@ contains
       nou4_ip1 = (dy1(j+1)*u(i,j,k)+dy1(j)*u(i,j+1,k)) /(dy1(j)+dy1(j+1))
       diu4_ip1 = 2.*(-v(i,j,k)+v(i+1,j,k))/(dx1(i)+dx1(i+1))
       cov4_ip1 = (nou4_ip1-u0)*diu4_ip1
+
+    ! cov4(ip+1,j,k) = cov4(ip,j,k)
 #if !defined(MPI) || (PROC_PER_ROW==1)
-     ! cov4(ip+1,j,k) = cov4(ip,j,k)
       if (i==ip) cov4_ip1 = cov4_i
 #else
       if (isTopRow(procPerRow) .and. (i==ip)) cov4_ip1 = cov4_i
@@ -333,7 +336,12 @@ contains
       diu7_ip1 = 2.*(-w(i,j,k)+w(i+1,j,k))/(dx1(i)+dx1(i+1))
       cov7_ip1 = (nou7_-u0)*diu7_
 
+#if !defined(MPI) || (PROC_PER_ROW==1)
       if (i==ip) cov7_ip1 = cov7_i
+#else
+      if (isTopRow(procPerRow) .and. (i==ip)) cov7_ip1 = cov7_i
+#endif
+
 !8
       nou8_ = (dzn(k+1)*v(i,j-1,k)+dzn(k)*v(i,j-1,k+1)) /(dzn(k)+dzn(k+1))
       diu8_ = 2.*(-w(i,j-1,k)+w(i,j,k))/(dy1(j-1)+dy1(j))
@@ -342,13 +350,14 @@ contains
       nou8_jp1 = (dzn(k+1)*v(i,j,k)+dzn(k)*v(i,j,k+1)) /(dzn(k)+dzn(k+1))
       diu8_jp1 = 2.*(-w(i,j,k)+w(i,j+1,k))/(dy1(j)+dy1(j+1))
       cov8_jp1 = nou8_jp1*diu8_jp1
+
+      !cov8(i,jp+1,k) = cov8(i,1,k)
 #if !defined(MPI) || (PROC_PER_ROW==1)
       if (j==jp) then
         nou8_ = (dzn(k+1)*v(i,0,k)+dzn(k)*v(i,0,k+1)) /(dzn(k)+dzn(k+1))
         diu8_ = 2.*(-w(i,0,k)+w(i,1,k))/(dy1(0)+dy1(1))
         cov8_jp1 = nou8_*diu8_
       end if
-      !cov8(i,jp+1,k) = cov8(i,1,k)
 #endif
 !9
       nou9_ = ( w(i,j,k-1)+w(i,j,k))/2.
