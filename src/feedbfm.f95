@@ -43,12 +43,7 @@ subroutine feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
     end do
 #endif
 ! WV: better set the whole array to 0.
-!    do j=1,jpmax
-!      do i=1,ipmax
-!            zbm(i,j)=0.
-            zbm=0.
-!      end do
-!    end do
+    zbm=0.
 
 #ifdef VERBOSE
 #ifdef MPI
@@ -77,6 +72,7 @@ subroutine feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
       end if !for imaster
       call distributeZBM(zbm, ip, jp, ipmax, jpmax, procPerRow)
 #endif
+
 #ifndef WV_NEW_FEEDBF
 ! print *, 'assign amask'
       do j = 1,jp
@@ -88,11 +84,6 @@ subroutine feedbfm(amask1,bmask1,cmask1,dmask1,zbm,z2,dzn)
               end do
           end do
       end do
-
-#ifdef MPI
-!    end if
-!    call distributeZBM(zbm, ip, jp, ipmax, jpmax, procPerRow)
-#endif
 
 ! -----------------------------------------------------------------------
 !print *, 'assign bcd masks'

@@ -178,7 +178,13 @@ contains
       diu1_ip1 = (-u(i,j,k)+u(i+1,j,k))/dx1(i+1) ! i.e. du/dx
       cov1_ip1 = nou1_ip1*diu1_ip1 
 
+! This is OK if we have the rightmost column
+! But it makes me wonder, if u has the correct bounds, then it should be correct anyway, assuming dx is constant
+#if !defined(MPI) || (PROC_PER_ROW==1)
       if (i==ip) cov1_ip1 = cov1_i
+!#else
+!      if (isTopRow(procPerRow) .and. (i==ip)) cov1_ip1 = cov1_i
+#endif
 !      cov1(ip+1,j,k) = cov1(ip,j,k)
 
 !2      
@@ -189,11 +195,15 @@ contains
       nou2_jp1 = (dx1(i+1)*v(i,j,k)+dx1(i)*v(i+1,j,k)) /(dx1(i)+dx1(i+1))
       diu2_jp1 = 2.*(-u(i,j,k)+u(i,j+1,k))/(dy1(j)+dy1(j+1))
       cov2_jp1 = nou2_jp1*diu2_jp1
+! Again, if u and v are up to date this should just be OK
+#if !defined(MPI) || (PROC_PER_ROW==1)
       if (j==jp) then
+      ! nou2(i,jp+1,k) = nou2(i,1,k)
       nou2_ = (dx1(i+1)*v(i,0,k)+dx1(i)*v(i+1,0,k)) /(dx1(i)+dx1(i+1))
       diu2_ = 2.*(-u(i,0,k)+u(i,1,k))/(dy1(0)+dy1(1))
       cov2_jp1 = nou2_*diu2_
       end if
+#endif
 !3
         nou3_ = (dx1(i+1)*w(i,j,k-1)+dx1(i)*w(i+1,j,k-1)) /(dx1(i)+dx1(i+1))
         diu3_ = (-u(i,j,k-1)+u(i,j,k))/dzs(k-1)
@@ -242,9 +252,9 @@ contains
       nou4_ip1 = (dy1(j+1)*u(i,j,k)+dy1(j)*u(i,j+1,k)) /(dy1(j)+dy1(j+1))
       diu4_ip1 = 2.*(-v(i,j,k)+v(i+1,j,k))/(dx1(i)+dx1(i+1))
       cov4_ip1 = (nou4_ip1-u0)*diu4_ip1
-
+#if !defined(MPI) || (PROC_PER_ROW==1)
       if (i==ip) cov4_ip1 = cov4_i
-
+#endif
 !5
       nou5_ = ( v(i,j-1,k)+v(i,j,k))/2.
       diu5_ = (-v(i,j-1,k)+v(i,j,k))/dy1(j)
@@ -254,11 +264,14 @@ contains
       diu5_jp1 = (-v(i,j,k)+v(i,j+1,k))/dy1(j+1)
       cov5_jp1 = nou5_jp1*diu5_jp1
 
+#if !defined(MPI) || (PROC_PER_ROW==1)
+      ! nou5(i,0,k) is never used
       if (j==jp) then
           nou5_ = ( v(i,1,k)+v(i,2,k))/2.
           diu5_ = (-v(i,1,k)+v(i,2,k))/dy1(j)
           cov5_jp1 = nou5_*diu5_
       end if  
+#endif
       !cov5(i,jp+1,k) = cov5(i,1,k)
       
 !6
@@ -321,14 +334,14 @@ contains
       nou8_jp1 = (dzn(k+1)*v(i,j,k)+dzn(k)*v(i,j,k+1)) /(dzn(k)+dzn(k+1))
       diu8_jp1 = 2.*(-w(i,j,k)+w(i,j+1,k))/(dy1(j)+dy1(j+1))
       cov8_jp1 = nou8_jp1*diu8_jp1
-
+#if !defined(MPI) || (PROC_PER_ROW==1)
       if (j==jp) then
         nou8_ = (dzn(k+1)*v(i,0,k)+dzn(k)*v(i,0,k+1)) /(dzn(k)+dzn(k+1))
         diu8_ = 2.*(-w(i,0,k)+w(i,1,k))/(dy1(0)+dy1(1))
         cov8_jp1 = nou8_*diu8_
       end if
       !cov8(i,jp+1,k) = cov8(i,1,k)
-      !end if
+#endif
 !9
       nou9_ = ( w(i,j,k-1)+w(i,j,k))/2.
       diu9_ = (-w(i,j,k-1)+w(i,j,k))/dzn(k)
@@ -371,7 +384,7 @@ contains
 ! --sideflow condition
     do k = 1,kp
         do i = 1,ip
-            g(i, 0,k) = g(i,jp  ,k) ! GR: Why only right->left? What about left->right?
+            g(i, 0,k) = g(i,jp  ,k) ! WV only right->left because g(jp+1) does not exist
         end do
     end do
 ! --ground and top condition

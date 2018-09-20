@@ -124,14 +124,8 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
     end do
 
 #ifdef MPI
-!#ifdef NESTED_LES
-!    if (n>2) then
-!#endif
     call getGlobalSumOf(rhsav)
     call getGlobalSumOf(area)
-!#ifdef NESTED_LES
-!    end if
-!#endif
 #endif
 
 #if GR_DEBUG
@@ -298,14 +292,8 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
     end do
 
 #ifdef MPI
-!#ifdef NESTED_LES
-!    if (n>2) then
-!#endif
     call getGlobalSumOf(pav)
     call getGlobalSumOf(pco)
-!#ifdef NESTED_LES
-!    end if
-!#endif
 #endif
 #if GR_DEBUG
     print*, 'GR: pav ', pav, ' pco ', pco

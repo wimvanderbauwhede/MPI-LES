@@ -34,10 +34,11 @@ subroutine bondfg(f,g,h)
 #if !defined(MPI) || (PROC_PER_ROW==1)
     do k = 1,kp
         do i = 1,ip
-            g(i, 0,k) = g(i,jp  ,k) ! GR: Why only right->left? What about left->right?
+            g(i, 0,k) = g(i,jp  ,k) ! WV only right->left because g(jp+1) does not exist
         end do
     end do
 #else
+! g has 0:jp and this is about setting this 0
     call sideflowRightLeft(g, procPerRow, jp+1, 1, 1, 0, 1, 0)
 #endif
 ! --ground and top condition
