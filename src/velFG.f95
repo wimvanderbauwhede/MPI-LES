@@ -221,7 +221,8 @@ contains
 
         if (k==1) then
             nou3_ = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
-            diu3_ = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
+!WV            diu3_ = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
+            diu3_ = 0.4*u(i,j,1) / ( alog( 5.0 * dzn(1) ) * 0.2 * dzn(1) )
             cov3_k = nou3_*diu3_
         end if
 
@@ -296,7 +297,8 @@ contains
 
         if (k==1) then
             nou6_ = 0.5*(dy1(j+1)*w(i,j,1)+dy1(j)*w(i,j+1,1))/(dy1(j)+dy1(j+1))
-            diu6_=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
+!            diu6_=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
+            diu6_= 0.4*v(i,j,1) / (alog(5.0*dzn(1)) * 0.2 * dzn(1))
             cov6_k = nou6_*diu6_
         end if
 
