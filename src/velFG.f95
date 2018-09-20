@@ -178,12 +178,12 @@ contains
       diu1_ip1 = (-u(i,j,k)+u(i+1,j,k))/dx1(i+1) ! i.e. du/dx
       cov1_ip1 = nou1_ip1*diu1_ip1 
 
-! This is OK if we have the rightmost column
+! This is OK if we have the top row
 ! But it makes me wonder, if u has the correct bounds, then it should be correct anyway, assuming dx is constant
 #if !defined(MPI) || (PROC_PER_ROW==1)
       if (i==ip) cov1_ip1 = cov1_i
-!#else
-!      if (isTopRow(procPerRow) .and. (i==ip)) cov1_ip1 = cov1_i
+#else
+      if (isTopRow(procPerRow) .and. (i==ip)) cov1_ip1 = cov1_i
 #endif
 !      cov1(ip+1,j,k) = cov1(ip,j,k)
 
@@ -192,16 +192,20 @@ contains
       diu2_ = 2.*(-u(i,j-1,k)+u(i,j,k))/(dy1(j-1)+dy1(j))
       cov2_j = nou2_*diu2_
 
+      ! nou2_jp1 = (dx1(i+1)*v(i,jp,k)+dx1(i)*v(i+1,jp,k)) /(dx1(i)+dx1(i+1))
+      ! v(*,0,*) = v(*,jp,*)
+      ! v(*,jp+1,*) = v(*,1,*)
+
       nou2_jp1 = (dx1(i+1)*v(i,j,k)+dx1(i)*v(i+1,j,k)) /(dx1(i)+dx1(i+1))
       diu2_jp1 = 2.*(-u(i,j,k)+u(i,j+1,k))/(dy1(j)+dy1(j+1))
       cov2_jp1 = nou2_jp1*diu2_jp1
-! Again, if u and v are up to date this should just be OK
+
 #if !defined(MPI) || (PROC_PER_ROW==1)
       if (j==jp) then
       ! nou2(i,jp+1,k) = nou2(i,1,k)
-      nou2_ = (dx1(i+1)*v(i,0,k)+dx1(i)*v(i+1,0,k)) /(dx1(i)+dx1(i+1))
-      diu2_ = 2.*(-u(i,0,k)+u(i,1,k))/(dy1(0)+dy1(1))
-      cov2_jp1 = nou2_*diu2_
+          nou2_ = (dx1(i+1)*v(i,0,k)+dx1(i)*v(i+1,0,k)) /(dx1(i)+dx1(i+1))
+          diu2_ = 2.*(-u(i,0,k)+u(i,1,k))/(dy1(0)+dy1(1))
+          cov2_jp1 = nou2_*diu2_
       end if
 #endif
 !3
@@ -214,9 +218,9 @@ contains
         cov3_kp1 = nou3_kp1*diu3_kp1
 
         if (k==1) then
-        nou3_ = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
-        diu3_ = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
-        cov3_k = nou3_*diu3_
+            nou3_ = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
+            diu3_ = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
+            cov3_k = nou3_*diu3_
         end if
 
         covx1 = (dx1(i+1)*cov1_i+dx1(i)*cov1_ip1) /(dx1(i)+dx1(i+1))
@@ -253,7 +257,10 @@ contains
       diu4_ip1 = 2.*(-v(i,j,k)+v(i+1,j,k))/(dx1(i)+dx1(i+1))
       cov4_ip1 = (nou4_ip1-u0)*diu4_ip1
 #if !defined(MPI) || (PROC_PER_ROW==1)
+     ! cov4(ip+1,j,k) = cov4(ip,j,k)
       if (i==ip) cov4_ip1 = cov4_i
+#else
+      if (isTopRow(procPerRow) .and. (i==ip)) cov4_ip1 = cov4_i
 #endif
 !5
       nou5_ = ( v(i,j-1,k)+v(i,j,k))/2.
@@ -266,14 +273,15 @@ contains
 
 #if !defined(MPI) || (PROC_PER_ROW==1)
       ! nou5(i,0,k) is never used
+      ! cov5(i,jp+1,k) = cov5(i,1,k)
       if (j==jp) then
           nou5_ = ( v(i,1,k)+v(i,2,k))/2.
           diu5_ = (-v(i,1,k)+v(i,2,k))/dy1(j)
           cov5_jp1 = nou5_*diu5_
       end if  
 #endif
-      !cov5(i,jp+1,k) = cov5(i,1,k)
       
+
 !6
         nou6_ = (dy1(j+1)*w(i,j,k-1)+dy1(j)*w(i,j+1,k-1)) /(dy1(j)+dy1(j+1))
         diu6_ = (-v(i,j,k-1)+v(i,j,k))/dzs(k-1)
@@ -284,9 +292,9 @@ contains
         cov6_kp1 = nou6_kp1*diu6_kp1
 
         if (k==1) then
-        nou6_ = 0.5*(dy1(j+1)*w(i,j,1)+dy1(j)*w(i,j+1,1))/(dy1(j)+dy1(j+1))
-        diu6_=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
-        cov6_k = nou6_*diu6_
+            nou6_ = 0.5*(dy1(j+1)*w(i,j,1)+dy1(j)*w(i,j+1,1))/(dy1(j)+dy1(j+1))
+            diu6_=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
+            cov6_k = nou6_*diu6_
         end if
 
         covx1 = (cov4_i+cov4_ip1)/2.
