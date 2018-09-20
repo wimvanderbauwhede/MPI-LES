@@ -184,7 +184,9 @@ contains
 #if !defined( DEBUG_MPI ) && (!defined(MPI) || (PROC_PER_ROW==1))
       if (i==ip) cov1_ip1 = cov1_i
 #else
+#if !defined( DEBUG_MPI )
       if (isTopRow(procPerRow) .and. (i==ip)) cov1_ip1 = cov1_i
+#endif
 #endif
 
 
@@ -264,7 +266,9 @@ contains
 #if !defined( DEBUG_MPI ) && (!defined(MPI) || (PROC_PER_ROW==1))
       if (i==ip) cov4_ip1 = cov4_i
 #else
+#if !defined( DEBUG_MPI )
       if (isTopRow(procPerRow) .and. (i==ip)) cov4_ip1 = cov4_i
+#endif
 #endif
 !5
       nou5_ = ( v(i,j-1,k)+v(i,j,k))/2.
@@ -341,7 +345,9 @@ contains
 #if !defined( DEBUG_MPI ) && (!defined(MPI) || (PROC_PER_ROW==1))
       if (i==ip) cov7_ip1 = cov7_i
 #else
+#if !defined( DEBUG_MPI )
       if (isTopRow(procPerRow) .and. (i==ip)) cov7_ip1 = cov7_i
+#endif
 #endif
 
 !8
