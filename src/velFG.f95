@@ -43,8 +43,7 @@ contains
 
 #else
       subroutine velfg(dx1,dy1,dzn,f, &
-      g,dzs,h,u,v,w, &
-      )
+      g,dzs,h,u,v,w)
 #endif
 #ifdef WV_NEW
     use params_common_sn
@@ -164,7 +163,7 @@ contains
 #ifdef MPI
        end if
 #endif
-#endif
+
 #else
 
 !wall function
@@ -185,10 +184,10 @@ contains
 #ifdef MPI
        end if
 #endif
-#endif
      end if
         end do
         end do
+#endif
       
 ! --u velocity
       do k = 1,kp

@@ -341,8 +341,7 @@ if (n>n_nest0) then
 #endif
 #ifdef WV_NEW_VELFG
       call velfg(dx1,dy1,dzn,f, &
-      g,dzs,h,u,v,w, &
-      )
+      g,dzs,h,u,v,w)
 #else
         call velfg(dx1,dy1,dzn,f,g,h,u,v,w, &
         dfu1,dfv1,dfw1,vn,dzs, &
