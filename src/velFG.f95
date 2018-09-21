@@ -44,7 +44,7 @@ contains
 #else
       subroutine velfg(dx1,dy1,dzn,f, &
       g,dzs,h,u,v,w, &
-      uspd,vspd)
+      )
 #endif
 #ifdef WV_NEW
     use params_common_sn
@@ -114,11 +114,14 @@ contains
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
         real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(In) :: w
-
+#ifndef WV_NEW_VELFG
 !wall function
         real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: uspd
         real(kind=4), dimension(0:ip+1,0:jp+1) , intent(out) :: vspd
-
+#else
+        real(kind=4) :: uspd
+        real(kind=4) :: vspd
+#endif
         integer :: i,j,k
         real(kind=4) :: covc,covx1,covy1,covz1
 #ifdef WV_NEW_VELFG
@@ -137,8 +140,8 @@ contains
 #endif
             cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9,&
             u,v,w,dx1,dy1,dzn,dzs,uspd,vspd)
-#else
-!
+
+
 !wall function
 
       do j=1,jp
@@ -162,7 +165,30 @@ contains
        end if
 #endif
 #endif
+#else
 
+!wall function
+! LAZY, FIXME!
+      do j=1,jp
+        do i=1,ip
+        if (j==jp/2 .and. i == ip/2) then
+         uspd=(u(i,j,1)**2+((0.5*(v(i,j-1,1)+v(i,j,1))*dx1(i+1)&
+     +0.5*(v(i+1,j-1,1)+v(i+1,j,1))*dx1(i))/(dx1(i)+dx1(i+1)))**2)**0.5
+         vspd=(v(i,j,1)**2+((0.5*(u(i-1,j,1)+u(i,j,1))*dy1(j+1)&
+     +0.5*(u(i-1,j+1,1)+u(i,j+1,1))*dy1(j))/(dy1(j)+dy1(j+1)))**2)**0.5
+
+! WV: to get a point somewhere near the middle of the domain
+#ifdef MPI
+       if (rank == mpi_size / 2 + procPerRow / 2 - 1 ) then
+#endif
+        write(6,*) 'CHK_uspd_vspd=',uspd,vspd
+#ifdef MPI
+       end if
+#endif
+#endif
+     end if
+        end do
+        end do
       
 ! --u velocity
       do k = 1,kp
@@ -220,8 +246,11 @@ contains
 
         if (k==1) then
             nou3_ = 0.5*(dx1(i+1)*w(i,j,1)+dx1(i)*w(i+1,j,1))/(dx1(i)+dx1(i+1))
+#ifndef WV_NEW_VELFG
             diu3_ = uspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*u(i,j,1)/uspd(i,j)
-!WV            diu3_ = 0.4*u(i,j,1) / ( alog( 5.0 * dzn(1) ) * 0.2 * dzn(1) )
+#else
+            diu3_ = 0.4*u(i,j,1) / ( alog( 5.0 * dzn(1) ) * 0.2 * dzn(1) )
+#endif
             cov3_k = nou3_*diu3_
         end if
 
@@ -296,8 +325,11 @@ contains
 
         if (k==1) then
             nou6_ = 0.5*(dy1(j+1)*w(i,j,1)+dy1(j)*w(i,j+1,1))/(dy1(j)+dy1(j+1))
+#ifndef WV_NEW_VELFG
             diu6_=vspd(i,j)*0.4/alog(0.5*dzn(1)/0.1)/(0.5*dzn(1))/0.4*v(i,j,1)/vspd(i,j)
-!WV            diu6_= 0.4*v(i,j,1) / (alog(5.0*dzn(1)) * 0.2 * dzn(1))
+#else
+            diu6_= 0.4*v(i,j,1) / (alog(5.0*dzn(1)) * 0.2 * dzn(1))
+#endif
             cov6_k = nou6_*diu6_
         end if
 

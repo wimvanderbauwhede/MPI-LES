@@ -71,23 +71,26 @@ program main
     real(kind=4) :: ro
     real(kind=4) :: time
     real(kind=4) :: vn
-
+#ifdef I_AVEFLOW
     real(kind=4), dimension(ip,jp,kp)  :: avel
     real(kind=4), dimension(ip,jp,kp)  :: avep
     real(kind=4), dimension(ip,jp,kp)  :: avesm
     real(kind=4), dimension(ip,jp,kp)  :: avesmsm
+#ifndef WV_NEW
     real(kind=4), dimension(ip,kp)  :: avesu
     real(kind=4), dimension(ip,kp)  :: avesuu
     real(kind=4), dimension(ip,kp)  :: avesv
     real(kind=4), dimension(ip,kp)  :: avesvv
     real(kind=4), dimension(ip,kp)  :: avesw
     real(kind=4), dimension(ip,kp)  :: avesww
+#endif
     real(kind=4), dimension(ip,jp,0:kp)  :: aveu
     real(kind=4), dimension(ip,jp,kp)  :: aveuu
     real(kind=4), dimension(ip,jp,0:kp)  :: avev
     real(kind=4), dimension(ip,jp,kp)  :: avevv
     real(kind=4), dimension(ip+1,jp,0:kp+2)  :: avew
     real(kind=4), dimension(ip,jp,kp)  :: aveww
+#endif
 #ifndef WV_NEW_FEEEDBF
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  :: amask1
     real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1)  :: bmask1
@@ -115,9 +118,11 @@ program main
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: cov9
 #endif
     real(kind=4), dimension(kp)  :: delx1
+#ifndef WV_NEW_VELFG
     real(kind=4), dimension(0:ip,jp,kp)  :: dfu1
     real(kind=4), dimension(ip,0:jp,kp)  :: dfv1
     real(kind=4), dimension(ip,jp,kp)  :: dfw1
+#endif
 #ifndef WV_NEW_LES
     real(kind=4), dimension(-1:ip+2,0:jp+2,0:kp+2)  :: diu1
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+2)  :: diu2
@@ -139,12 +144,14 @@ program main
     real(kind=4), dimension(-1:kp+2)  :: dzs
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: f
 !#if ICAL == 1
-    real(kind=4), dimension(ip,jp,kp)  :: fghold
+!    real(kind=4), dimension(ip,jp,kp)  :: fghold
 !#endif
     real(kind=4), dimension(ip,jp,kp)  :: fold
+#ifndef WV_NEW_FEEDBF
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: fx
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: fy
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: fz
+#endif
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: g
     real(kind=4), dimension(ip,jp,kp)  :: gold
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: h
@@ -180,10 +187,10 @@ program main
     real(kind=4), dimension(0:ip,0:jp,0:kp)  :: wsum
     real(kind=4), dimension(0:kp+2)  :: z2
     real(kind=4), dimension(-1:ipmax+1,-1:jpmax+1)  :: zbm
-
+#ifndef WV_NEW_VELFG
     real(kind=4), dimension(0:ip+1,0:jp+1)  :: uspd
     real(kind=4), dimension(0:ip+1,0:jp+1)  :: vspd
-  
+#endif
 
 !#ifdef TIMINGS
     integer :: clock_rate
@@ -256,17 +263,20 @@ program main
 !#ifndef WV_DEBUG_MPI
     call ifdata( &
 !#if ICAL == 1
-                fold,gold,hold,fghold, time, &
+                fold,gold,hold,&
+                !fghold,&
+                 time, &
 !#endif
                 n,u,v,w,p,usum,vsum,wsum,delx1,dx1,dy1,dzn,&
 #ifndef WV_NEW_LES
                 diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,&
 #endif
-                sm,f,g,h,z2,dt,dxs,dfu1,vn,dfv1, &
+                sm,f,g,h,z2,dt,dxs,vn, &
 #ifndef WV_NEW_VELFG
+                dfu1,dfv1,dfw1,&
                 cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9,&
 #endif
-                dfw1,dzs,&
+                dzs,&
 #ifndef WV_NEW_LES2
                 nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9,&
 #endif
@@ -332,7 +342,7 @@ if (n>n_nest0) then
 #ifdef WV_NEW_VELFG
       call velfg(dx1,dy1,dzn,f, &
       g,dzs,h,u,v,w, &
-      uspd,vspd)
+      )
 #else
         call velfg(dx1,dy1,dzn,f,g,h,u,v,w, &
         dfu1,dfv1,dfw1,vn,dzs, &
@@ -361,7 +371,7 @@ if (n>n_nest0) then
         call system_clock(timestamp(4), clock_rate)
 #endif
 #ifdef WV_NEW_LES
-        call les(u,v,w,f,g,h,uspd,vspd,sm,dx1,dy1,dzn,dzs,dxs,dys)
+        call les(u,v,w,f,g,h,sm,dx1,dy1,dzn,dzs,dxs,dys)
 #else
         call les(delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6, &
                  diu7,diu8,diu9,sm,f,g,h,u,v,uspd,vspd,dxs,dys,n) ! WV: calls boundsm which uses halos
@@ -371,7 +381,9 @@ if (n>n_nest0) then
 #ifdef TIMINGS
         call system_clock(timestamp(5), clock_rate)
 #endif
-        call adam(n,nmax,data21,fold,gold,hold,fghold,f,g,h) ! WV: no MPI
+        call adam(n,nmax,data21,fold,gold,hold,&
+        !fghold,&
+        f,g,h) ! WV: no MPI
 #ifdef TIMINGS
         call system_clock(timestamp(6), clock_rate)
 #endif

@@ -8,7 +8,7 @@ contains
       subroutine les(delx1,dx1,dy1,dzn,diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,sm,f,g, &
       h,u,v,uspd,vspd,dxs,dys,n)
 #else
-        subroutine les(u,v,w,f,g,h,uspd,vspd,sm,dx1,dy1,dzn,dzs,dxs,dys)
+        subroutine les(u,v,w,f,g,h,sm,dx1,dy1,dzn,dzs,dxs,dys)
 #endif
 #ifdef WV_NEW
     use params_common_sn
@@ -51,8 +51,10 @@ contains
 !wall function
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: v
+#ifndef WV_NEW_LES
         real(kind=4), dimension(0:ip+1,0:jp+1) , intent(in) :: uspd
         real(kind=4), dimension(0:ip+1,0:jp+1) , intent(in) :: vspd
+#endif
         real(kind=4), dimension(0:ip) , intent(in) :: dxs
         real(kind=4), dimension(0:jp) , intent(in) :: dys
         integer :: i,j,k
@@ -280,7 +282,11 @@ contains
       diu7_ip1_j_1 = 2.*(-w(i,j,1)+w(i+1,j,1))/(dx1(i)+dx1(i+1))
       visuz2=(evsz2)* ( diu3_i_j_2 + diu7_ip1_j_1 )
 #endif
+#ifndef WV_NEW_LES
       visuz1=(0.4*uspd(i,j)/alog(0.5*dzn(1)/0.1))**2*(u(i,j,1)/uspd(i,j))
+#else
+      visuz1=(0.4/alog(0.5*dzn(1)/0.1))**2*u(i,j,1)
+#endif
 !
       vfu= (visux2-visux1)/dxs(i)+(visuy2-visuy1)/dy1(j)+(visuz2-visuz1)/dzn(1)
 !
@@ -386,7 +392,11 @@ contains
       diu8_i_jp1_1 = 2.*(-w(i,j,1)+w(i,j+1,1))/(dy1(j)+dy1(j+1))
       visvz2=(evsz2)* ( diu6_i_j_2+diu8_i_jp1_1)
 #endif
+#ifndef WV_NEW_LES
       visvz1=(0.4*vspd(i,j)/alog(0.5*dzn(1)/0.1))**2*(v(i,j,1)/vspd(i,j))
+#else
+      visvz1=(0.4/alog(0.5*dzn(1)/0.1))**2*v(i,j,1)
+#endif
 !
       vfv=(visvx2-visvx1)/dx1(i)+(visvy2-visvy1)/dys(j)+(visvz2-visvz1)/dzn(1)
 !

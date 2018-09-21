@@ -4,7 +4,9 @@ module module_adam
 #endif
 contains
 
-subroutine adam(n,nmax,data21,fold,gold,hold,fghold,f,g,h)
+subroutine adam(n,nmax,data21,fold,gold,hold,&
+!fghold,&
+f,g,h)
 #ifdef WV_NEW
     use params_common_sn
 
@@ -15,7 +17,7 @@ subroutine adam(n,nmax,data21,fold,gold,hold,fghold,f,g,h)
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: f
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: g
     real(kind=4), dimension(0:ip,0:jp,0:kp) , intent(InOut) :: h
-    real(kind=4), dimension(ip,jp,kp) , intent(In) :: fghold
+!    real(kind=4), dimension(ip,jp,kp) , intent(In) :: fghold
     real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: fold
     real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: gold
     real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: hold
@@ -31,7 +33,7 @@ subroutine adam(n,nmax,data21,fold,gold,hold,fghold,f,g,h)
         write(21) (((fold(i,j,k),i=1,ip),j=1,jp),k=1,kp)
         write(21) (((gold(i,j,k),i=1,ip),j=1,jp),k=1,kp)
         write(21) (((hold(i,j,k),i=1,ip),j=1,jp),k=1,kp)
-        write(21) (((fghold(i,j,k),i=1,ip),j=1,jp),k=1,kp)
+!        write(21) (((fghold(i,j,k),i=1,ip),j=1,jp),k=1,kp)
         close(unit=21)
     end if
 

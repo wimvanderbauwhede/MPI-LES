@@ -4,7 +4,9 @@ module module_aveflow
 #endif
 contains
 #ifdef WV_NEW
-subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm, &
+subroutine aveflow(n,n1,aveu,avev,avew,avep,&
+!avel,&
+aveuu,avevv,aveww,avesm,avesmsm, &
       uwfx,u,v,w,p,sm,nmax)
 #else
 subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm, &
@@ -18,7 +20,7 @@ subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm
 #ifdef MPI
     use communication_helper_real
 #endif
-    real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avel
+!    real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avel
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avep
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avesm
     real(kind=4), dimension(ip,jp,kp) , intent(Out) :: avesmsm
@@ -112,7 +114,7 @@ subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm
                 do i = 1,ip
                     avev(i,j,k) = 0.0
                     avep(i,j,k) = 0.0
-                    avel(i,j,k) = 0.0
+!                    avel(i,j,k) = 0.0
                     aveuu(i,j,k) = 0.0
                     avevv(i,j,k) = 0.0
                     aveww(i,j,k) = 0.0
@@ -182,7 +184,7 @@ subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm
                   avev(i,j,k) = avev(i,j,k)/real(nmax-n1+1)
 !                  avew(i,j,k) = avew(i,j,k)/real(nmax-n1+1)
                   avep(i,j,k) = avep(i,j,k)/real(nmax-n1+1)
-                  avel(i,j,k) = avel(i,j,k)/real(nmax-n1+1)
+!                  avel(i,j,k) = avel(i,j,k)/real(nmax-n1+1)
                   aveuu(i,j,k) = aveuu(i,j,k)/real(nmax-n1+1)
                   avevv(i,j,k) = avevv(i,j,k)/real(nmax-n1+1)
                   aveww(i,j,k) = aveww(i,j,k)/real(nmax-n1+1)
@@ -361,7 +363,7 @@ subroutine aveflow(n,n1,aveu,avev,avew,avep,avel,aveuu,avevv,aveww,avesm,avesmsm
                     avev(i,j,k) = 0.0
                     avew(i,j,k) = 0.0
                     avep(i,j,k) = 0.0
-                    avel(i,j,k) = 0.0
+!                    avel(i,j,k) = 0.0
                     aveuu(i,j,k) = 0.0
                     avevv(i,j,k) = 0.0
                     aveww(i,j,k) = 0.0

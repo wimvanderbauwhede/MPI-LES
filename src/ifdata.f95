@@ -157,17 +157,20 @@ contains
 
       subroutine ifdata( &
 !#if ICAL == 1
-                fold,gold,hold,fghold, time, &
+                fold,gold,hold,&
+                !fghold,&
+                 time, &
 !#endif
                 n,u,v,w,p,usum,vsum,wsum,delx1,dx1,dy1,dzn,&
 #ifndef WV_NEW_LES
                 diu1,diu2,diu3,diu4,diu5,diu6,diu7,diu8,diu9,&
 #endif
-                sm,f,g,h,z2,dt,dxs,dfu1,vn,dfv1, &
+                sm,f,g,h,z2,dt,dxs,vn, &
 #ifndef WV_NEW_VELFG
+                dfu1,dfv1,dfw1,&
                 cov1,cov2,cov3,cov4,cov5,cov6,cov7,cov8,cov9,&
 #endif
-                dfw1,dzs,&
+                dzs,&
 #ifndef WV_NEW_LES2
                 nou1,nou2,nou3,nou4,nou5,nou6,nou7,nou8,nou9,&
 #endif
@@ -192,7 +195,7 @@ contains
 
 !#endif
 #if !defined( WV_NEW ) || (defined( WV_NEW ) && (!defined( WV_NEW_FEEDBF ) || !defined( WV_NEW_VELFG ) || !defined(WV_NEW_LES)|| !defined(WV_NEW_LES2)))
-        real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: fghold
+!        real(kind=4), dimension(ip,jp,kp) , intent(InOut) :: fghold
         real(kind=4), intent(In) :: alpha
         real(kind=4), intent(In) :: beta
 #endif
