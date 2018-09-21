@@ -181,14 +181,11 @@ contains
 ! This is OK if we have the top row
 ! But it makes me wonder, if u has the correct bounds, then it should be correct anyway, assuming dx is constant
 !      cov1(ip+1,j,k) = cov1(ip,j,k)
-#if !defined( DEBUG_MPI ) && (!defined(MPI) || (PROC_PER_ROW==1))
+#if (!defined(MPI) || (PROC_PER_ROW==1))
       if (i==ip) cov1_ip1 = cov1_i
 #else
-#if !defined( DEBUG_MPI )
-      if (isTopRow(procPerRow) .and. (i==ip)) cov1_ip1 = cov1_i
+      if (isBottomRow(procPerRow) .and. (i==ip)) cov1_ip1 = cov1_i
 #endif
-#endif
-
 
 !2      
       nou2_ = (dx1(i+1)*v(i,j-1,k)+dx1(i)*v(i+1,j-1,k)) /(dx1(i)+dx1(i+1))
@@ -263,12 +260,10 @@ contains
       cov4_ip1 = (nou4_ip1-u0)*diu4_ip1
 
     ! cov4(ip+1,j,k) = cov4(ip,j,k)
-#if !defined( DEBUG_MPI ) && (!defined(MPI) || (PROC_PER_ROW==1))
+#if (!defined(MPI) || (PROC_PER_ROW==1))
       if (i==ip) cov4_ip1 = cov4_i
 #else
-#if !defined( DEBUG_MPI )
-      if (isTopRow(procPerRow) .and. (i==ip)) cov4_ip1 = cov4_i
-#endif
+      if (isBottomRow(procPerRow) .and. (i==ip)) cov4_ip1 = cov4_i
 #endif
 !5
       nou5_ = ( v(i,j-1,k)+v(i,j,k))/2.
@@ -342,12 +337,10 @@ contains
       diu7_ip1 = 2.*(-w(i,j,k)+w(i+1,j,k))/(dx1(i)+dx1(i+1))
       cov7_ip1 = (nou7_-u0)*diu7_
 
-#if !defined( DEBUG_MPI ) && (!defined(MPI) || (PROC_PER_ROW==1))
+#if (!defined(MPI) || (PROC_PER_ROW==1))
       if (i==ip) cov7_ip1 = cov7_i
 #else
-#if !defined( DEBUG_MPI )
-      if (isTopRow(procPerRow) .and. (i==ip)) cov7_ip1 = cov7_i
-#endif
+      if (isBottomRow(procPerRow) .and. (i==ip)) cov7_ip1 = cov7_i
 #endif
 
 !8
