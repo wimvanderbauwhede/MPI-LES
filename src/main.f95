@@ -91,7 +91,7 @@ program main
     real(kind=4), dimension(ip+1,jp,0:kp+2)  :: avew
     real(kind=4), dimension(ip,jp,kp)  :: aveww
 #endif
-#ifndef WV_NEW_FEEEDBF
+#ifndef WV_NEW_FEEDBF
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1)  :: amask1
     real(kind=4), dimension(-1:ip+1,0:jp+1,0:kp+1)  :: bmask1
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1)  :: cmask1

@@ -47,7 +47,7 @@ my $vvv=0;
 
 my $help_message =<<ENDH;
 
-        $0 [-d, --dev CPU|GPU] [-s, --stage stage] [--nth #threads ] [--nunits #units]   
+        $0 [-d, --dev CPU|GPU|FPGA] [-s, --stage stage] [--nth #threads ] [--nunits #units]   
 
     The script takes the following (optional) arguments: 
         --dev: the target device: CPU or GPU. Default is $plat
