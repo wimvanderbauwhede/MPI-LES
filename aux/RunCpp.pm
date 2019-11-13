@@ -44,6 +44,16 @@ sub run_cpp { my @args=@_;
 	    $single=1;
 	    $single_src=$args[0];
 	}
+
+    my $macros_file = './macros.h';
+    if (@args==2) {
+        $macros_file=$args[1];
+    }
+	
+    my $macros_to_skip_file = './macros_to_skip.h';
+    if (@args==3) {
+        $macros_file=$args[2];
+    }
 	
 	my @macros_to_skip=();
 	my @defined_macros=();
@@ -53,8 +63,8 @@ sub run_cpp { my @args=@_;
 	my $defined_macros_str='';
 	 my $undef_macros_str=''; 
 	# If a file 'macros.h' exists, the #define'd macros from that file will be used.
-	if (-e 'macros.h') { 
-		( $defined_macros_str,  $undef_macros_str) = macro_file_to_cmd_line_str( './macros.h');
+	if (-e $macros_file) { 
+		( $defined_macros_str,  $undef_macros_str) = macro_file_to_cmd_line_str( $macros_file);
 		$macros_str = "$defined_macros_str  $undef_macros_str";
 	
 	} else {
@@ -63,12 +73,12 @@ sub run_cpp { my @args=@_;
 
 	# If 'macros_to_skip.h' exists, the code segments guarded by these macros will be removed from the source and written to a file 
 	# NOTE: macros with #undef are ignored
-	if (-e 'macros_to_skip.h') {
-			(my $defined_macros_ref,my $undef_macros_ref)= get_macro_defs_from_file('./macros_to_skip.h');
+	if (-e $macros_to_skip_file) {
+			(my $defined_macros_ref,my $undef_macros_ref)= get_macro_defs_from_file($macros_to_skip_file);
 			@macros_to_skip=@{ $defined_macros_ref };
 			my @undef_macros= @{ $undef_macros_ref }; # unused		
 	} elsif ($no_macros) {
-	    die 'Could not find macros.h or macros_to_skip.h';
+	    die "Could not find $macros_file or $macros_to_skip_file";
 	}
 
 	# Processed files go in PostCPP

@@ -592,6 +592,7 @@ contains
 
 !!!! END INLINED VEL2 !!!!!
 
+#ifndef NO_BOUNDS_CALCS
 !wall function
 
       do j=1,jp
@@ -606,11 +607,14 @@ contains
      +0.5*(u(i-1,j+1,1)+u(i,j+1,1))*dy1(j))/(dy1(j)+dy1(j+1)))**2)**0.5
         end do
         end do
+#endif
 ! WV: to get a point somewhere near the middle of the domain
 #ifdef MPI
        if (rank == mpi_size / 2 + procPerRow / 2 - 1 ) then
 #endif
+#ifndef NO_IO
         write(6,*) 'CHK_uspd_vspd=',uspd(ip/2,jp/2),vspd(ip/2,jp/2)
+#endif        
 #ifdef MPI
        end if
 #endif
@@ -631,7 +635,9 @@ contains
 #ifdef MPI
        if (rank == mpi_size / 2 + procPerRow / 2 - 1 ) then
 #endif
+#ifndef NO_IO
         write(6,*) 'CHK_uspd_vspd=',uspd,vspd
+#endif
 #ifdef MPI
        end if
 #endif

@@ -333,7 +333,11 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
         do j = 1,jp
             do i = 1,ip
 #ifdef TWINNED_BUFFER
+#ifndef SEPARATE_P_ARRAYS
                 pav = pav+p(0,i,j,k)*dx1(i)*dy1(j)*dzn(k)
+#else
+                pav = pav+p0(i,j,k)*dx1(i)*dy1(j)*dzn(k)
+#endif
 #else
                 pav = pav+p(i,j,k)*dx1(i)*dy1(j)*dzn(k)
 #endif
@@ -355,7 +359,11 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
         do j = 1,jp
             do i = 1,ip
 #ifdef TWINNED_BUFFER
+#ifndef SEPARATE_P_ARRAYS
                 p(0,i,j,k) = p(0,i,j,k)-pav
+#else
+                p0(i,j,k) = p0(i,j,k)-pav
+#endif
 #else
                 p(i,j,k) = p(i,j,k)-pav
 #endif
@@ -372,14 +380,24 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
       ! --computational boundary(neumann condition)
           do k=0,kp+1
           do j=0,jp+1
+#ifndef SEPARATE_P_ARRAYS
             p(0,   0,j,k) = p(0,1 ,j,k)
             p(0,ip+1,j,k) = p(0,ip,j,k)
+#else
+            p0(   0,j,k) = p0(1 ,j,k)
+            p0(ip+1,j,k) = p0(ip,j,k)
+#endif
           end do
           end do
           do k=0,kp+1
           do i=0,ip+1
+#ifndef SEPARATE_P_ARRAYS
             p(0,i,   0,k) = p(0,i,jp,k)
             p(0,i,jp+1,k) = p(0,i, 1,k)
+#else
+            p0(i,   0,k) = p0(i,jp,k)
+            p0(i,jp+1,k) = p0(i, 1,k)
+#endif
           end do
           end do
 #else
@@ -393,8 +411,13 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
 ! --computational boundary(neumann condition)
       do j=0,jp+1
       do i=0,ip+1
+#ifndef SEPARATE_P_ARRAYS      
         p(0,i,j,   0) = p(0,i,j,1)
         p(0,i,j,kp+1) = p(0,i,j,kp)
+#else
+        p0(i,j,   0) = p0(i,j,1)
+        p0(i,j,kp+1) = p0(i,j,kp)
+#endif
       end do
       end do
 #else
@@ -451,7 +474,11 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
         nn = n/1000
         print *, 'timestep: ',nn,' pressure at centre: ',&
 #ifdef TWINNED_BUFFER
+#ifndef SEPARATE_P_ARRAYS      
         p(0,ip/2,jp/2,kp/2), &
+#else
+        p0(ip/2,jp/2,kp/2), &
+#endif
 #else
         p(ip/2,jp/2,kp/2), &
 #endif
@@ -467,7 +494,11 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
         write(20) (((v(i,j,k),i=1,ip),j=1,jp),k=1,kp)
         write(20) (((w(i,j,k),i=1,ip),j=1,jp),k=1,kp)
 #ifdef TWINNED_BUFFER
+#ifndef SEPARATE_P_ARRAYS      
         write(20) (((p(0,i,j,k),i=1,ip),j=1,jp),k=1,kp)
+#else
+        write(20) (((p0(i,j,k),i=1,ip),j=1,jp),k=1,kp)
+#endif
 #else
         write(20) (((p(i,j,k),i=1,ip),j=1,jp),k=1,kp)
 #endif
