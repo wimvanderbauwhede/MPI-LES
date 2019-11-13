@@ -2,7 +2,11 @@ module module_velnw
     implicit none
 contains
 
+#ifdef SEPARATE_P_ARRAYS
+      subroutine velnw(p0,ro,dxs,u,dt,f,dys,v,g,dzs,w,h)
+#else
       subroutine velnw(p,ro,dxs,u,dt,f,dys,v,g,dzs,w,h)
+#endif          
 #ifdef WV_NEW
     use params_common_sn
     implicit none
@@ -20,7 +24,11 @@ contains
 #ifndef TWINNED_BUFFER
         real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(In) :: p
 #else
+#ifdef SEPARATE_P_ARRAYS
+        real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(In) :: p0
+#else
         real(kind=4), dimension(0:1,0:ip+2,0:jp+2,0:kp+1) , intent(In) :: p
+#endif
 #endif
         real(kind=4), intent(In) :: ro
         real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(InOut) :: u
@@ -28,9 +36,8 @@ contains
         real(kind=4), dimension(0:ip+1,-1:jp+1,-1:kp+1) , intent(InOut) :: w
         integer :: i,j,k
         real(kind=4) :: pz
-! setting pz to 0 does not make the error go away
-! commenting out the redundant lines also not
-! Which means it's the values of f,g,h that are changing. g seems fine.
+
+! $u=u+(f-\frac{1}{\rho}\frac{\partial p}{dx})\Delta$t
 ! --u velocity
       do k = 1,kp
       do j = 1,jp
@@ -38,7 +45,11 @@ contains
 #ifndef TWINNED_BUFFER
         pz = (-p(i,j,k)+p(i+1,j,k))/ro/dxs(i)
 #else
+#ifdef SEPARATE_P_ARRAYS
+        pz = (-p0(i,j,k)+p0(i+1,j,k))/ro/dxs(i)
+#else        
         pz = (-p(0,i,j,k)+p(0,i+1,j,k))/ro/dxs(i)
+#endif
 #endif
         u(i,j,k) = u(i,j,k)+dt*(f(i,j,k)-pz)
 !        u(i,j,k) = u(i,j,k)
@@ -46,14 +57,18 @@ contains
       end do
       end do
 
-! --v velocity (WV: OK)
+! --v velocity
       do k = 1,kp
       do j = 1,jp
       do i = 1,ip
 #ifndef TWINNED_BUFFER
         pz = (-p(i,j,k)+p(i,j+1,k))/ro/dys(j)
 #else
+#ifdef SEPARATE_P_ARRAYS
+        pz = (-p0(i,j,k)+p0(i,j+1,k))/ro/dys(j)
+#else
         pz = (-p(0,i,j,k)+p(0,i,j+1,k))/ro/dys(j)
+#endif
 #endif
 !        if (k==kp/2 .and. j==jp/2 .and. i==ip/2) then
 !            print *,'timestep', p(i,j,k),p(i,j+1,k),v(i,j,k),v(i,j,k)+dt*(g(i,j,k)-pz)
@@ -63,14 +78,18 @@ contains
       end do
       end do
 
-! --w velocity (WV: NOK)
+! --w velocity
       do k = 1,kp-1
       do j = 1,jp
       do i = 1,ip
 #ifndef TWINNED_BUFFER
         pz = (-p(i,j,k)+p(i,j,k+1))/ro/dzs(k)
 #else
+#ifdef SEPARATE_P_ARRAYS
+        pz = (-p0(i,j,k)+p0(i,j,k+1))/ro/dzs(k)
+#else
         pz = (-p(0,i,j,k)+p(0,i,j,k+1))/ro/dzs(k)
+#endif
 #endif
         w(i,j,k) = w(i,j,k)+dt*(h(i,j,k)-pz)
 !        w(i,j,k) = w(i,j,k)

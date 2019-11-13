@@ -229,7 +229,7 @@ if (not $skip_step_1) {
     if ($TRUST_THE_COMPILER) {
         chdir $src_dir;
         ##
-        say'*NOTE 2018-03-07* 
+        say '*NOTE 2018-03-07* 
         The `AutoParallel-Fortran` compiler has built-in handling of macros via the -D and -X flags. 
         This generates the same code as when using the `run_cpp.pl` and `restore_stashed_lines.pl` scripts. 
         ' if 0;

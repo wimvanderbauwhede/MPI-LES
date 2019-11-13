@@ -34,7 +34,7 @@ subroutine feedbf(usum,u,bmask1,vsum,v,cmask1,wsum,w,dmask1,alpha,&
                   dt,beta,fx,fy,fz,f,g,h,n)
 #endif
 
-#ifdef WV_NEW_FEEDBF
+#ifdef WV_NEW
     use params_common_sn
 #else
     use common_sn ! create_new_include_statements() line 102

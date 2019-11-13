@@ -54,7 +54,6 @@ sub macro_file_to_cmd_line_str { (my $macros_src, my $flag)=@_;
 	} else {
 		$defined_macros_str = $flag.' '.join(' ',@defined_macros);
 	}
-		 	
 	return ($defined_macros_str, $undef_macros_str);
 }
 

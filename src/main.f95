@@ -23,7 +23,9 @@ program main
 !    use module_LES_combined_ocl
 !#else
     use module_velnw
+#ifndef NO_BOUNDS_CALCS    
     use module_bondv1
+#endif    
     use module_velFG
 #if IFBF == 1
     use module_feedbf
@@ -332,7 +334,9 @@ inNest = inNestedGrid()
 #ifdef TIMINGS
         call system_clock(timestamp(1), clock_rate)
 #endif
+#ifndef NO_BOUNDS_CALCS    
         call bondv1(u,z2,dzn,v,w,n,n0,dt,dxs) !WV: via halos + gatheraaa/bbb. Sideflow etc should be OK as in outer domain ???
+#endif
 #if defined( MPI ) && defined( NESTED_LES)
 if (n>n_nest0) then
 #endif

@@ -8,11 +8,19 @@ module module_press
 contains
 
 #ifdef WV_NEW
+#ifndef SEPARATE_P_ARRAYS
 subroutine press(u,v,w,p,rhs,f,g,h,dx1,dy1,dzn,dxs,dys,dzs,dt,n,nmax &
 #if !defined( NO_IO)  && !defined( MPI )
     ,usum,vsum,wsum,data20 &
 #endif
 )
+#else
+subroutine press(u,v,w,p0,p1,rhs,f,g,h,dx1,dy1,dzn,dxs,dys,dzs,dt,n,nmax &
+#if !defined( NO_IO)  && !defined( MPI )
+    ,usum,vsum,wsum,data20 &
+#endif
+)
+#endif
 #else
 subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,cn4s, &
                  n,nmax,data20,usum,vsum,wsum)
@@ -56,7 +64,11 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
 #ifndef TWINNED_BUFFER
     real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) , intent(InOut) :: p
 #else
+#ifdef SEPARATE_P_ARRAYS
+    real(kind=4), dimension(0:ip+2,0:jp+2,0:kp+1) :: p0,p1
+#else
     real(kind=4), dimension(0:1,0:ip+2,0:jp+2,0:kp+1) :: p
+#endif
 #endif
     real(kind=4), dimension(0:ip+1,0:jp+1,0:kp+1) , intent(Out) :: rhs
     real(kind=4), dimension(0:ip+1,-1:jp+1,0:kp+1) , intent(In) :: u
@@ -72,6 +84,7 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
     integer, parameter  :: nmaxp = 50 ! WV was 50
     real, parameter  :: omega = 1.
 
+#ifndef NO_BOUNDS_CALCS    
 #if !defined( INLINE_BOUND_CALCS ) || defined( MPI )
     call bondfg(f,g,h)
 #else
@@ -95,7 +108,7 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
    end do
       end do
 #endif
-
+#endif
     do k = 1,kp
         do j = 1,jp
             do i = 1,ip
@@ -186,6 +199,8 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
                                  cn4s*p(i,j,k-1) -rhs(i,j,k))-p(i,j,k))
 
 #else
+#ifndef SEPARATE_P_ARRAYS
+
                       if (nrd==0) then
                         ! buffer 0
                         reltmp = omega*(cn1 *(cn2l*p(0,i+1,j,k) + &
@@ -201,6 +216,23 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
                                  cn4s*p(1,i,j,k-1) -rhs(i,j,k))-p(1,i,j,k))
                         p(0,i,j,k) = p(1,i,j,k) +reltmp
                       end if
+#else
+                      if (nrd==0) then
+                        ! buffer 0
+                        reltmp = omega*(cn1 *(cn2l*p0(i+1,j,k) + &
+                                 cn2s*p0(i-1,j,k) +cn3l*p0(i,j+1,k) + &
+                                 cn3s*p0(i,j-1,k) +cn4l*p0(i,j,k+1) + &
+                                 cn4s*p0(i,j,k-1) -rhs(i,j,k))-p0(i,j,k))
+                        p1(i,j,k) = p0(i,j,k) +reltmp
+                      else
+                          ! buffer 1
+                        reltmp = omega*(cn1 *(cn2l*p1(i+1,j,k) + &
+                                 cn2s*p1(i-1,j,k) +cn3l*p1(i,j+1,k) + &
+                                 cn3s*p1(i,j-1,k) +cn4l*p1(i,j,k+1) + &
+                                 cn4s*p1(i,j,k-1) -rhs(i,j,k))-p1(i,j,k))
+                        p0(i,j,k) = p1(i,j,k) +reltmp
+                      end if
+#endif
 #endif
 
 #else
@@ -223,34 +255,53 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
                     end do
                 end do
             end do
+#ifndef NO_BOUNDS_CALCS
 #if defined( TWINNED_BUFFER ) && defined(INLINE_BOUND_CALCS) && !defined(MPI)
       ! --computational boundary(neumann condition)
           do k=0,kp+1
           do j=0,jp+1
+#ifdef SEPARATE_P_ARRAYS          
+            p0(0,j,k) = p0(1 ,j,k)
+            p0(ip+1,j,k) = p0(ip,j,k)
+#else
             p(0,   0,j,k) = p(0,1 ,j,k)
             p(0,ip+1,j,k) = p(0,ip,j,k)
+#endif
           end do
           end do
           do k=0,kp+1
           do i=0,ip+1
+#ifdef SEPARATE_P_ARRAYS          
+            p0(i,   0,k) = p0(i,jp,k)
+            p0(i,jp+1,k) = p0(i, 1,k)
+#else
             p(0,i,   0,k) = p(0,i,jp,k)
             p(0,i,jp+1,k) = p(0,i, 1,k)
+#endif
           end do
           end do
 #else
             call boundp1(p)
 #endif
+#endif
         end do  ! nrd
+#ifndef NO_BOUNDS_CALCS
 #if defined( TWINNED_BUFFER ) && defined(INLINE_BOUND_CALCS) && !defined(MPI)
 ! --computational boundary(neumann condition)
       do j=0,jp+1
       do i=0,ip+1
+#ifndef SEPARATE_P_ARRAYS      
         p(0,i,j,   0) = p(0,i,j,1)
         p(0,i,j,kp+1) = p(0,i,j,kp)
+#else
+        p0(i,j,   0) = p0(i,j,1)
+        p0(i,j,kp+1) = p0(i,j,kp)
+#endif
       end do
       end do
 #else
       call boundp2(p)
+#endif
 #endif
 #ifndef NO_IO
 #ifdef VERBOSE
@@ -315,6 +366,8 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
 #ifdef WV_DEBUG
     print *, "F95: P_SUM_ADJ=",sum(p)
 #endif
+
+#ifndef NO_BOUNDS_CALCS
 #if defined( TWINNED_BUFFER ) && defined(INLINE_BOUND_CALCS) && !defined(MPI)
       ! --computational boundary(neumann condition)
           do k=0,kp+1
@@ -349,6 +402,8 @@ subroutine press(rhs,u,dx1,v,dy1,w,dzn,f,g,h,dt,cn1,cn2l,p,cn2s,cn3l,cn3s,cn4l,c
 #endif
 #ifdef WV_DEBUG
     print *, "F95: P_SUM_BOUND=",sum(p)
+#endif
+
 #endif
 
 #if !defined( NO_IO ) && defined( VERBOSE )
