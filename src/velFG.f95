@@ -621,6 +621,7 @@ contains
 
 #else
 
+#ifndef NO_BOUNDS_CALCS      
 !wall function
 ! LAZY, FIXME!
       do j=1,jp
@@ -645,6 +646,7 @@ contains
         end do
         end do
 #endif
+#endif 
       
 ! --u velocity
       do k = 1,kp
@@ -877,6 +879,7 @@ contains
       end do
       end do
 ! WV: This seems not necessary, perhaps because it is called in press.
+#ifndef NO_BOUNDS_CALCS      
 #ifdef WV_NEW_VELFG
 #if !defined( INLINE_BOUND_CALCS ) || defined( MPI )
     call bondfg(f,g,h)
@@ -900,6 +903,7 @@ contains
             h(i,j,kp) = 0.0
         end do
     end do
+#endif
 #endif
 #endif
 !
