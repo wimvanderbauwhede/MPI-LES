@@ -362,7 +362,7 @@ if (not $skip_step_3) {
     ## SConstruct.auto is generated
     create_sconstruct($main_src, \@kernel_sources, \@orig_sources, $superkernel_name);
     
-    say  "Now we can build the OpenCL Fortran host code, setting the number of threads and compute units depending on the GPU";
+    say 'Now we can build the OpenCL Fortran host code, setting the number of threads and compute units depending on the GPU';
     say 'Note that the Scons build runs cpp on the kernel for the macros NTH, NUNITS and BARRIER_OK';
     say 'Normally these are set via the `nth`, `nunits` and `dev` flags on the scons command line';
     say 'But you can also put them in `macros_kernel.h`';

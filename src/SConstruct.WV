@@ -26,13 +26,14 @@ else:
         OSX=0
         OSFLAG='-D__LINUX__'
 
-print "MACROS are read from ./macros.h"
+print( "MACROS are read from ./macros.h")
 macro_source_str = getOpt('m','Macros','./macros.h')
 macro_sources = macro_source_str.split(",")
 MACROS = []
 for macro_source in macro_sources:
-    macros_str =  subprocess.check_output( ['perl', '-e', '@ls=<>;$macros_str=join(\" \",map {$_=~s/\n//;s/^\s*//;s/\s*$//;s/.define\s*/-D/;s/.undef\s*/-U/;s/\s+/=/;$_} @ls);print $macros_str',macro_source])
-    MACROS += macros_str.split()
+    macros_str =  subprocess.check_output( ['perl', '-e', '@ls=<>;$macros_str=join(" ",map {$_=~s/\n//;s/^\s*//;s/\s*$//;s/.define\s*/-D/;s/.undef\s*/-U/;s/\s+/=/;$_} @ls);print $macros_str',macro_source])
+    dec_macros_str = macros_str.decode()
+    MACROS += dec_macros_str.split()
 
 # Then build the rest of the code
 verbose = getOpt('v','Verbose','1')
@@ -160,9 +161,9 @@ else:
         LIBPATH = '/opt/rh/devtoolset-2/root/usr/lib'
     else:
 # reasonable default ...
-  	NETCDF = os.environ.get('NETCDF_DIR')
-	INCLPATH = [NETCDF + '/include']
-	LIBPATH  = [NETCDF + '/lib']
+        NETCDF = str(os.environ.get('NETCDF_DIR'))
+        INCLPATH = [NETCDF + '/include']
+        LIBPATH  = [NETCDF + '/lib']
 #MPICH = os.environ.get('MPICH')
 #INCLPATH = [NETCDF + '/include', MPICH + '/include']
 #LIBPATH = [NETCDF + '/lib', MPICH + '/lib']
