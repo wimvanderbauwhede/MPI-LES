@@ -1,6 +1,7 @@
 import subprocess
 import os
-import commands
+#import commands
+import subprocess
 import glob
 
 import OclBuilder
@@ -34,7 +35,8 @@ macro_sources = macro_source_str.split(",")
 MACROS = []
 for macro_source in macro_sources:
     macros_str =  subprocess.check_output( ['perl', '-e', '@ls=<>;$str=join(\" \",map {$_=~s/\n//;s/^\s*//;s/\s*$//;s/.define\s*/-D/;s/.undef\s*/-U/;s/\s+/=/;$_} @ls);print $str',macro_source])
-    MACROS += macros_str.split()
+    macros_str_dec = macros_str.decode('utf-8')
+    MACROS += macros_str_dec.split()
 
     nth_nunits_str =  subprocess.check_output( ['perl', '-e', '@ls=<>;$str=join(\" \",map {$_=~s/\n//;s/^\s*//;s/\s*$//;s/.define\s*//;$_} @ls);print $str','./macros_kernel.h'])
     NTH_NUNITS = nth_nunits_str.split()
@@ -59,17 +61,17 @@ envF=initOcl(envF)
 barrier_ok=''
 if OclBuilder.dev == 'GPU':
     barrier_ok='-DBARRIER_OK'
-    print 'dev:'+OclBuilder.dev
+    print( 'dev:'+OclBuilder.dev)
 else:
-    print 'dev:'+OclBuilder.dev
+    print( 'dev:'+OclBuilder.dev)
 
 # WV: FIXME: at the moment this is IGNORED!
 OclBuilder.kopts='-cl-mad-enable -cl-fast-relaxed-math -I. -DNTH='+str(nth)+' -DNUNITS='+str(nunits)+" "+barrier_ok
-print 'OclBuilder.kopts: '+OclBuilder.kopts
+print( 'OclBuilder.kopts: '+OclBuilder.kopts)
 
 #OclBuilder.kopts
 kernel_opts = envF['KERNEL_OPTS'] 
-print "envF['KERNEL_OPTS']: ", kernel_opts 
+print( "envF['KERNEL_OPTS']: ", kernel_opts )
 
 def labelNewFilename(originalFilename, label):
     (prefix, extension) = splitAtExtension(originalFilename)
@@ -89,13 +91,13 @@ def splitAtExtension(originalFilename):
 
 def configureKernelWorkGroupInfo(nunits, nth, barrier_ok, kernelFilename):
     cmd_cpp = 'cpp -P -DNUNITS=' + str(nunits) + ' -DNTH=' + str(nth) + ' '+barrier_ok+ ' '
-    print 'Configuring OpenCL kernel code in ' +kernelFilename + ' with appropriate NUNITS and NTH values: '+cmd_cpp
+    print( 'Configuring OpenCL kernel code in ' +kernelFilename + ' with appropriate NUNITS and NTH values: '+cmd_cpp)
     tempFilename = manufactureTempName()
     (kernelFilename_prefix, kernelFilename_extension) = splitAtExtension(kernelFilename)
     cmd_cpp_file = cmd_cpp + ' '+kernelFilename_prefix + '_ORIG.cl' + ' > ' + tempFilename
-    print "Running command: "+cmd_cpp_file
+    print( "Running command: "+cmd_cpp_file)
     os.system(cmd_cpp_file)
-    print "Done running command "+ cmd_cpp_file
+    print( "Done running command "+ cmd_cpp_file)
     os.system('mv ' + tempFilename + ' ' + kernelFilename)
     return kernelFilename
 

@@ -1,8 +1,14 @@
 #define WV_OPENCL
 #define WV_NEW
+#define INLINE_BOUND_CALCS
+#define INLINE_VEL2
+#define WV_NEW_FEEDBF
+#define WV_NEW_LES
+#define WV_NEW_LES2
+#define WV_NEW_VEL2
+#define WV_NEW_VELFG
 #define NO_GLOBAL_SOR 
 #define TWINNED_BUFFER 
-#define INLINE_BOUND_CALCS 
 #define WV_TEST 
 #define NO_IO 
 #undef NO_FILE_IO 

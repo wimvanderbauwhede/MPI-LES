@@ -238,7 +238,7 @@ if (not $skip_step_1) {
         (my $macros_to_skip_str, my $empty_str) = macro_file_to_cmd_line_str('./macros_to_skip.h','-X');
         
         say("AutoParallel-Fortran-exe $kernel_sources_str -out ../$gen_dir/ -iowrite $iowrite_subs_str -main ./$main_src -plat $plat  $defined_macros_str $macros_to_skip_str $vflag" );
-        #system('which AutoParallel-Fortran-exe');die;
+        
         system("AutoParallel-Fortran-exe $kernel_sources_str -out ../$gen_dir/ -iowrite $iowrite_subs_str -main ./$main_src  -plat $plat  $defined_macros_str $macros_to_skip_str $vflag" );    
         
     } else {    
@@ -331,9 +331,9 @@ ENDCFG
         close $MKS;
 
     }
-    say($ENV{HOME}.'/Git/RefactorF4Acc/bin/'.'refactorF4acc.pl '.$vflag.' -P translate_to_OpenCL -c rf4a_to_C.cfg '.$superkernel_name); 
-    system($ENV{HOME}.'/Git/RefactorF4Acc/bin/'.'refactorF4acc.pl '.$vflag.' -P translate_to_OpenCL -c rf4a_to_C.cfg '.$superkernel_name);
-    system("cp  module_$superkernel_name.cl module_${superkernel_name}_ORIG.cl");
+    say($ENV{HOME}.'/Git/RefactorF4Acc/bin/'.'refactorF4acc.pl '.$vflag.' -P translate_to_OpenCL -c rf4a_to_C.cfg module_'.$superkernel_name); 
+    system($ENV{HOME}.'/Git/RefactorF4Acc/bin/'.'refactorF4acc.pl '.$vflag.' -P translate_to_OpenCL -c rf4a_to_C.cfg module_'.$superkernel_name);
+    system("cp Temp/module_$superkernel_name.cl module_${superkernel_name}_ORIG.cl");
 
     # Unused, for debugging
     #open my $MK, '<', $macros_kernel_src or die $!;

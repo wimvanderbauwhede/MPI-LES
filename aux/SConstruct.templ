@@ -1,6 +1,5 @@
 import subprocess
 import os
-import commands
 import glob
 
 import OclBuilder
@@ -34,7 +33,8 @@ macro_sources = macro_source_str.split(",")
 MACROS = []
 for macro_source in macro_sources:
     macros_str =  subprocess.check_output( ['perl', '-e', '@ls=<>;$str=join(\" \",map {$_=~s/\n//;s/^\s*//;s/\s*$//;s/.define\s*/-D/;s/.undef\s*/-U/;s/\s+/=/;$_} @ls);print $str',macro_source])
-    MACROS += macros_str.split()
+    macros_str_dec = macros_str.decode('utf-8')
+    MACROS += macros_str_dec.split()
 
     nth_nunits_str =  subprocess.check_output( ['perl', '-e', '@ls=<>;$str=join(\" \",map {$_=~s/\n//;s/^\s*//;s/\s*$//;s/.define\s*//;$_} @ls);print $str','./macros_kernel.h'])
     NTH_NUNITS = nth_nunits_str.split()
