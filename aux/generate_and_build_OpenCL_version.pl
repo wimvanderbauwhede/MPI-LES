@@ -45,6 +45,10 @@ my $nth = 256;
 my $nunits = 16;
 my $vvv=0;
 
+my $gen_dir = 'generated-src';
+my $src_dir = 'src';
+my $ref_src_dir = 'refactored-src';
+
 my $help_message =<<ENDH;
 
         $0 [-d, --dev CPU|GPU|FPGA] [-s, --stage stage] [--nth #threads ] [--nunits #units]   
@@ -54,6 +58,10 @@ my $help_message =<<ENDH;
         --nth: the number of threads per compute unit. Default is $nth  
         --nunits: the number of compute units (--nunits). Default is $nunits
         --stage: the stage of the conversion: refactor, autopar, convert, build.
+        --srcdir: directory with the source files. Default is $src_dir
+        --refsrcdir: directory with the refactored source files (in case the refactor stage needs to be run on the sources). Default is $ref_src_dir
+        --gendir: directory for the generated files. Default is $gen_dir
+        
                  
     You can provide several stages separated with a comman. 
     If not given, the script will attempt to run all stages in one go. 
@@ -77,6 +85,7 @@ my $help_message =<<ENDH;
 ENDH
 my $help=0;
 
+
 my $stages_str='refactor,autopar,convert,build';
 my $use_separate_stash_step=0;
 my $verbose;
@@ -85,8 +94,11 @@ GetOptions ('nth=i' => \$nth,
             'dev=s'   => \$plat,     # I know, not consistent.
             'stage=s' => \$stages_str,
             'stash' => \$use_separate_stash_step,
+            'srcdir=s' => \$src_dir,
+            'refsrcdir=s' => \$ref_src_dir,
+            'gendir=s' => \$gen_dir,
             'verbose'  => \$vvv,
-            'help' => \$help
+            'help' => \$help,
         ) or die("Error in command line arguments\n");
 
 if ($help) { die $help_message; }        
@@ -99,7 +111,7 @@ my $main_src = 'main.f95';
 
 # TODO: These should be extracted from the source code using rf4a. It would be best to save these to a file when running the refactoring
 
-my @kernel_sources=qw(
+my @kernel_sources_WRONG_ORDER=qw(
 adam.f95
 bondv1.f95
 feedbf.f95
@@ -107,6 +119,16 @@ les.f95
 press.f95
 velFG.f95
 velnw.f95
+);
+
+my @kernel_sources=qw(
+velnw.f95
+bondv1.f95
+velFG.f95
+feedbf.f95
+les.f95
+adam.f95
+press.f95
 );
 
 # TODO: These should be extracted from the source code using rf4a
@@ -174,9 +196,9 @@ if (exists $stages{build}) {
     $skip_step_3 = 0;
 }
 
-my $gen_dir = 'GeneratedCode';
-if ($TRUST_THE_COMPILER==1) {
-    $gen_dir = 'GeneratedCodeV2';
+
+if ($TRUST_THE_COMPILER==0) {
+    $gen_dir .= 'V0';
 }
 
 # The compiler fails if this directory does not exists
@@ -188,10 +210,19 @@ if (not -d $gen_dir) {
 # this is LES-specific
 chdir $gen_dir;
 if (not -d 'data') {
-    system('cp -r ../data .');
+    if (-d '../data') {
+        system('cp -r ../data .');
+    } else {
+        mkdir 'data';
+    }
 }
 if (not -d 'GIS') {
+    if (-d '../GIS') {
     system('cp -r ../GIS .');
+    } else {
+        mkdir 'GIS';
+        _generate_fake_GIS_data('Tokyo_20mgrid.txt',10000,0,150);
+    }
 }
 chdir $wd;
  
@@ -222,7 +253,10 @@ if (not $skip_step_0) {
         say '';
     }
 }
-    my $src_dir = $refactored ? 'RefactoredSources' : 'src';
+
+if ($refactored ) {
+    $src_dir = $ref_src_dir;
+}
 
 # Step 1. Run the auto-parallelizing GPU compiler `AutoParallel-Fortran-exe`. The output is stored in `GeneratedCodeV2`
 if (not $skip_step_1) {
@@ -277,9 +311,7 @@ if (not $skip_step_2) {
     ##
     say "* In `$gen_dir`, we copy the non-modified source files into the current folder, as well as some scripts and config files needed to build the OpenCL kernel." if $VV;
     chdir $wd;
-    chdir $gen_dir;
-    
-    
+    chdir $gen_dir;    
     
     my $ref_dir = $TRUST_THE_COMPILER ? "$wd/$src_dir" : "$wd/PostCPP";
     for my $src (@orig_sources) {
@@ -413,6 +445,19 @@ sub create_sconstruct { (my $main_src, my $kernel_sources, my $orig_sources, my 
         say "SConstruct.auto already exists, not overwriting. Delete or rename the file and run the build stage again.";
     }
 
+}
+
+sub _generate_fake_GIS_data { my ($fname,$npoints, $min_val, $max_val)=@_;
+my @vals=();
+
+for my $pt (1..$npoints) {
+    push @vals,$min_val + rand($max_val-$min_val);
+}
+open my $GIS, '>', $fname or die "$!";
+for my $val (@vals) {
+    say $GIS $val;
+}
+close $GIS;
 }
 
 sub strip_ext { (my $fn)=@_;
